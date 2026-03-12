@@ -112,8 +112,8 @@ const getQboInstance = async () => {
             realmId,
             process.env.QBO_ENVIRONMENT === 'sandbox',
             process.env.NODE_ENV !== 'production',
-            null,
             '65',
+            '2.0',
             currentToken.refresh_token
         );
 
