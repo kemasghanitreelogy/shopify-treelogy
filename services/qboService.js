@@ -11,7 +11,6 @@ const oauthClient = new OAuthClient({
 
 const getQboInstance = async () => {
     try {
-        // 1. Ambil token terbaru
         const savedToken = await Token.findOne().sort({ updatedAt: -1 });
         
         if (!savedToken) {
@@ -23,9 +22,9 @@ const getQboInstance = async () => {
         
         oauthClient.setToken(tokenData);
 
-        // 2. Cek validitas dengan buffer 5 menit (300 detik)
-        // Jika token mati dalam < 5 menit, kita refresh sekarang untuk mencegah error di tengah jalan.
-        const isNearExpiry = (savedToken.expires_in + (savedToken.updatedAt.getTime() / 1000)) < (Date.now() / 1000) + 300;
+        // PERBAIKAN DI SINI: Safe check untuk updatedAt
+        const lastUpdateMs = savedToken.updatedAt ? new Date(savedToken.updatedAt).getTime() : Date.now();
+        const isNearExpiry = (savedToken.expires_in + (lastUpdateMs / 1000)) < (Date.now() / 1000) + 300;
 
         if (!oauthClient.isAccessTokenValid() || isNearExpiry) {
             console.log('🔄 Token hampir habis atau sudah expired. Refreshing...');
@@ -34,7 +33,6 @@ const getQboInstance = async () => {
                 const authResponse = await oauthClient.refresh();
                 const newToken = authResponse.getToken();
                 
-                // Update dengan returnDocument: 'after' (mengganti new: true)
                 const updatedDoc = await Token.findOneAndUpdate(
                     { realmId: realmId },
                     { 
@@ -42,7 +40,7 @@ const getQboInstance = async () => {
                         refresh_token: newToken.refresh_token,
                         x_refresh_token_expires_in: newToken.x_refresh_token_expires_in,
                         expires_in: newToken.expires_in,
-                        updatedAt: new Date()
+                        updatedAt: new Date() // Sekarang field ini pasti akan tersimpan
                     },
                     { 
                         upsert: true, 
@@ -62,7 +60,6 @@ const getQboInstance = async () => {
 
         const currentToken = oauthClient.getToken();
 
-        // 3. Instance QBO
         return new QuickBooks(
             process.env.QBO_CLIENT_ID,
             process.env.QBO_CLIENT_SECRET,
@@ -70,7 +67,7 @@ const getQboInstance = async () => {
             false, 
             realmId,
             process.env.QBO_ENVIRONMENT === 'sandbox',
-            process.env.NODE_ENV !== 'production', // Debug true hanya di development
+            process.env.NODE_ENV !== 'production',
             null,
             '65', 
             currentToken.refresh_token
