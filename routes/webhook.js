@@ -21,6 +21,16 @@ const verifyShopifyWebhook = (req) => {
     return generatedHash === hmacHeader;
 };
 
+// Helper: extract QBO error details from axios/QBO error
+const getQboErrorDetail = (err) => {
+    // QBO error via axios response
+    const data = err?.response?.data;
+    if (data?.Fault?.Error) return JSON.stringify(data.Fault.Error, null, 2);
+    // QBO error passed directly
+    if (err?.Fault?.Error) return JSON.stringify(err.Fault.Error, null, 2);
+    return err?.message || String(err);
+};
+
 // 2. Fungsi Cari/Buat Customer Otomatis
 const getOrCreateCustomer = (qbo, customerData) => {
     return new Promise((resolve, reject) => {
@@ -33,10 +43,13 @@ const getOrCreateCustomer = (qbo, customerData) => {
         const query = `SELECT * FROM Customer WHERE PrimaryEmailAddr = '${email}'`;
 
         qbo.findCustomers({ Query: query }, (err, result) => {
-            if (err) return reject(err);
+            if (err) {
+                console.error('❌ findCustomers error:', getQboErrorDetail(err));
+                return reject(err);
+            }
 
             // Jika Customer sudah ada di QBO
-            if (result.QueryResponse && result.QueryResponse.Customer && result.QueryResponse.Customer.length > 0) {
+            if (result?.QueryResponse?.Customer?.length > 0) {
                 const existing = result.QueryResponse.Customer[0];
                 console.log(`👤 Customer ditemukan: ${existing.DisplayName} (ID: ${existing.Id})`);
                 return resolve(existing.Id);
@@ -49,12 +62,15 @@ const getOrCreateCustomer = (qbo, customerData) => {
             const newCustomer = {
                 GivenName: customerData.first_name || 'Pembeli',
                 FamilyName: customerData.last_name || 'Shopify',
-                DisplayName: uniqueName, // Harus unik di QBO
+                DisplayName: uniqueName,
                 PrimaryEmailAddr: { Address: email }
             };
 
             qbo.createCustomer(newCustomer, (errCreate, created) => {
-                if (errCreate) return reject(errCreate);
+                if (errCreate) {
+                    console.error('❌ createCustomer error:', getQboErrorDetail(errCreate));
+                    return reject(errCreate);
+                }
                 console.log(`✅ Customer baru terdaftar dgn ID: ${created.Id}`);
                 resolve(created.Id);
             });
@@ -97,30 +113,39 @@ router.post('/shopify', async (req, res) => {
         const lineItems = [];
         for (const item of shopifyOrder.line_items) {
             const itemId = await findItemByName(qbo, item.name);
+            const price = parseFloat(item.price) || 0;
+            const qty = parseInt(item.quantity) || 1;
+            const amount = Math.round(price * qty * 100) / 100;
+
             lineItems.push({
                 Description: item.name,
-                Amount: item.price * item.quantity,
+                Amount: amount,
                 DetailType: "SalesItemLineDetail",
                 SalesItemLineDetail: {
-                    Qty: item.quantity,
-                    UnitPrice: item.price,
-                    ItemRef: { value: itemId }, // ID Dinamis
-                    TaxCodeRef: { value: "NON" } 
+                    Qty: qty,
+                    UnitPrice: price,
+                    ItemRef: { value: itemId },
+                    TaxCodeRef: { value: "NON" }
                 }
             });
         }
 
         const salesReceiptData = {
             Line: lineItems,
-            CustomerRef: { value: customerId }, // ID Dinamis
+            CustomerRef: { value: customerId },
             CurrencyRef: { value: shopifyOrder.currency }
         };
+
+        console.log('📦 SalesReceipt data:', JSON.stringify(salesReceiptData, null, 2));
 
         const createReceipt = () => {
             return new Promise((resolve, reject) => {
                 qbo.createSalesReceipt(salesReceiptData, (err, receipt) => {
-                    if (err) reject(err);
-                    else resolve(receipt);
+                    if (err) {
+                        console.error('❌ createSalesReceipt error:', getQboErrorDetail(err));
+                        return reject(err);
+                    }
+                    resolve(receipt);
                 });
             });
         };
@@ -131,16 +156,7 @@ router.post('/shopify', async (req, res) => {
         res.status(200).send('Success');
 
     } catch (error) {
-        // PERBAIKAN: Jangan gunakan JSON.stringify untuk objek Error langsung.
-        // Kita pecah log-nya agar pesan asli atau detail QBO bisa terbaca.
-        console.error('❌ Terjadi Kesalahan:');
-        console.error(error.message || error); // Menampilkan pesan utama
-        
-        // Jika error berasal dari library Intuit/QBO, biasanya detailnya ada di objek 'Fault'
-        if (error.Fault && error.Fault.Error) {
-             console.error('🔍 Detail QBO:', JSON.stringify(error.Fault.Error, null, 2));
-        }
-
+        console.error('❌ Terjadi Kesalahan:', getQboErrorDetail(error));
         res.status(500).send('Error processing webhook');
     }
 });
