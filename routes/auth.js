@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { oauthClient } = require('../services/qboService');
+const OAuthClient = require('intuit-oauth'); // <--- TAMBAHKAN BARIS INI
+const { oauthClient } = require('../services/qboService'); 
 const Token = require('../models/Token');
 
 // Step 1: Redirect to Intuit for login
 router.get('/login', (req, res) => {
+    // Sekarang OAuthClient sudah terdefinisi dan bisa mengambil scope Accounting
     const authUri = oauthClient.authorizeUri({
-        scope: [OAuthClient.scopes.Accounting],
+        scope: [OAuthClient.scopes.Accounting], 
         state: 'intuit-test'
     });
     res.redirect(authUri);
