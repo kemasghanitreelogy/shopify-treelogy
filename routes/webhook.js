@@ -24,23 +24,16 @@ const verifyShopifyWebhook = (req) => {
 };
 
 router.post('/shopify', async (req, res) => {
-    // 1. Validasi keamanan menggunakan HMAC
     if (!verifyShopifyWebhook(req)) {
-        console.error('⚠️ Percobaan akses ilegal! HMAC tidak cocok.');
         return res.status(401).send('Unauthorized');
     }
 
     try {
         const shopifyOrder = req.body;
-        
-        // Segera beri respon 200 ke Shopify agar webhook tidak dianggap gagal/timeout
-        res.status(200).send('Webhook verified and received');
-
         console.log('✅ HMAC Valid. Memproses order ID:', shopifyOrder.id);
 
         const qbo = await getQboInstance();
 
-        // Mapping data Shopify ke QBO
         const lineItems = shopifyOrder.line_items.map(item => ({
             Description: item.name,
             Amount: item.price * item.quantity,
@@ -48,7 +41,6 @@ router.post('/shopify', async (req, res) => {
             SalesItemLineDetail: {
                 Qty: item.quantity,
                 UnitPrice: item.price,
-                // Gunakan ID Item yang valid dari Sandbox Anda
                 ItemRef: { value: "1" }, 
                 TaxCodeRef: { value: "NON" } 
             }
@@ -56,22 +48,30 @@ router.post('/shopify', async (req, res) => {
 
         const salesReceiptData = {
             Line: lineItems,
-            // Gunakan ID Customer yang valid dari Sandbox Anda
             CustomerRef: { value: "1" },
             CurrencyRef: { value: shopifyOrder.currency }
         };
 
-        // Kirim data ke QuickBooks
-        qbo.createSalesReceipt(salesReceiptData, (err, receipt) => {
-            if (err) {
-                console.error('❌ QBO Error:', err.Fault ? err.Fault.Error[0] : err);
-            } else {
-                console.log('🚀 Sales Receipt berhasil dibuat di QBO. ID:', receipt.Id);
-            }
-        });
+        // BUNGKUS DENGAN PROMISE AGAR VERCEL MENUNGGU
+        const createReceipt = () => {
+            return new Promise((resolve, reject) => {
+                qbo.createSalesReceipt(salesReceiptData, (err, receipt) => {
+                    if (err) reject(err);
+                    else resolve(receipt);
+                });
+            });
+        };
+
+        const receipt = await createReceipt();
+        console.log('🚀 Sales Receipt Berhasil! ID:', receipt.Id);
+        
+        // BALAS SHOPIFY SETELAH SEMUA SELESAI
+        res.status(200).send('Success');
 
     } catch (error) {
-        console.error('❌ Webhook Processing Error:', error);
+        // Jika ID "1" tidak ada, errornya akan muncul di sini sekarang
+        console.error('❌ Detail Error dari QBO:', JSON.stringify(error, null, 2));
+        res.status(500).send('Error processing webhook');
     }
 });
 
