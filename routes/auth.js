@@ -24,7 +24,15 @@ router.get('/callback', async (req, res) => {
 
         await Token.findOneAndUpdate(
             { realmId: realmId },
-            { ...tokenData, realmId: realmId },
+            {
+                realmId: realmId,
+                token_type: tokenData.token_type,
+                access_token: tokenData.access_token,
+                refresh_token: tokenData.refresh_token,
+                expires_in: tokenData.expires_in,
+                x_refresh_token_expires_in: tokenData.x_refresh_token_expires_in,
+                tokenCreatedAt: tokenData.createdAt,
+            },
             { upsert: true, new: true }
         );
 

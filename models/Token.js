@@ -7,7 +7,7 @@ const TokenSchema = new mongoose.Schema({
     refresh_token: String,
     expires_in: Number,
     x_refresh_token_expires_in: Number,
-    createdAt: { type: Date, default: Date.now }
-});
+    tokenCreatedAt: { type: Number, default: Date.now },
+}, { timestamps: true });
 
 module.exports = mongoose.model('Token', TokenSchema);
