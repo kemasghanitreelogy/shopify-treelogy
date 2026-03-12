@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "intuit-oauth": "^4.2.2",
+    "mongoose": "^9.3.0",
+    "node-quickbooks": "^2.0.48"
+  }
+}
