@@ -2,7 +2,6 @@ const OAuthClient = require('intuit-oauth');
 const QuickBooks = require('node-quickbooks');
 const Token = require('../models/Token');
 
-// Inisialisasi OAuth Client
 const oauthClient = new OAuthClient({
     clientId: process.env.QBO_CLIENT_ID,
     clientSecret: process.env.QBO_CLIENT_SECRET,
@@ -12,68 +11,73 @@ const oauthClient = new OAuthClient({
 
 const getQboInstance = async () => {
     try {
-        // 1. Ambil token terbaru dari database (tidak perlu hardcode realmId di .env)
+        // 1. Ambil token terbaru
         const savedToken = await Token.findOne().sort({ updatedAt: -1 });
         
         if (!savedToken) {
-            throw new Error('⚠️ Belum ada token di database. Silakan akses /api/auth/login terlebih dahulu.');
+            throw new Error('Belum ada token di database. Akses /api/auth/login.');
         }
 
         const realmId = savedToken.realmId;
-
-        // PENTING: Ubah Mongoose Document menjadi plain JSON Object
-        // Intuit-oauth sering error jika diberikan object bawaan Mongoose
-        const tokenData = savedToken.toObject ? savedToken.toObject() : savedToken;
+        const tokenData = savedToken.toObject();
         
         oauthClient.setToken(tokenData);
 
-        let currentToken = oauthClient.getToken();
+        // 2. Cek validitas dengan buffer 5 menit (300 detik)
+        // Jika token mati dalam < 5 menit, kita refresh sekarang untuk mencegah error di tengah jalan.
+        const isNearExpiry = (savedToken.expires_in + (savedToken.updatedAt.getTime() / 1000)) < (Date.now() / 1000) + 300;
 
-        // 2. Cek apakah Access Token kedaluwarsa (biasanya 60 menit)
-        if (!oauthClient.isAccessTokenValid()) {
-            console.log('🔄 Access Token expired. Memulai proses refresh token...');
+        if (!oauthClient.isAccessTokenValid() || isNearExpiry) {
+            console.log('🔄 Token hampir habis atau sudah expired. Refreshing...');
             
             try {
                 const authResponse = await oauthClient.refresh();
-                currentToken = authResponse.getToken();
+                const newToken = authResponse.getToken();
                 
-                // Simpan token yang baru di-refresh ke Database secara spesifik
-                await Token.findOneAndUpdate(
+                // Update dengan returnDocument: 'after' (mengganti new: true)
+                const updatedDoc = await Token.findOneAndUpdate(
                     { realmId: realmId },
                     { 
-                        access_token: currentToken.access_token,
-                        refresh_token: currentToken.refresh_token,
-                        x_refresh_token_expires_in: currentToken.x_refresh_token_expires_in,
-                        expires_in: currentToken.expires_in,
+                        access_token: newToken.access_token,
+                        refresh_token: newToken.refresh_token,
+                        x_refresh_token_expires_in: newToken.x_refresh_token_expires_in,
+                        expires_in: newToken.expires_in,
                         updatedAt: new Date()
                     },
-                    { upsert: true, new: true }
+                    { 
+                        upsert: true, 
+                        returnDocument: 'after' 
+                    }
                 );
-                console.log('✅ Refresh token sukses dan berhasil disimpan ke DB.');
+                
+                oauthClient.setToken(updatedDoc.toObject());
+                console.log('✅ Token diperbarui dan disimpan.');
                 
             } catch (refreshError) {
-                // Log detail error dari server Intuit (sangat berguna untuk debugging Vercel)
-                console.error('❌ Gagal refresh token. Intuit Response:', refreshError.authResponse?.json || refreshError.message);
-                throw new Error('Refresh token invalid atau hangus. Anda HARUS login ulang via /api/auth/login');
+                const errorDetail = refreshError.authResponse?.json || refreshError.message;
+                console.error('❌ Refresh Grant Failed:', errorDetail);
+                throw new Error('Refresh token invalid. Silakan login ulang.');
             }
         }
 
-        // 3. Kembalikan instance node-quickbooks yang sudah terautentikasi
+        const currentToken = oauthClient.getToken();
+
+        // 3. Instance QBO
         return new QuickBooks(
             process.env.QBO_CLIENT_ID,
             process.env.QBO_CLIENT_SECRET,
             currentToken.access_token,
-            false, // noTokenRenewal (karena kita sudah handle manual di atas)
+            false, 
             realmId,
-            process.env.QBO_ENVIRONMENT === 'sandbox', // true jika sandbox
-            true, // aktifkan debugging log QBO di Vercel (ubah ke false saat Production)
+            process.env.QBO_ENVIRONMENT === 'sandbox',
+            process.env.NODE_ENV !== 'production', // Debug true hanya di development
             null,
-            '65', // Minor version (65 sangat stabil untuk QBO Australia/Global)
+            '65', 
             currentToken.refresh_token
         );
 
     } catch (error) {
-        console.error('❌ QBO Instance Error:', error.message);
+        console.error('❌ QBO Service Error:', error.message);
         throw error;
     }
 };
