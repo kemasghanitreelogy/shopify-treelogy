@@ -131,7 +131,16 @@ router.post('/shopify', async (req, res) => {
         res.status(200).send('Success');
 
     } catch (error) {
-        console.error('❌ Detail Error dari QBO:', JSON.stringify(error, null, 2));
+        // PERBAIKAN: Jangan gunakan JSON.stringify untuk objek Error langsung.
+        // Kita pecah log-nya agar pesan asli atau detail QBO bisa terbaca.
+        console.error('❌ Terjadi Kesalahan:');
+        console.error(error.message || error); // Menampilkan pesan utama
+        
+        // Jika error berasal dari library Intuit/QBO, biasanya detailnya ada di objek 'Fault'
+        if (error.Fault && error.Fault.Error) {
+             console.error('🔍 Detail QBO:', JSON.stringify(error.Fault.Error, null, 2));
+        }
+
         res.status(500).send('Error processing webhook');
     }
 });
