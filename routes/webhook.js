@@ -55,9 +55,10 @@ const getOrCreateCustomer = (qbo, customerData) => {
         }
 
         const email = customerData.email;
-        const query = `SELECT * FROM Customer WHERE PrimaryEmailAddr = '${email}'`;
 
-        qbo.findCustomers({ Query: query }, (err, body) => {
+        qbo.findCustomers([
+            { field: 'PrimaryEmailAddr', value: email, operator: '=' }
+        ], (err, body) => {
             if (err) {
                 console.error('❌ findCustomers error:', extractQboError(err, body));
                 return reject(new Error('findCustomers: ' + extractQboError(err, body)));
@@ -97,9 +98,10 @@ const getOrCreateCustomer = (qbo, customerData) => {
 const findItemByName = (qbo, itemName) => {
     return new Promise((resolve) => {
         const safeName = itemName.replace(/'/g, "");
-        const query = `SELECT * FROM Item WHERE Name = '${safeName}'`;
 
-        qbo.findItems({ Query: query }, (err, body) => {
+        qbo.findItems([
+            { field: 'Name', value: safeName, operator: '=' }
+        ], (err, body) => {
             if (!err && body?.QueryResponse?.Item?.length > 0) {
                 return resolve(body.QueryResponse.Item[0].Id);
             }

@@ -33,7 +33,7 @@ router.get('/callback', async (req, res) => {
                 x_refresh_token_expires_in: tokenData.x_refresh_token_expires_in,
                 tokenCreatedAt: tokenData.createdAt,
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
 
         res.send('Authorization successful! Token saved to database. You can close this window.');

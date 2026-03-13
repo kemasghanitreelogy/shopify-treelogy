@@ -24,7 +24,7 @@ async function refreshAndSave(realmId) {
             x_refresh_token_expires_in: newToken.x_refresh_token_expires_in,
             tokenCreatedAt: newToken.createdAt,
         },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     console.log('✅ Token diperbarui dan disimpan.');
