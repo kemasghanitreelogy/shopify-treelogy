@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
 
-// 1. Fungsi Verifikasi HMAC
+// ─── HMAC Verification ───
 const verifyShopifyWebhook = (req) => {
     const hmacHeader = req.headers['x-shopify-hmac-sha256'];
     const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
@@ -21,32 +21,73 @@ const verifyShopifyWebhook = (req) => {
     return generatedHash === hmacHeader;
 };
 
-// Helper: extract QBO error detail from callback args
-// node-quickbooks callback pattern: callback(err, body, res)
-// - HTTP error: err=axiosError, body=response.data (has Fault.Error)
-// - QBO fault:  err=body (has Fault.Error), body=same
+// ─── QBO Error Helper ───
 const extractQboError = (err, body) => {
-    // Check body first (always has the real QBO error)
-    if (body && body.Fault && body.Fault.Error) {
-        return body.Fault.Error.map(e => `${e.Message} - ${e.Detail}`).join('; ');
-    }
-    // Check err.Fault (when QBO returns fault in 200 response)
-    if (err && err.Fault && err.Fault.Error) {
-        return err.Fault.Error.map(e => `${e.Message} - ${e.Detail}`).join('; ');
-    }
-    // Check axios error response data
-    if (err && err.response && err.response.data) {
-        const data = err.response.data;
-        if (data.Fault && data.Fault.Error) {
-            return data.Fault.Error.map(e => `${e.Message} - ${e.Detail}`).join('; ');
-        }
-        // Return raw response if not Fault structure
-        return JSON.stringify(data);
-    }
+    if (body?.Fault?.Error) return body.Fault.Error.map(e => `${e.Message} - ${e.Detail}`).join('; ');
+    if (err?.Fault?.Error) return err.Fault.Error.map(e => `${e.Message} - ${e.Detail}`).join('; ');
+    if (err?.response?.data?.Fault?.Error) return err.response.data.Fault.Error.map(e => `${e.Message} - ${e.Detail}`).join('; ');
+    if (err?.response?.data) return JSON.stringify(err.response.data);
     return err?.message || String(err);
 };
 
-// 2. Fungsi Cari/Buat Customer Otomatis
+// ─── QBO Metadata Cache (per warm instance) ───
+let _cachedTaxCodeId = null;
+let _cachedIncomeAccountId = null;
+
+// Get a valid tax code from QBO
+const getDefaultTaxCode = (qbo) => {
+    if (process.env.QBO_TAX_CODE) return Promise.resolve(process.env.QBO_TAX_CODE);
+    if (_cachedTaxCodeId) return Promise.resolve(_cachedTaxCodeId);
+
+    return new Promise((resolve) => {
+        qbo.findTaxCodes([], (err, body) => {
+            const codes = body?.QueryResponse?.TaxCode;
+            if (codes && codes.length > 0) {
+                // Prefer zero-rate/exempt tax codes
+                const zeroRate = codes.find(c =>
+                    c.Active !== false && (
+                        /free|exempt|zero|nil|none|nol|bebas/i.test(c.Name) ||
+                        c.Name === 'FRE' || c.Name === 'Z' || c.Name === 'NON'
+                    )
+                );
+                _cachedTaxCodeId = zeroRate ? String(zeroRate.Id) : String(codes[0].Id);
+                console.log(`🏷️ Tax code: "${zeroRate ? zeroRate.Name : codes[0].Name}" (ID: ${_cachedTaxCodeId})`);
+            } else {
+                console.log('⚠️ No tax codes found, omitting TaxCodeRef');
+                _cachedTaxCodeId = null;
+            }
+            resolve(_cachedTaxCodeId);
+        });
+    });
+};
+
+// Get an income account for auto-creating items
+const getIncomeAccountId = (qbo) => {
+    if (process.env.QBO_INCOME_ACCOUNT_ID) return Promise.resolve(process.env.QBO_INCOME_ACCOUNT_ID);
+    if (_cachedIncomeAccountId) return Promise.resolve(_cachedIncomeAccountId);
+
+    return new Promise((resolve) => {
+        qbo.findAccounts([
+            { field: 'AccountType', value: 'Income', operator: '=' }
+        ], (err, body) => {
+            const accounts = body?.QueryResponse?.Account;
+            if (accounts && accounts.length > 0) {
+                // Prefer "Sales of Product Income" or similar
+                const salesAccount = accounts.find(a =>
+                    /sales|revenue|pendapatan|penjualan/i.test(a.Name)
+                ) || accounts[0];
+                _cachedIncomeAccountId = String(salesAccount.Id);
+                console.log(`💰 Income account: "${salesAccount.Name}" (ID: ${_cachedIncomeAccountId})`);
+            } else {
+                console.log('⚠️ No income account found');
+                _cachedIncomeAccountId = null;
+            }
+            resolve(_cachedIncomeAccountId);
+        });
+    });
+};
+
+// ─── Customer: Find or Create ───
 const getOrCreateCustomer = (qbo, customerData) => {
     return new Promise((resolve, reject) => {
         if (!customerData || !customerData.email) {
@@ -64,40 +105,36 @@ const getOrCreateCustomer = (qbo, customerData) => {
                 return reject(new Error('findCustomers: ' + extractQboError(err, body)));
             }
 
-            // Jika Customer sudah ada di QBO
             if (body?.QueryResponse?.Customer?.length > 0) {
                 const existing = body.QueryResponse.Customer[0];
                 console.log(`👤 Customer ditemukan: ${existing.DisplayName} (ID: ${existing.Id})`);
                 return resolve(existing.Id);
             }
 
-            // Jika belum ada, buat baru
             console.log(`🆕 Membuat Customer baru untuk: ${email}`);
             const uniqueName = `${customerData.first_name || 'Pembeli'} ${customerData.last_name || 'Shopify'} (${email})`;
 
-            const newCustomer = {
+            qbo.createCustomer({
                 GivenName: customerData.first_name || 'Pembeli',
                 FamilyName: customerData.last_name || 'Shopify',
                 DisplayName: uniqueName,
                 PrimaryEmailAddr: { Address: email }
-            };
-
-            qbo.createCustomer(newCustomer, (errCreate, bodyCreate) => {
+            }, (errCreate, bodyCreate) => {
                 if (errCreate) {
                     console.error('❌ createCustomer error:', extractQboError(errCreate, bodyCreate));
                     return reject(new Error('createCustomer: ' + extractQboError(errCreate, bodyCreate)));
                 }
-                console.log(`✅ Customer baru terdaftar dgn ID: ${bodyCreate.Id}`);
+                console.log(`✅ Customer baru: ${bodyCreate.Id}`);
                 resolve(bodyCreate.Id);
             });
         });
     });
 };
 
-// 3. Fungsi Cari Item Otomatis
-const findItemByName = (qbo, itemName) => {
+// ─── Item: Find or Auto-Create ───
+const getOrCreateItem = (qbo, itemName, price, incomeAccountId) => {
     return new Promise((resolve) => {
-        const safeName = itemName.replace(/'/g, "");
+        const safeName = itemName.replace(/'/g, "").substring(0, 100); // QBO max 100 chars
 
         qbo.findItems([
             { field: 'Name', value: safeName, operator: '=' }
@@ -105,15 +142,32 @@ const findItemByName = (qbo, itemName) => {
             if (!err && body?.QueryResponse?.Item?.length > 0) {
                 return resolve(body.QueryResponse.Item[0].Id);
             }
-            if (err) {
-                console.log(`⚠️ findItems error for '${itemName}':`, extractQboError(err, body));
+
+            // Auto-create item if not found and we have an income account
+            if (!incomeAccountId) {
+                console.log(`⚠️ Item '${safeName}' tidak ada & tidak bisa auto-create (no income account)`);
+                return resolve(null);
             }
-            console.log(`⚠️ Item '${itemName}' tidak ditemukan di QBO, pakai ID fallback "1"`);
-            resolve("1");
+
+            console.log(`🆕 Auto-creating item: ${safeName}`);
+            qbo.createItem({
+                Name: safeName,
+                Type: 'Service',
+                IncomeAccountRef: { value: incomeAccountId },
+                UnitPrice: price,
+            }, (errCreate, bodyCreate) => {
+                if (errCreate) {
+                    console.log(`⚠️ createItem error for '${safeName}':`, extractQboError(errCreate, bodyCreate));
+                    return resolve(null);
+                }
+                console.log(`✅ Item created: ${safeName} (ID: ${bodyCreate.Id})`);
+                resolve(bodyCreate.Id);
+            });
         });
     });
 };
 
+// ─── Webhook Handler ───
 router.post('/shopify', async (req, res) => {
     if (!verifyShopifyWebhook(req)) {
         return res.status(401).send('Unauthorized');
@@ -126,35 +180,52 @@ router.post('/shopify', async (req, res) => {
         const qbo = await getQboInstance();
         console.log('✅ QBO instance berhasil dibuat.');
 
-        // Dapatkan ID Customer secara dinamis
+        // Fetch QBO metadata (tax code + income account) in parallel
+        const [taxCodeId, incomeAccountId] = await Promise.all([
+            getDefaultTaxCode(qbo),
+            getIncomeAccountId(qbo),
+        ]);
+
+        // Customer
         const customerId = await getOrCreateCustomer(qbo, shopifyOrder.customer);
         console.log('✅ Customer ID:', customerId);
 
-        // Proses Line Items secara dinamis
+        // Line Items
         const lineItems = [];
         for (const item of shopifyOrder.line_items) {
-            const itemId = await findItemByName(qbo, item.name);
             const price = parseFloat(item.price) || 0;
             const qty = parseInt(item.quantity) || 1;
             const amount = Math.round(price * qty * 100) / 100;
+
+            const itemId = await getOrCreateItem(qbo, item.name, price, incomeAccountId);
+
+            const lineDetail = {
+                Qty: qty,
+                UnitPrice: price,
+            };
+
+            // Only add ItemRef if we have a valid item
+            if (itemId) {
+                lineDetail.ItemRef = { value: itemId };
+            }
+
+            // Only add TaxCodeRef if we found a valid tax code
+            if (taxCodeId) {
+                lineDetail.TaxCodeRef = { value: taxCodeId };
+            }
 
             lineItems.push({
                 Description: item.name,
                 Amount: amount,
                 DetailType: "SalesItemLineDetail",
-                SalesItemLineDetail: {
-                    Qty: qty,
-                    UnitPrice: price,
-                    ItemRef: { value: itemId },
-                    TaxCodeRef: { value: "NON" }
-                }
+                SalesItemLineDetail: lineDetail,
             });
         }
 
         const salesReceiptData = {
             Line: lineItems,
             CustomerRef: { value: customerId },
-            CurrencyRef: { value: shopifyOrder.currency }
+            CurrencyRef: { value: shopifyOrder.currency },
         };
 
         console.log('📦 SalesReceipt payload:', JSON.stringify(salesReceiptData, null, 2));
