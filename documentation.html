@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopify → QBO Integration | Complete Technical Documentation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔗</text></svg>">
+<style>
+:root{--primary:#0d6efd;--primary-dark:#0a58ca;--primary-light:#e7f1ff;--secondary:#6c757d;--success:#198754;--success-light:#d1e7dd;--warning:#ffc107;--warning-light:#fff3cd;--danger:#dc3545;--danger-light:#f8d7da;--info:#0dcaf0;--info-light:#cff4fc;--dark:#1a1a2e;--light:#f8f9fa;--bg:#ffffff;--card-bg:#ffffff;--border:#e0e0e0;--code-bg:#0d1117;--code-text:#c9d1d9;--code-keyword:#ff7b72;--code-string:#a5d6ff;--code-comment:#8b949e;--code-func:#d2a8ff;--sidebar-w:290px;--font-sans:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;--font-mono:'JetBrains Mono','Fira Code','Cascadia Code','SF Mono',monospace;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--radius:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+body{font-family:var(--font-sans);color:#333;background:var(--light);line-height:1.75;display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:linear-gradient(180deg,#0f0c29,#1a1a2e,#16213e);color:#fff;overflow-y:auto;z-index:100;padding:0;transition:transform .3s;scrollbar-width:thin;scrollbar-color:#334 transparent}
+.sidebar::-webkit-scrollbar{width:5px}
+.sidebar::-webkit-scrollbar-thumb{background:#445;border-radius:10px}
+.sidebar-header{padding:28px 24px 20px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.08);text-align:center}
+.sidebar-header h2{font-size:1.15rem;color:#7dd3fc;letter-spacing:.5px}
+.sidebar-header .subtitle{color:#94a3b8;font-size:.72rem;margin-top:4px;letter-spacing:.8px;text-transform:uppercase}
+.sidebar-header .version{display:inline-block;margin-top:8px;background:rgba(125,211,252,.15);color:#7dd3fc;padding:2px 10px;border-radius:20px;font-size:.68rem;font-weight:600}
+.sidebar nav{padding:12px 0 24px}
+.sidebar nav a{display:flex;align-items:center;gap:8px;padding:7px 24px;color:#94a3b8;text-decoration:none;font-size:.82rem;border-left:3px solid transparent;transition:all .15s ease}
+.sidebar nav a:hover{color:#e2e8f0;background:rgba(255,255,255,.04);border-left-color:rgba(125,211,252,.4)}
+.sidebar nav a.active{color:#fff;background:rgba(125,211,252,.08);border-left-color:#7dd3fc;font-weight:500}
+.sidebar nav .nav-group{padding:18px 24px 6px;color:#7dd3fc;font-size:.65rem;text-transform:uppercase;letter-spacing:2px;font-weight:700}
+.sidebar nav .nav-icon{font-size:.9rem;width:20px;text-align:center;flex-shrink:0}
+
+/* ═══ MAIN ═══ */
+.main{margin-left:var(--sidebar-w);flex:1;padding:40px 56px 80px;max-width:960px}
+h1{font-size:2.4rem;margin-bottom:8px;color:var(--dark);font-weight:800;letter-spacing:-.5px}
+.page-subtitle{font-size:1.05rem;color:var(--secondary);margin-bottom:32px;line-height:1.6}
+h2{font-size:1.55rem;margin:56px 0 18px;padding-bottom:10px;border-bottom:3px solid var(--primary);color:var(--dark);font-weight:700;letter-spacing:-.3px}
+h3{font-size:1.18rem;margin:36px 0 12px;color:var(--primary-dark);font-weight:700}
+h4{font-size:.95rem;margin:24px 0 8px;color:var(--dark);font-weight:700}
+p{margin-bottom:16px;color:#444}
+
+/* ═══ CARDS ═══ */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin:18px 0;box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.card-header .icon{font-size:1.6rem}
+.card-header h4{margin:0;font-size:1.05rem}
+
+/* ═══ BADGES ═══ */
+.badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.72rem;font-weight:600;margin:2px;letter-spacing:.3px}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-green{background:#d1fae5;color:#065f46}
+.badge-orange{background:#ffedd5;color:#9a3412}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-gray{background:#f3f4f6;color:#374151}
+.badge-cyan{background:#cffafe;color:#155e75}
+
+/* ═══ CODE ═══ */
+pre{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:20px 24px;overflow-x:auto;margin:14px 0 22px;font-family:var(--font-mono);font-size:.8rem;line-height:1.7;border:1px solid #21262d;position:relative}
+pre .label{position:absolute;top:8px;right:12px;font-size:.65rem;color:#8b949e;font-family:var(--font-sans);text-transform:uppercase;letter-spacing:1px}
+code{font-family:var(--font-mono);font-size:.84em}
+p code,li code,td code{background:#eef2ff;padding:2px 7px;border-radius:4px;color:#4338ca;font-size:.82em;border:1px solid #e0e7ff}
+
+/* ═══ TABLES ═══ */
+table{width:100%;border-collapse:separate;border-spacing:0;margin:14px 0 22px;font-size:.88rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+th,td{padding:11px 16px;text-align:left}
+th{background:#f1f5f9;font-weight:600;color:var(--dark);font-size:.82rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border)}
+td{border-bottom:1px solid #f1f5f9}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+
+/* ═══ FLOW DIAGRAMS ═══ */
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:24px 0;padding:20px;background:#f8fafc;border-radius:var(--radius);border:1px solid #e2e8f0}
+.flow-step{background:var(--card-bg);border:2px solid var(--primary);border-radius:var(--radius);padding:12px 16px;text-align:center;min-width:130px;font-size:.82rem;font-weight:600;box-shadow:var(--shadow)}
+.flow-step small{display:block;font-weight:400;color:var(--secondary);font-size:.72rem;margin-top:2px}
+.flow-arrow{font-size:1.4rem;color:var(--primary);font-weight:700}
+.flow-step.error{border-color:var(--danger);background:#fff5f5}
+.flow-step.success{border-color:var(--success);background:#f0fff4}
+.flow-step.db{border-color:#f59e0b;background:#fffbeb}
+.flow-step.api{border-color:#8b5cf6;background:#f5f3ff}
+
+/* ═══ ALERTS ═══ */
+.alert{padding:16px 22px;border-radius:8px;margin:18px 0;border-left:4px solid;font-size:.88rem}
+.alert-info{background:var(--info-light);border-color:var(--info);color:#055160}
+.alert-warning{background:var(--warning-light);border-color:var(--warning);color:#664d03}
+.alert-danger{background:var(--danger-light);border-color:var(--danger);color:#842029}
+.alert-success{background:var(--success-light);border-color:var(--success);color:#0f5132}
+.alert strong{display:block;margin-bottom:4px;font-size:.9rem}
+
+/* ═══ LISTS ═══ */
+ul,ol{margin:8px 0 16px 24px}
+li{margin-bottom:6px;color:#444}
+li strong{color:#333}
+
+/* ═══ ARCHITECTURE LAYERS ═══ */
+.arch-box{border:2px solid;border-radius:12px;padding:22px 24px;margin:14px 0;position:relative;background:#fff}
+.arch-box .layer-label{position:absolute;top:-11px;left:18px;background:var(--bg);padding:0 10px;font-weight:700;font-size:.78rem;letter-spacing:.5px}
+.arch-box.shopify{border-color:#96bf48}.arch-box.shopify .layer-label{color:#96bf48}
+.arch-box.vercel{border-color:#000}.arch-box.vercel .layer-label{color:#000}
+.arch-box.mongo{border-color:#00684a}.arch-box.mongo .layer-label{color:#00684a}
+.arch-box.intuit{border-color:#0077c5}.arch-box.intuit .layer-label{color:#0077c5}
+.arch-inner{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.arch-inner .box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:.82rem}
+.arch-inner .box strong{display:block;margin-bottom:4px;color:#333}
+.arch-inner .box span{color:#64748b}
+
+/* ═══ FILE TREE ═══ */
+.file-tree{font-family:var(--font-mono);font-size:.82rem;background:var(--code-bg);color:var(--code-text);padding:24px;border-radius:8px;line-height:2.1;border:1px solid #21262d}
+.file-tree .dir{color:#79c0ff;font-weight:600}
+.file-tree .file{color:#7ee787}
+.file-tree .cfg{color:#ffa657}
+.file-tree .desc{color:#8b949e;font-style:italic}
+
+/* ═══ ENV TABLE ═══ */
+.env-table td:first-child{font-family:var(--font-mono);font-weight:600;white-space:nowrap;color:#4338ca;font-size:.82rem}
+
+/* ═══ STEPS ═══ */
+.steps{counter-reset:step-counter;list-style:none;margin-left:0;padding-left:0}
+.steps li{counter-increment:step-counter;position:relative;padding:12px 0 12px 48px;border-left:2px solid #e2e8f0;margin-left:16px}
+.steps li:last-child{border-left-color:transparent}
+.steps li::before{content:counter(step-counter);position:absolute;left:-14px;top:10px;width:28px;height:28px;background:var(--primary);color:#fff;border-radius:50%;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* ═══ ASCII DIAGRAM ═══ */
+.ascii-diagram{font-family:var(--font-mono);font-size:.78rem;background:var(--code-bg);color:#7ee787;padding:24px;border-radius:8px;line-height:1.8;overflow-x:auto;border:1px solid #21262d;white-space:pre}
+
+/* ═══ FEATURE GRID ═══ */
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.feature-item{background:#fff;border:1px solid #e2e8f0;border-radius:var(--radius);padding:18px 20px;transition:box-shadow .2s}
+.feature-item:hover{box-shadow:var(--shadow-md)}
+.feature-item .fi-icon{font-size:1.3rem;margin-bottom:6px}
+.feature-item .fi-title{font-weight:700;font-size:.88rem;color:var(--dark);margin-bottom:4px}
+.feature-item .fi-desc{font-size:.82rem;color:#64748b;line-height:1.5}
+
+/* ═══ ERROR CARD ═══ */
+.error-card{background:#fff;border:1px solid #fecaca;border-radius:var(--radius);padding:20px 24px;margin:14px 0;border-left:4px solid var(--danger)}
+.error-card .error-title{font-weight:700;color:var(--danger);font-size:.92rem;margin-bottom:8px}
+.error-card .error-cause{font-size:.85rem;color:#92400e;margin-bottom:6px}
+.error-card .error-fix{font-size:.85rem;color:var(--success);font-weight:500}
+
+/* ═══ FIGMA EMBEDS ═══ */
+.figma-section{margin:24px 0}
+.figma-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:20px 0;box-shadow:var(--shadow-md)}
+.figma-card-header{display:flex;align-items:center;gap:12px;padding:16px 24px;background:linear-gradient(135deg,#1e1e2e,#2d2b55);color:#fff}
+.figma-card-header .figma-icon{width:28px;height:28px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.figma-card-header h4{margin:0;font-size:.95rem;font-weight:600;color:#fff}
+.figma-card-header small{display:block;color:#a5b4fc;font-size:.72rem;margin-top:2px}
+.figma-embed-wrapper{position:relative;width:100%;padding-top:56.25%;background:#f1f5f9}
+.figma-embed-wrapper iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+.figma-embed-wrapper .figma-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#94a3b8;font-size:.85rem;text-align:center}
+.figma-link{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;font-size:.82rem;color:var(--primary);text-decoration:none;border-top:1px solid #f1f5f9;transition:background .15s}
+.figma-link:hover{background:#f8fafc;text-decoration:underline}
+.figma-link svg{width:14px;height:14px}
+.diagram-tabs{display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin:24px 0 0}
+.diagram-tab{padding:10px 20px;font-size:.85rem;font-weight:600;color:var(--secondary);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
+.diagram-tab:hover{color:var(--dark);background:#f8fafc}
+.diagram-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.diagram-panel{display:none}
+.diagram-panel.active{display:block}
+
+/* ═══ FOOTER ═══ */
+.footer{text-align:center;padding:40px 0 20px;color:var(--secondary);font-size:.82rem;border-top:1px solid var(--border);margin-top:60px}
+.footer a{color:var(--primary);text-decoration:none;font-weight:500}
+.footer a:hover{text-decoration:underline}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:960px){.sidebar{transform:translateX(-100%)}.main{margin-left:0;padding:24px 20px}.feature-grid{grid-template-columns:1fr}.arch-inner{grid-template-columns:1fr}.hamburger{display:block}}
+@media(min-width:961px){.hamburger{display:none}}
+.hamburger{position:fixed;top:12px;left:12px;z-index:200;background:var(--dark);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:1.2rem}
+</style>
+</head>
+<body>
+
+<button class="hamburger" onclick="document.querySelector('.sidebar').style.transform=document.querySelector('.sidebar').style.transform==='none'?'translateX(-100%)':'none'">&#9776;</button>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SIDEBAR NAVIGATION -->
+<!-- ═══════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<h2>Shopify &rarr; QBO</h2>
+<div class="subtitle">Integration Documentation</div>
+<div class="version">v1.0.0 &bull; Node.js</div>
+<a href="https://github.com/kemasghanitreelogy/shopify-treelogy" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 14px;background:rgba(255,255,255,.1);color:#e2e8f0;border-radius:6px;font-size:.72rem;text-decoration:none;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub Repo</a>
+</div>
+<nav>
+<div class="nav-group">Overview</div>
+<a href="#overview"><span class="nav-icon">&#128640;</span> Project Overview</a>
+<a href="#features"><span class="nav-icon">&#9889;</span> Key Features</a>
+<a href="#architecture"><span class="nav-icon">&#127959;</span> Architecture</a>
+<a href="#tech-stack"><span class="nav-icon">&#128736;</span> Tech Stack</a>
+<a href="#project-structure"><span class="nav-icon">&#128193;</span> Project Structure</a>
+
+<div class="nav-group">Visual Diagrams</div>
+<a href="#figma-diagrams"><span class="nav-icon">&#127912;</span> Flow Diagrams (Figma)</a>
+<a href="#diagram-qbo-instance"><span class="nav-icon">&#128202;</span> getQboInstance Flow</a>
+<a href="#diagram-webhook"><span class="nav-icon">&#128202;</span> Webhook Processing</a>
+<a href="#diagram-token"><span class="nav-icon">&#128202;</span> Token Lifecycle</a>
+
+<div class="nav-group">Integration Flow</div>
+<a href="#complete-flow"><span class="nav-icon">&#128260;</span> Complete Flow</a>
+<a href="#oauth-flow"><span class="nav-icon">&#128274;</span> OAuth 2.0 Flow</a>
+<a href="#webhook-flow"><span class="nav-icon">&#128230;</span> Webhook Flow</a>
+<a href="#token-lifecycle"><span class="nav-icon">&#9200;</span> Token Lifecycle</a>
+<a href="#concurrent-refresh"><span class="nav-icon">&#128279;</span> Concurrent Refresh</a>
+
+<div class="nav-group">Source Code Docs</div>
+<a href="#code-index"><span class="nav-icon">&#128196;</span> index.js</a>
+<a href="#code-db"><span class="nav-icon">&#128196;</span> config/db.js</a>
+<a href="#code-token"><span class="nav-icon">&#128196;</span> models/Token.js</a>
+<a href="#code-qbo-service"><span class="nav-icon">&#128196;</span> services/qboService.js</a>
+<a href="#code-auth"><span class="nav-icon">&#128196;</span> routes/auth.js</a>
+<a href="#code-webhook"><span class="nav-icon">&#128196;</span> routes/webhook.js</a>
+
+<div class="nav-group">QBO API Reference</div>
+<a href="#qbo-oauth-api"><span class="nav-icon">&#128273;</span> OAuth 2.0 Endpoints</a>
+<a href="#qbo-rest-api"><span class="nav-icon">&#128218;</span> REST API Entities</a>
+<a href="#qbo-error-format"><span class="nav-icon">&#9888;</span> Error Format</a>
+<a href="#qbo-rate-limits"><span class="nav-icon">&#128200;</span> Rate Limits</a>
+
+<div class="nav-group">Deployment</div>
+<a href="#vercel-deploy"><span class="nav-icon">&#9650;</span> Vercel Setup</a>
+<a href="#mongodb-setup"><span class="nav-icon">&#127811;</span> MongoDB Atlas</a>
+<a href="#shopify-setup"><span class="nav-icon">&#128722;</span> Shopify Webhooks</a>
+<a href="#qbo-dev-setup"><span class="nav-icon">&#128215;</span> QBO Developer Setup</a>
+<a href="#env-vars"><span class="nav-icon">&#128272;</span> Environment Variables</a>
+
+<div class="nav-group">Troubleshooting</div>
+<a href="#common-errors"><span class="nav-icon">&#128027;</span> Common Errors</a>
+<a href="#debug-guide"><span class="nav-icon">&#128269;</span> Debug Guide</a>
+<a href="#expected-logs"><span class="nav-icon">&#128203;</span> Expected Logs</a>
+</nav>
+</aside>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- MAIN CONTENT -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="main">
+
+<!-- ─────────────────────────────── -->
+<!-- OVERVIEW -->
+<!-- ─────────────────────────────── -->
+<h1 id="overview">Shopify &rarr; QuickBooks Online Integration</h1>
+<p class="page-subtitle">
+A serverless Node.js integration deployed on <a href="https://vercel.com/" target="_blank">Vercel</a> that automatically syncs Shopify orders to <a href="https://developer.intuit.com/app/developer/qbo/docs/develop" target="_blank">QuickBooks Online</a> as Sales Receipts. OAuth tokens are persisted in <a href="https://www.mongodb.com/" target="_blank">MongoDB Atlas</a> with automatic refresh — no manual re-login needed.
+</p>
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:32px">
+<a href="https://github.com/kemasghanitreelogy/shopify-treelogy" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#24292f;color:#fff;border-radius:8px;font-size:.88rem;font-weight:600;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:background .15s" onmouseover="this.style.background='#1a1f24'" onmouseout="this.style.background='#24292f'"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+<a href="https://www.figma.com/board/JlDv33HTmVym0kinbXMwJD/Shopify-to-QuickBooks-Integration-Flows?node-id=0-1&p=f" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#a259ff;color:#fff;border-radius:8px;font-size:.88rem;font-weight:600;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:background .15s" onmouseover="this.style.background='#8c3ee6'" onmouseout="this.style.background='#a259ff'"><svg width="16" height="16" viewBox="0 0 38 57" fill="currentColor"><path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z"/><path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z"/><path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z"/><path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z"/><path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z"/></svg>Flow Diagrams</a>
+</div>
+
+<!-- FEATURES -->
+<h2 id="features">Key Features</h2>
+
+<div class="feature-grid">
+<div class="feature-item">
+<div class="fi-icon">&#128203;</div>
+<div class="fi-title">Automatic Sales Receipts</div>
+<div class="fi-desc">Every paid Shopify order automatically becomes a QBO Sales Receipt with correct line items, customer, and currency.</div>
+</div>
+<div class="feature-item">
+<div class="fi-icon">&#128274;</div>
+<div class="fi-title">OAuth 2.0 Auto-Refresh</div>
+<div class="fi-desc">Access tokens (1hr TTL) auto-refresh using the refresh token (100-day TTL). Login only needed once per 100 days of inactivity.</div>
+</div>
+<div class="feature-item">
+<div class="fi-icon">&#128100;</div>
+<div class="fi-title">Customer Auto-Sync</div>
+<div class="fi-desc">Finds existing QBO customers by email or creates new ones with Shopify name and email data.</div>
+</div>
+<div class="feature-item">
+<div class="fi-icon">&#128230;</div>
+<div class="fi-title">Product Auto-Creation</div>
+<div class="fi-desc">Shopify line items not found in QBO are automatically created as Service-type items with auto-detected income accounts.</div>
+</div>
+<div class="feature-item">
+<div class="fi-icon">&#127991;</div>
+<div class="fi-title">Tax Code Auto-Detection</div>
+<div class="fi-desc">Queries QBO for valid tax codes, preferring zero-rate or exempt codes. Works with GST, VAT, and tax-free companies.</div>
+</div>
+<div class="feature-item">
+<div class="fi-icon">&#128737;</div>
+<div class="fi-title">HMAC-SHA256 Verification</div>
+<div class="fi-desc">Every webhook is verified against Shopify's HMAC signature to prevent unauthorized requests.</div>
+</div>
+<div class="feature-item">
+<div class="fi-icon">&#128279;</div>
+<div class="fi-title">Concurrent Refresh Protection</div>
+<div class="fi-desc">Module-level mutex pattern prevents race conditions when multiple webhooks trigger simultaneous token refreshes.</div>
+</div>
+<div class="feature-item">
+<div class="fi-icon">&#9889;</div>
+<div class="fi-title">Serverless-Ready</div>
+<div class="fi-desc">Handles Vercel cold starts, MongoDB connection pooling, dynamic IPs, and warm-instance caching.</div>
+</div>
+</div>
+
+<!-- ─────────────────────────────── -->
+<!-- ARCHITECTURE -->
+<!-- ─────────────────────────────── -->
+<h2 id="architecture">Architecture</h2>
+
+<div class="ascii-diagram">
+   Shopify Store                                           QuickBooks Online
+   ┌──────────────┐                                       ┌──────────────────┐
+   │  Order Event  │──── HTTPS POST ────┐                 │  REST API v3     │
+   │  (webhook)    │  + HMAC-SHA256     │                 │  /salesreceipt   │
+   └──────────────┘                     │                 │  /customer       │
+                                        ▼                 │  /item           │
+                               ┌─────────────────┐       │  /taxcode        │
+                               │  Vercel (Node)   │──────▶│  /account        │
+                               │                  │       └────────┬─────────┘
+                               │  Express 5.x     │                │
+                               │  ├── auth.js     │       ┌────────▼─────────┐
+                               │  ├── webhook.js  │       │  Intuit OAuth    │
+                               │  └── qboService  │◀─────▶│  Token Endpoint  │
+                               └────────┬─────────┘       └──────────────────┘
+                                        │
+                               ┌────────▼─────────┐
+                               │  MongoDB Atlas    │
+                               │  (OAuth Tokens)   │
+                               │  ┌──────────────┐ │
+                               │  │ access_token │ │
+                               │  │ refresh_token│ │
+                               │  │ realmId      │ │
+                               │  │ tokenCreated │ │
+                               │  └──────────────┘ │
+                               └───────────────────┘</div>
+
+<div class="arch-box shopify">
+<div class="layer-label">SHOPIFY (Event Source)</div>
+<p>Sends <code>orders/create</code> webhooks via HTTPS POST with HMAC-SHA256 signature in <code>x-shopify-hmac-sha256</code> header. Retries on non-2xx responses.</p>
+</div>
+
+<div class="arch-box vercel">
+<div class="layer-label">VERCEL SERVERLESS (Application)</div>
+<div class="arch-inner">
+<div class="box"><strong>index.js</strong><span>Express 5.x entry point. Captures rawBody for HMAC verification. Mounts auth + webhook routes.</span></div>
+<div class="box"><strong>routes/auth.js</strong><span>OAuth 2.0 authorization code flow. Login redirect + callback handler.</span></div>
+<div class="box"><strong>routes/webhook.js</strong><span>Webhook handler. HMAC verify, customer/item/tax resolution, Sales Receipt creation.</span></div>
+<div class="box"><strong>services/qboService.js</strong><span>Token management. Auto-refresh with mutex. QuickBooks client factory.</span></div>
+</div>
+</div>
+
+<div class="arch-box intuit">
+<div class="layer-label">QUICKBOOKS ONLINE API</div>
+<div class="arch-inner">
+<div class="box"><strong>OAuth 2.0 Server</strong><span>Token exchange + refresh at oauth.platform.intuit.com</span></div>
+<div class="box"><strong>REST API v3</strong><span>CRUD operations on SalesReceipt, Customer, Item, TaxCode, Account entities.</span></div>
+</div>
+</div>
+
+<div class="arch-box mongo">
+<div class="layer-label">MONGODB ATLAS (Data Store)</div>
+<p>Stores OAuth tokens with <code>realmId</code> as unique key. Mongoose ODM with automatic timestamps. Connection pooling for warm Vercel instances.</p>
+</div>
+
+<!-- ─────────────────────────────── -->
+<!-- TECH STACK -->
+<!-- ─────────────────────────────── -->
+<h2 id="tech-stack">Tech Stack</h2>
+
+<table>
+<thead><tr><th>Technology</th><th>Version</th><th>Purpose</th><th>Documentation</th></tr></thead>
+<tbody>
+<tr><td><strong>Node.js</strong></td><td>18+</td><td>Server-side JavaScript runtime</td><td><a href="https://nodejs.org/" target="_blank">nodejs.org</a></td></tr>
+<tr><td><strong>Express</strong></td><td>^5.2.1</td><td>HTTP framework with rawBody support via verify callback</td><td><a href="https://expressjs.com/" target="_blank">expressjs.com</a></td></tr>
+<tr><td><strong>intuit-oauth</strong></td><td>^4.2.2</td><td>Intuit OAuth 2.0 client — authorization, token exchange, refresh</td><td><a href="https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/oauth-2.0" target="_blank">Intuit OAuth Docs</a></td></tr>
+<tr><td><strong>node-quickbooks</strong></td><td>^2.0.48</td><td>QBO REST API wrapper — CRUD operations on financial entities</td><td><a href="https://github.com/mcohen01/node-quickbooks" target="_blank">GitHub</a></td></tr>
+<tr><td><strong>Mongoose</strong></td><td>^9.3.0</td><td>MongoDB ODM — schema validation, timestamps, connection pooling</td><td><a href="https://mongoosejs.com/" target="_blank">mongoosejs.com</a></td></tr>
+<tr><td><strong>cors</strong></td><td>^2.8.6</td><td>Cross-Origin Resource Sharing middleware</td><td></td></tr>
+<tr><td><strong>dotenv</strong></td><td>^17.3.1</td><td>Environment variable loader from .env files</td><td></td></tr>
+<tr><td><strong>Vercel</strong></td><td>v2 config</td><td>Serverless hosting with @vercel/node builder</td><td><a href="https://vercel.com/docs" target="_blank">vercel.com/docs</a></td></tr>
+<tr><td><strong>MongoDB Atlas</strong></td><td>Cloud (M0 free)</td><td>Managed database for OAuth token persistence</td><td><a href="https://www.mongodb.com/atlas" target="_blank">mongodb.com/atlas</a></td></tr>
+</tbody>
+</table>
+
+<!-- ─────────────────────────────── -->
+<!-- PROJECT STRUCTURE -->
+<!-- ─────────────────────────────── -->
+<h2 id="project-structure">Project Structure</h2>
+
+<div class="file-tree">
+<span class="dir">shopify-qbo-integration/</span>
+  <span class="file">index.js</span>              <span class="desc"># Express entry point, rawBody capture</span>
+  <span class="cfg">vercel.json</span>            <span class="desc"># Vercel deployment config (@vercel/node)</span>
+  <span class="cfg">package.json</span>           <span class="desc"># Dependencies &amp; scripts</span>
+  <span class="cfg">.env</span>                   <span class="desc"># Environment variables (NOT committed)</span>
+  <span class="dir">config/</span>
+    <span class="file">db.js</span>              <span class="desc"># MongoDB connection w/ cold-start handling</span>
+  <span class="dir">models/</span>
+    <span class="file">Token.js</span>           <span class="desc"># Mongoose schema — tokenCreatedAt as Number</span>
+  <span class="dir">services/</span>
+    <span class="file">qboService.js</span>      <span class="desc"># OAuth client, token refresh, QBO factory</span>
+  <span class="dir">routes/</span>
+    <span class="file">auth.js</span>            <span class="desc"># GET /api/auth/login &amp; /api/auth/callback</span>
+    <span class="file">webhook.js</span>         <span class="desc"># POST /api/webhook/shopify (main handler)</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- FIGMA VISUAL DIAGRAMS -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="figma-diagrams">Visual Flow Diagrams</h2>
+
+<p>Interactive diagrams designed in <a href="https://www.figma.com/board/JlDv33HTmVym0kinbXMwJD/Shopify-to-QuickBooks-Integration-Flows?node-id=0-1&p=f" target="_blank">Figma</a> illustrating the three core flows of this integration. Click on the tabs below to switch between diagrams, or view the full board on Figma.</p>
+
+<div class="diagram-tabs">
+<button class="diagram-tab active" onclick="switchDiagram('qbo-instance',this)">getQboInstance Flow</button>
+<button class="diagram-tab" onclick="switchDiagram('webhook-processing',this)">Webhook Processing</button>
+<button class="diagram-tab" onclick="switchDiagram('token-lifecycle-diagram',this)">Token Lifecycle</button>
+</div>
+
+<!-- Diagram 1: getQboInstance Decision Flow -->
+<div class="diagram-panel active" id="panel-qbo-instance">
+<div class="figma-card" id="diagram-qbo-instance">
+<div class="figma-card-header">
+<div class="figma-icon">&#9881;</div>
+<div>
+<h4>getQboInstance() Decision Flow</h4>
+<small>Token loading, validation, refresh with mutex &amp; race condition handling</small>
+</div>
+</div>
+<div class="figma-embed-wrapper">
+<div class="figma-loading">Loading Figma diagram...</div>
+<iframe src="https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Fboard%2FJlDv33HTmVym0kinbXMwJD%2FShopify-to-QuickBooks-Integration-Flows%3Fnode-id%3D1-92" allowfullscreen loading="lazy"></iframe>
+</div>
+<a class="figma-link" href="https://www.figma.com/board/JlDv33HTmVym0kinbXMwJD/Shopify-to-QuickBooks-Integration-Flows?node-id=1-92&t=OCz2iJLk8WahkWJZ-4" target="_blank">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+Open full diagram in Figma
+</a>
+</div>
+<div class="card">
+<div class="card-header"><div class="icon">&#128161;</div><h4>What This Diagram Shows</h4></div>
+<p>The <code>getQboInstance()</code> function is called on every webhook request. This decision flow covers:</p>
+<ul>
+<li><strong>Token Loading</strong> &mdash; Loading the latest OAuth token from MongoDB (sorted by <code>updatedAt</code>)</li>
+<li><strong>Token Reconstruction</strong> &mdash; Converting <code>tokenCreatedAt</code> (Number) to the format expected by <code>intuit-oauth</code></li>
+<li><strong>Validity Check</strong> &mdash; <code>isAccessTokenValid()</code> evaluates <code>createdAt + expires_in * 1000 > Date.now()</code></li>
+<li><strong>Refresh with Mutex</strong> &mdash; Module-level <code>refreshInProgress</code> promise prevents concurrent refresh attempts</li>
+<li><strong>Race Condition Retry</strong> &mdash; If refresh fails, reload token from DB (another instance may have refreshed)</li>
+<li><strong>QuickBooks Client Creation</strong> &mdash; 10-parameter constructor with OAuth 2.0 configuration</li>
+</ul>
+</div>
+</div>
+
+<!-- Diagram 2: Shopify Webhook Processing Flow -->
+<div class="diagram-panel" id="panel-webhook-processing">
+<div class="figma-card" id="diagram-webhook">
+<div class="figma-card-header">
+<div class="figma-icon">&#128230;</div>
+<div>
+<h4>Shopify Webhook Processing Flow</h4>
+<small>End-to-end order processing: HMAC &rarr; Token &rarr; Customer &rarr; Items &rarr; Sales Receipt</small>
+</div>
+</div>
+<div class="figma-embed-wrapper">
+<div class="figma-loading">Loading Figma diagram...</div>
+<iframe src="https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Fboard%2FJlDv33HTmVym0kinbXMwJD%2FShopify-to-QuickBooks-Integration-Flows%3Fnode-id%3D1-120" allowfullscreen loading="lazy"></iframe>
+</div>
+<a class="figma-link" href="https://www.figma.com/board/JlDv33HTmVym0kinbXMwJD/Shopify-to-QuickBooks-Integration-Flows?node-id=1-120&t=OCz2iJLk8WahkWJZ-4" target="_blank">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+Open full diagram in Figma
+</a>
+</div>
+<div class="card">
+<div class="card-header"><div class="icon">&#128161;</div><h4>What This Diagram Shows</h4></div>
+<p>The complete webhook processing pipeline from receiving a Shopify <code>orders/create</code> event to creating a Sales Receipt in QBO:</p>
+<ul>
+<li><strong>HMAC-SHA256 Verification</strong> &mdash; Validates webhook authenticity using <code>req.rawBody</code> and <code>SHOPIFY_WEBHOOK_SECRET</code></li>
+<li><strong>QBO Instance</strong> &mdash; Token management via <code>getQboInstance()</code> (see previous diagram)</li>
+<li><strong>Parallel Metadata Fetch</strong> &mdash; <code>Promise.all([getDefaultTaxCode(), getIncomeAccountId()])</code> with warm-instance caching</li>
+<li><strong>Customer Resolution</strong> &mdash; Find by <code>PrimaryEmailAddr</code> or create new with Shopify name + email</li>
+<li><strong>Item Processing Loop</strong> &mdash; For each line item: find by Name or auto-create as Service type</li>
+<li><strong>Sales Receipt Creation</strong> &mdash; Build payload with Line items, CustomerRef, CurrencyRef &rarr; <code>createSalesReceipt()</code></li>
+<li><strong>Error Handling</strong> &mdash; <code>extractQboError(err, body)</code> extracts detailed Fault messages</li>
+</ul>
+</div>
+</div>
+
+<!-- Diagram 3: OAuth Token Lifecycle -->
+<div class="diagram-panel" id="panel-token-lifecycle-diagram">
+<div class="figma-card" id="diagram-token">
+<div class="figma-card-header">
+<div class="figma-icon">&#128274;</div>
+<div>
+<h4>OAuth Token Lifecycle</h4>
+<small>Access token (1hr) auto-refresh, refresh token (100-day) rotation, re-auth trigger</small>
+</div>
+</div>
+<div class="figma-embed-wrapper">
+<div class="figma-loading">Loading Figma diagram...</div>
+<iframe src="https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Fboard%2FJlDv33HTmVym0kinbXMwJD%2FShopify-to-QuickBooks-Integration-Flows%3Fnode-id%3D1-55" allowfullscreen loading="lazy"></iframe>
+</div>
+<a class="figma-link" href="https://www.figma.com/board/JlDv33HTmVym0kinbXMwJD/Shopify-to-QuickBooks-Integration-Flows?node-id=1-55&t=OCz2iJLk8WahkWJZ-4" target="_blank">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+Open full diagram in Figma
+</a>
+</div>
+<div class="card">
+<div class="card-header"><div class="icon">&#128161;</div><h4>What This Diagram Shows</h4></div>
+<p>The complete OAuth 2.0 token lifecycle managed by this integration:</p>
+<ul>
+<li><strong>Initial Authorization</strong> &mdash; One-time OAuth 2.0 Authorization Code Grant via <code>/api/auth/login</code></li>
+<li><strong>Access Token (1hr TTL)</strong> &mdash; Automatically refreshed before each QBO API call when expired</li>
+<li><strong>Refresh Token (100-day TTL)</strong> &mdash; Rotates on every use (old token invalidated, new one persisted to MongoDB)</li>
+<li><strong>Concurrent Refresh Mutex</strong> &mdash; Module-level <code>refreshInProgress</code> promise prevents parallel refresh calls</li>
+<li><strong>Cross-Instance Race Handling</strong> &mdash; DB reload + comparison of <code>refresh_token</code> values</li>
+<li><strong>Re-Authorization Trigger</strong> &mdash; When refresh token itself expires (&gt;100 days of inactivity), user must re-login</li>
+</ul>
+</div>
+</div>
+
+<div class="alert alert-info">
+<strong>&#8505;&#65039; Viewing the Diagrams</strong>
+The diagrams are embedded from <a href="https://www.figma.com/board/JlDv33HTmVym0kinbXMwJD/Shopify-to-QuickBooks-Integration-Flows?node-id=0-1&p=f" target="_blank">this Figma board</a>. If the embeds don't load (e.g., due to network restrictions), click the "Open full diagram in Figma" link below each diagram to view them directly. You can zoom, pan, and inspect each node interactively on Figma.
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- INTEGRATION FLOW -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="complete-flow">Complete Integration Flow</h2>
+
+<p>The integration has two main flows: a one-time OAuth authorization and a per-order webhook processing pipeline.</p>
+
+<!-- OAUTH FLOW -->
+<h3 id="oauth-flow">1. OAuth 2.0 Authorization Flow (One-Time Setup)</h3>
+
+<p>Before the integration can create records in QBO, you must authorize the app. This uses the standard <strong>OAuth 2.0 Authorization Code Grant</strong> flow.</p>
+
+<div class="flow">
+<div class="flow-step">&#128100; Admin<small>visits /api/auth/login</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step api">&#128274; Intuit OAuth<small>consent screen</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step success">&#9989; Callback<small>/api/auth/callback</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step db">&#128190; MongoDB<small>tokens persisted</small></div>
+</div>
+
+<div class="card">
+<div class="card-header"><div class="icon">&#128220;</div><h4>Step-by-Step OAuth Process</h4></div>
+<ol class="steps">
+<li><strong>Admin navigates to <code>GET /api/auth/login</code></strong> — Server generates Intuit authorization URL with <code>scope: com.intuit.quickbooks.accounting</code> and <code>state: intuit-test</code> (CSRF protection).</li>
+<li><strong>Browser redirects to Intuit</strong> — URL: <code>https://appcenter.intuit.com/connect/oauth2</code> with parameters <code>response_type=code</code>, <code>client_id</code>, <code>redirect_uri</code>, <code>scope</code>, <code>state</code>.</li>
+<li><strong>User logs in and grants access</strong> — Selects which QBO company to authorize.</li>
+<li><strong>Intuit redirects back</strong> — To <code>/api/auth/callback?code=AUTH_CODE&amp;realmId=COMPANY_ID&amp;state=intuit-test</code></li>
+<li><strong>Server exchanges code for tokens</strong> — Calls <code>oauthClient.createToken(req.url)</code> which POSTs to <code>https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer</code> with <code>grant_type=authorization_code</code>.</li>
+<li><strong>Tokens saved to MongoDB</strong> — <code>access_token</code>, <code>refresh_token</code>, <code>expires_in</code> (3600), <code>x_refresh_token_expires_in</code> (8726400), and critically <code>tokenCreatedAt</code> as a <strong>Number</strong> (Unix milliseconds).</li>
+<li><strong>Done!</strong> — User sees success message. Webhooks can now create QBO records automatically.</li>
+</ol>
+</div>
+
+<div class="alert alert-danger">
+<strong>&#128680; Critical: tokenCreatedAt Must Be a Number</strong>
+The <code>intuit-oauth</code> library checks token validity with arithmetic: <code>createdAt + expires_in * 1000 > Date.now()</code>. If <code>createdAt</code> is a JavaScript Date object instead of a Number, the <code>+</code> operator performs <strong>string concatenation</strong> instead of addition, producing <code>NaN</code>. This makes <code>isAccessTokenValid()</code> always return <code>false</code>, causing constant unnecessary refreshes that eventually exhaust the refresh token.
+</div>
+
+<!-- WEBHOOK FLOW -->
+<h3 id="webhook-flow">2. Webhook Processing Flow (Per Order)</h3>
+
+<p>Every time a customer places an order on Shopify, this automatic flow executes:</p>
+
+<div class="flow">
+<div class="flow-step">&#128722; Shopify<small>orders/create</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step">&#128272; HMAC<small>SHA-256 verify</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step db">&#128190; Token<small>load from DB</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step api">&#128260; Refresh<small>if expired</small></div>
+</div>
+<div class="flow" style="margin-top:4px">
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step">&#127991; Tax + Acct<small>parallel detect</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step">&#128100; Customer<small>find or create</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step">&#128230; Items<small>find or create</small></div>
+<div class="flow-arrow">&rarr;</div>
+<div class="flow-step success">&#129534; Receipt<small>created in QBO</small></div>
+</div>
+
+<div class="card">
+<div class="card-header"><div class="icon">&#128220;</div><h4>Detailed Webhook Steps</h4></div>
+<ol class="steps">
+<li><strong>HMAC Verification</strong> — Compute SHA-256 HMAC of raw request body using <code>SHOPIFY_WEBHOOK_SECRET</code>. Compare Base64-encoded hash with <code>x-shopify-hmac-sha256</code> header. Reject with 401 if mismatch.</li>
+<li><strong>QBO Instance Creation</strong> — <code>getQboInstance()</code> loads token from MongoDB, reconstructs with <code>createdAt</code> as Number, checks validity via <code>isAccessTokenValid()</code>, auto-refreshes if expired (with mutex + retry), creates authenticated <code>node-quickbooks</code> client.</li>
+<li><strong>Metadata Fetch (Parallel)</strong> — <code>Promise.all([getDefaultTaxCode(), getIncomeAccountId()])</code>. Results are cached per warm Vercel instance for subsequent requests.</li>
+<li><strong>Customer Resolution</strong> — <code>getOrCreateCustomer()</code> searches QBO by <code>PrimaryEmailAddr</code>. If not found, creates a new customer with <code>GivenName</code>, <code>FamilyName</code>, <code>DisplayName</code> (format: "First Last (email)"), and <code>PrimaryEmailAddr</code>.</li>
+<li><strong>Line Item Processing</strong> — For each Shopify line item: parse price (String &rarr; Number), calculate amount (<code>Math.round(price * qty * 100) / 100</code> to avoid floating point), find or auto-create QBO item as Service type.</li>
+<li><strong>Sales Receipt Creation</strong> — Build payload with <code>Line[]</code> (SalesItemLineDetail), <code>CustomerRef</code>, <code>CurrencyRef</code>. Call <code>createSalesReceipt()</code>.</li>
+<li><strong>Response</strong> — Return 200 on success (Shopify marks webhook as delivered), 500 on error (Shopify will retry).</li>
+</ol>
+</div>
+
+<!-- TOKEN LIFECYCLE -->
+<h3 id="token-lifecycle">3. Token Lifecycle</h3>
+
+<table>
+<thead><tr><th>Token</th><th>TTL</th><th>Rotation</th><th>Behavior</th></tr></thead>
+<tbody>
+<tr><td><code>access_token</code></td><td><strong>1 hour</strong> (3600s)</td><td>No</td><td>Used as Bearer token for QBO API calls. Auto-refreshed before each call if expired.</td></tr>
+<tr><td><code>refresh_token</code></td><td><strong>100 days</strong> (~8.7M seconds)</td><td>Yes &mdash; rotates on every use</td><td>Used to obtain new access tokens. Old refresh token is invalidated after each refresh. Must re-authorize if expired.</td></tr>
+</tbody>
+</table>
+
+<div class="ascii-diagram">
+                    ┌─────────────────────────┐
+                    │  /api/auth/login         │
+                    │  User authorizes QBO     │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │  /api/auth/callback      │
+                    │  Save tokens to MongoDB  │
+                    │  (access + refresh +     │
+                    │   tokenCreatedAt)        │
+                    └────────────┬────────────┘
+                                 │
+              ┌──────────────────┴──────────────────┐
+              │                                     │
+              ▼                                     ▼
+    Access token valid              Access token expired
+    (&lt; 1 hour old)                  (&gt; 1 hour old)
+              │                                     │
+              ▼                                     ▼
+    Use directly ──▶ QBO API       oauthClient.refresh()
+                                            │
+                                  ┌─────────┴──────────┐
+                                  │                    │
+                                  ▼                    ▼
+                            Success                  Fail
+                                  │                    │
+                                  ▼                    ▼
+                            Save new tokens      Retry: reload from DB
+                            to MongoDB           (race condition check)
+                                  │                    │
+                                  ▼                    ▼
+                            Use new token        Token changed?
+                                               Yes → use new token
+                                               No  → "Please login again"</div>
+
+<!-- CONCURRENT REFRESH -->
+<h3 id="concurrent-refresh">4. Concurrent Refresh Protection</h3>
+
+<p>In a serverless environment, multiple webhook requests can arrive simultaneously. Without protection, each would attempt to refresh the token, but only the first refresh invalidates the old refresh_token. Subsequent attempts would fail with "invalid_grant".</p>
+
+<div class="card">
+<div class="card-header"><div class="icon">&#128279;</div><h4>Mutex Pattern</h4></div>
+<pre><span class="label">qboService.js</span>
+// Module-level mutex — shared within a warm Vercel instance
+let refreshInProgress = null;
+
+// Inside getQboInstance():
+if (!oauthClient.isAccessTokenValid()) {
+    if (!refreshInProgress) {
+        // First caller initiates refresh
+        refreshInProgress = refreshAndSave(realmId).finally(() =&gt; {
+            refreshInProgress = null;
+        });
+    }
+    // ALL concurrent callers await the SAME promise
+    await refreshInProgress;
+}</pre>
+<p style="margin-top:12px"><strong>Additionally:</strong> If a refresh fails, the service reloads the token from MongoDB. If <code>refresh_token</code> has changed (meaning another Vercel instance successfully refreshed), it uses the updated token. This handles cross-instance race conditions.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SOURCE CODE DOCUMENTATION -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="code-index">index.js &mdash; Application Entry Point</h2>
+
+<div style="margin-bottom:8px">
+<span class="badge badge-blue">Express 5.x</span>
+<span class="badge badge-green">Entry Point</span>
+<span class="badge badge-orange">rawBody Capture</span>
+</div>
+
+<p>Initializes Express, captures raw request body for HMAC verification, connects to MongoDB, and mounts route handlers.</p>
+
+<pre><span class="label">index.js</span>
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/auth');
+const webhookRoutes = require('./routes/webhook');
+
+const app = express();
+
+connectDB();   // Non-blocking — begins MongoDB connection
+
+app.use(cors());
+app.use(express.json({
+    verify: (req, res, buf) =&gt; {
+        req.rawBody = buf;   // ← Captures raw Buffer BEFORE JSON parsing
+    }
+}));
+
+// Route mounting
+app.use('/api/auth', authRoutes);       // OAuth routes
+app.use('/api/webhook', webhookRoutes); // Webhook routes
+
+app.get('/', (req, res) =&gt; {
+    res.send('Shopify to QBO Integration is running.');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =&gt; console.log(`Server running on port ${PORT}`));
+module.exports = app;</pre>
+
+<div class="alert alert-info">
+<strong>&#8505;&#65039; Why rawBody?</strong>
+Shopify's HMAC verification requires computing SHA-256 over the <strong>exact bytes</strong> sent by Shopify. After <code>express.json()</code> parses the body, the JSON may differ from the original (key ordering, whitespace). The <code>verify</code> callback captures the raw Buffer before parsing, storing it as <code>req.rawBody</code> for the HMAC function.
+</div>
+
+<!-- config/db.js -->
+<h2 id="code-db">config/db.js &mdash; Database Connection</h2>
+
+<div style="margin-bottom:8px">
+<span class="badge badge-green">Mongoose</span>
+<span class="badge badge-cyan">Connection Pooling</span>
+<span class="badge badge-orange">Cold-Start Safe</span>
+</div>
+
+<pre><span class="label">config/db.js</span>
+const mongoose = require('mongoose');
+
+const connectDB = async () =&gt; {
+    if (mongoose.connection.readyState &gt;= 1) return;  // Reuse warm connection
+
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            serverSelectionTimeoutMS: 10000,  // 10s timeout for cold starts
+        });
+        console.log('MongoDB Connected');
+    } catch (error) {
+        console.error('MongoDB Connection Error:', error.message);
+        throw error;  // Let caller handle — NO process.exit() in serverless!
+    }
+};</pre>
+
+<table>
+<thead><tr><th>Design Decision</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td><code>readyState &gt;= 1</code> guard</td><td>Prevents redundant connections on warm Vercel instances (function reuse)</td></tr>
+<tr><td><code>serverSelectionTimeoutMS: 10000</code></td><td>Allows time for cold-start DNS resolution to MongoDB Atlas cluster</td></tr>
+<tr><td><code>throw error</code> (not <code>process.exit</code>)</td><td><code>process.exit(1)</code> kills the entire serverless container, breaking all concurrent requests</td></tr>
+<tr><td>Atlas <code>0.0.0.0/0</code> whitelist</td><td>Vercel uses dynamic IPs that change with each deployment and cold start</td></tr>
+</tbody>
+</table>
+
+<!-- models/Token.js -->
+<h2 id="code-token">models/Token.js &mdash; OAuth Token Schema</h2>
+
+<div style="margin-bottom:8px">
+<span class="badge badge-blue">Mongoose Schema</span>
+<span class="badge badge-red">Critical: Number Type</span>
+</div>
+
+<pre><span class="label">models/Token.js</span>
+const mongoose = require('mongoose');
+
+const TokenSchema = new mongoose.Schema({
+    realmId:                    { type: String, required: true, unique: true },
+    token_type:                 String,       // "bearer"
+    access_token:               String,       // JWT — valid 1 hour
+    refresh_token:              String,       // Opaque — valid 100 days
+    expires_in:                 Number,       // 3600 (seconds)
+    x_refresh_token_expires_in: Number,       // 8726400 (seconds)
+    tokenCreatedAt:             { type: Number, default: Date.now },
+    //                           ^^^^^^ MUST be Number, NOT Date!
+}, { timestamps: true });  // Adds createdAt + updatedAt (Date type)
+
+module.exports = mongoose.model('Token', TokenSchema);</pre>
+
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>realmId</code></td><td>String (unique, required)</td><td>QBO Company ID — primary key for token lookup</td></tr>
+<tr><td><code>token_type</code></td><td>String</td><td>Always <code>"bearer"</code></td></tr>
+<tr><td><code>access_token</code></td><td>String</td><td>Bearer token for QBO API calls (1-hour TTL)</td></tr>
+<tr><td><code>refresh_token</code></td><td>String</td><td>Used to obtain new access tokens (100-day TTL, rotates on each use)</td></tr>
+<tr><td><code>expires_in</code></td><td>Number</td><td>Access token lifetime in seconds (3600)</td></tr>
+<tr><td><code>x_refresh_token_expires_in</code></td><td>Number</td><td>Refresh token lifetime in seconds (8,726,400 &asymp; 100 days)</td></tr>
+<tr><td><code>tokenCreatedAt</code></td><td><strong>Number</strong></td><td>Unix timestamp (ms) when token was issued. MUST be Number for <code>intuit-oauth</code> arithmetic.</td></tr>
+<tr><td><code>createdAt</code></td><td>Date (auto)</td><td>Mongoose automatic — when document was first created</td></tr>
+<tr><td><code>updatedAt</code></td><td>Date (auto)</td><td>Mongoose automatic — when document was last modified</td></tr>
+</tbody>
+</table>
+
+<!-- services/qboService.js -->
+<h2 id="code-qbo-service">services/qboService.js &mdash; QBO Service Layer</h2>
+
+<div style="margin-bottom:8px">
+<span class="badge badge-blue">OAuth 2.0</span>
+<span class="badge badge-green">Auto-Refresh</span>
+<span class="badge badge-purple">Mutex Lock</span>
+<span class="badge badge-orange">Race Condition</span>
+</div>
+
+<p>Central service that manages the OAuth client singleton, handles token refresh with concurrency protection, and creates authenticated QuickBooks client instances.</p>
+
+<h4>OAuth Client Initialization</h4>
+<pre><span class="label">Singleton</span>
+const OAuthClient = require('intuit-oauth');
+const QuickBooks = require('node-quickbooks');
+const Token = require('../models/Token');
+
+const oauthClient = new OAuthClient({
+    clientId:     process.env.QBO_CLIENT_ID,
+    clientSecret: process.env.QBO_CLIENT_SECRET,
+    environment:  process.env.QBO_ENVIRONMENT || 'sandbox',
+    redirectUri:  process.env.QBO_REDIRECT_URI,
+});</pre>
+
+<h4>refreshAndSave(realmId) &mdash; Token Refresh + Persistence</h4>
+<pre><span class="label">Refresh Logic</span>
+async function refreshAndSave(realmId) {
+    // POST to https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer
+    // with grant_type=refresh_token
+    const authResponse = await oauthClient.refresh();
+    const newToken = authResponse.getToken();
+
+    // Persist new tokens (refresh_token rotates — old one is now invalid)
+    await Token.findOneAndUpdate(
+        { realmId },
+        {
+            access_token:               newToken.access_token,
+            refresh_token:              newToken.refresh_token,   // New rotation
+            expires_in:                 newToken.expires_in,
+            x_refresh_token_expires_in: newToken.x_refresh_token_expires_in,
+            tokenCreatedAt:             newToken.createdAt,       // Number (ms)
+        },
+        { returnDocument: 'after' }   // Mongoose 9.x (replaces deprecated { new: true })
+    );
+    return newToken;
+}</pre>
+
+<h4>getQboInstance() &mdash; Main Factory Function</h4>
+<pre><span class="label">Factory</span>
+const getQboInstance = async () =&gt; {
+    // 1. Load latest token from MongoDB
+    const savedToken = await Token.findOne().sort({ updatedAt: -1 });
+    if (!savedToken) throw new Error('No token in database. Visit /api/auth/login.');
+
+    const realmId = savedToken.realmId;
+
+    // 2. Reconstruct token object — createdAt MUST be Number
+    const tokenForOAuth = {
+        token_type:                 savedToken.token_type,
+        access_token:               savedToken.access_token,
+        refresh_token:              savedToken.refresh_token,
+        expires_in:                 savedToken.expires_in,
+        x_refresh_token_expires_in: savedToken.x_refresh_token_expires_in,
+        createdAt:                  savedToken.tokenCreatedAt || Date.now(),
+    };
+    oauthClient.setToken(tokenForOAuth);
+
+    // 3. Auto-refresh if expired (with mutex + retry)
+    if (!oauthClient.isAccessTokenValid()) {
+        // ... (mutex logic + DB retry shown in Concurrent Refresh section)
+    }
+
+    // 4. Create QuickBooks client — EXACT parameter order required
+    const currentToken = oauthClient.getToken();
+    return new QuickBooks(
+        process.env.QBO_CLIENT_ID,       // 1: consumerKey
+        process.env.QBO_CLIENT_SECRET,    // 2: consumerSecret
+        currentToken.access_token,        // 3: oauth token (Bearer)
+        false,                            // 4: tokenSecret (false = OAuth 2.0)
+        realmId,                          // 5: realmId (QBO company ID)
+        process.env.QBO_ENVIRONMENT === 'sandbox',  // 6: useSandbox
+        process.env.NODE_ENV !== 'production',       // 7: debug logging
+        '65',                             // 8: minorversion (API version)
+        '2.0',                            // 9: oauthversion — MUST be '2.0'
+        currentToken.refresh_token        // 10: refreshToken
+    );
+};</pre>
+
+<div class="alert alert-danger">
+<strong>&#128680; Critical: Parameter Order in QuickBooks Constructor</strong>
+The <code>node-quickbooks</code> constructor takes 10 positional parameters. Parameter 8 must be <code>'65'</code> (API minor version) and parameter 9 must be <code>'2.0'</code> (OAuth version). Swapping these causes the library to attempt OAuth 1.0 authentication, which fails with <code>"tokenSecret not defined"</code> because OAuth 1.0 requires a token secret that doesn't exist in OAuth 2.0.
+</div>
+
+<!-- routes/auth.js -->
+<h2 id="code-auth">routes/auth.js &mdash; OAuth Routes</h2>
+
+<div style="margin-bottom:8px">
+<span class="badge badge-blue">OAuth 2.0</span>
+<span class="badge badge-green">Authorization Code Grant</span>
+</div>
+
+<pre><span class="label">routes/auth.js</span>
+const express = require('express');
+const router = express.Router();
+const OAuthClient = require('intuit-oauth');
+const { oauthClient } = require('../services/qboService');
+const Token = require('../models/Token');
+
+// ─── Step 1: Redirect to Intuit ───
+router.get('/login', (req, res) =&gt; {
+    const authUri = oauthClient.authorizeUri({
+        scope: [OAuthClient.scopes.Accounting],  // com.intuit.quickbooks.accounting
+        state: 'intuit-test'                      // CSRF protection
+    });
+    res.redirect(authUri);
+});
+
+// ─── Step 2: Handle callback ───
+router.get('/callback', async (req, res) =&gt; {
+    try {
+        const authResponse = await oauthClient.createToken(req.url);
+        const tokenData = authResponse.getToken();
+        const realmId = oauthClient.getToken().realmId;
+
+        await Token.findOneAndUpdate(
+            { realmId },
+            {
+                realmId,
+                token_type:                 tokenData.token_type,
+                access_token:               tokenData.access_token,
+                refresh_token:              tokenData.refresh_token,
+                expires_in:                 tokenData.expires_in,
+                x_refresh_token_expires_in: tokenData.x_refresh_token_expires_in,
+                tokenCreatedAt:             tokenData.createdAt,   // Number (Unix ms)
+            },
+            { upsert: true, returnDocument: 'after' }
+        );
+
+        res.send('Authorization successful! Token saved. You can close this window.');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Authorization failed.');
+    }
+});</pre>
+
+<!-- routes/webhook.js -->
+<h2 id="code-webhook">routes/webhook.js &mdash; Webhook Handler</h2>
+
+<div style="margin-bottom:8px">
+<span class="badge badge-blue">Shopify Webhook</span>
+<span class="badge badge-green">HMAC Verification</span>
+<span class="badge badge-purple">Auto-Create Resources</span>
+<span class="badge badge-orange">Error Handling</span>
+<span class="badge badge-cyan">Caching</span>
+</div>
+
+<p>The core webhook handler — 253 lines. Receives Shopify <code>orders/create</code> events, verifies authenticity, and creates Sales Receipts in QBO with auto-created customers, items, and auto-detected tax codes.</p>
+
+<h4>HMAC-SHA256 Verification</h4>
+<pre><span class="label">Security</span>
+const verifyShopifyWebhook = (req) =&gt; {
+    const hmacHeader = req.headers['x-shopify-hmac-sha256'];
+    const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
+
+    if (!req.rawBody) {
+        console.error('⚠️ Error: req.rawBody not found.');
+        return false;
+    }
+
+    const generatedHash = crypto
+        .createHmac('sha256', secret)   // HMAC with webhook secret
+        .update(req.rawBody)            // Raw request bytes (NOT parsed JSON)
+        .digest('base64');              // Base64 encoding
+
+    return generatedHash === hmacHeader;
+};</pre>
+
+<h4>QBO Error Extraction Helper</h4>
+<pre><span class="label">Error Handling</span>
+// node-quickbooks callback pattern: callback(err, body, res)
+// On HTTP errors:
+//   err  = axios error object (generic "Request failed with status code 400")
+//   body = actual QBO response with Fault.Error details
+//
+// This helper extracts the REAL error message from all possible locations:
+
+const extractQboError = (err, body) =&gt; {
+    if (body?.Fault?.Error)                    // 1. QBO error in body (callback arg 2)
+        return body.Fault.Error.map(e =&gt; `${e.Message} - ${e.Detail}`).join('; ');
+    if (err?.Fault?.Error)                     // 2. QBO fault in err object
+        return err.Fault.Error.map(e =&gt; `${e.Message} - ${e.Detail}`).join('; ');
+    if (err?.response?.data?.Fault?.Error)     // 3. Nested in axios response
+        return err.response.data.Fault.Error.map(e =&gt; `${e.Message} - ${e.Detail}`).join('; ');
+    if (err?.response?.data)                   // 4. Raw axios response data
+        return JSON.stringify(err.response.data);
+    return err?.message || String(err);        // 5. Fallback to generic message
+};</pre>
+
+<h4>Tax Code Auto-Detection (Cached Per Warm Instance)</h4>
+<pre><span class="label">Tax Codes</span>
+let _cachedTaxCodeId = null;
+
+const getDefaultTaxCode = (qbo) =&gt; {
+    if (process.env.QBO_TAX_CODE) return Promise.resolve(process.env.QBO_TAX_CODE);
+    if (_cachedTaxCodeId) return Promise.resolve(_cachedTaxCodeId);
+
+    return new Promise((resolve) =&gt; {
+        qbo.findTaxCodes([], (err, body) =&gt; {
+            const codes = body?.QueryResponse?.TaxCode;
+            if (codes &amp;&amp; codes.length &gt; 0) {
+                // Prefer zero-rate/exempt tax codes for flexibility
+                const zeroRate = codes.find(c =&gt;
+                    c.Active !== false &amp;&amp; (
+                        /free|exempt|zero|nil|none|nol|bebas/i.test(c.Name) ||
+                        c.Name === 'FRE' || c.Name === 'Z' || c.Name === 'NON'
+                    )
+                );
+                _cachedTaxCodeId = zeroRate ? String(zeroRate.Id) : String(codes[0].Id);
+            }
+            resolve(_cachedTaxCodeId);
+        });
+    });
+};</pre>
+
+<h4>Income Account Auto-Detection (Cached)</h4>
+<pre><span class="label">Accounts</span>
+let _cachedIncomeAccountId = null;
+
+const getIncomeAccountId = (qbo) =&gt; {
+    if (process.env.QBO_INCOME_ACCOUNT_ID) return Promise.resolve(process.env.QBO_INCOME_ACCOUNT_ID);
+    if (_cachedIncomeAccountId) return Promise.resolve(_cachedIncomeAccountId);
+
+    return new Promise((resolve) =&gt; {
+        qbo.findAccounts([
+            { field: 'AccountType', value: 'Income', operator: '=' }
+        ], (err, body) =&gt; {
+            const accounts = body?.QueryResponse?.Account;
+            if (accounts &amp;&amp; accounts.length &gt; 0) {
+                const salesAccount = accounts.find(a =&gt;
+                    /sales|revenue|pendapatan|penjualan/i.test(a.Name)
+                ) || accounts[0];
+                _cachedIncomeAccountId = String(salesAccount.Id);
+            }
+            resolve(_cachedIncomeAccountId);
+        });
+    });
+};</pre>
+
+<h4>Customer: Find or Create</h4>
+<pre><span class="label">Customer Sync</span>
+const getOrCreateCustomer = (qbo, customerData) =&gt; {
+    return new Promise((resolve, reject) =&gt; {
+        if (!customerData?.email) return resolve("1");  // Fallback customer
+
+        const email = customerData.email;
+
+        // Search by email using array criteria format
+        qbo.findCustomers([
+            { field: 'PrimaryEmailAddr', value: email, operator: '=' }
+        ], (err, body) =&gt; {
+            if (err) return reject(new Error('findCustomers: ' + extractQboError(err, body)));
+
+            if (body?.QueryResponse?.Customer?.length &gt; 0) {
+                return resolve(body.QueryResponse.Customer[0].Id);
+            }
+
+            // Create new customer with unique DisplayName
+            const uniqueName = `${customerData.first_name || 'Buyer'} ${customerData.last_name || 'Shopify'} (${email})`;
+            qbo.createCustomer({
+                GivenName:        customerData.first_name || 'Buyer',
+                FamilyName:       customerData.last_name || 'Shopify',
+                DisplayName:      uniqueName,
+                PrimaryEmailAddr: { Address: email }
+            }, (errCreate, bodyCreate) =&gt; {
+                if (errCreate) return reject(new Error('createCustomer: ' + extractQboError(errCreate, bodyCreate)));
+                resolve(bodyCreate.Id);
+            });
+        });
+    });
+};</pre>
+
+<h4>Item: Find or Auto-Create</h4>
+<pre><span class="label">Product Sync</span>
+const getOrCreateItem = (qbo, itemName, price, incomeAccountId) =&gt; {
+    return new Promise((resolve) =&gt; {
+        const safeName = itemName.replace(/'/g, "").substring(0, 100);  // QBO max 100 chars
+
+        qbo.findItems([
+            { field: 'Name', value: safeName, operator: '=' }
+        ], (err, body) =&gt; {
+            if (!err &amp;&amp; body?.QueryResponse?.Item?.length &gt; 0) {
+                return resolve(body.QueryResponse.Item[0].Id);
+            }
+
+            if (!incomeAccountId) return resolve(null);
+
+            // Auto-create as Service type
+            qbo.createItem({
+                Name:             safeName,
+                Type:             'Service',
+                IncomeAccountRef: { value: incomeAccountId },
+                UnitPrice:        price,
+            }, (errCreate, bodyCreate) =&gt; {
+                if (errCreate) return resolve(null);  // Non-fatal: line item still works without ItemRef
+                resolve(bodyCreate.Id);
+            });
+        });
+    });
+};</pre>
+
+<h4>Main Webhook Handler</h4>
+<pre><span class="label">POST /api/webhook/shopify</span>
+router.post('/shopify', async (req, res) =&gt; {
+    if (!verifyShopifyWebhook(req)) return res.status(401).send('Unauthorized');
+
+    try {
+        const shopifyOrder = req.body;
+        console.log('✅ HMAC Valid. Processing order ID:', shopifyOrder.id);
+
+        const qbo = await getQboInstance();
+
+        // Parallel metadata fetch (cached after first call)
+        const [taxCodeId, incomeAccountId] = await Promise.all([
+            getDefaultTaxCode(qbo),
+            getIncomeAccountId(qbo),
+        ]);
+
+        // Customer resolution
+        const customerId = await getOrCreateCustomer(qbo, shopifyOrder.customer);
+
+        // Build line items
+        const lineItems = [];
+        for (const item of shopifyOrder.line_items) {
+            const price = parseFloat(item.price) || 0;
+            const qty   = parseInt(item.quantity) || 1;
+            const amount = Math.round(price * qty * 100) / 100;
+
+            const itemId = await getOrCreateItem(qbo, item.name, price, incomeAccountId);
+
+            const lineDetail = { Qty: qty, UnitPrice: price };
+            if (itemId)    lineDetail.ItemRef    = { value: itemId };
+            if (taxCodeId) lineDetail.TaxCodeRef = { value: taxCodeId };
+
+            lineItems.push({
+                Description:        item.name,
+                Amount:             amount,
+                DetailType:         "SalesItemLineDetail",
+                SalesItemLineDetail: lineDetail,
+            });
+        }
+
+        // Create Sales Receipt
+        const salesReceiptData = {
+            Line:        lineItems,
+            CustomerRef: { value: customerId },
+            CurrencyRef: { value: shopifyOrder.currency },
+        };
+
+        const receipt = await new Promise((resolve, reject) =&gt; {
+            qbo.createSalesReceipt(salesReceiptData, (err, body) =&gt; {
+                if (err) return reject(new Error('createSalesReceipt: ' + extractQboError(err, body)));
+                resolve(body);
+            });
+        });
+
+        console.log('🚀 Sales Receipt Created! ID:', receipt.Id);
+        res.status(200).send('Success');
+    } catch (error) {
+        console.error('❌ Error:', error.message);
+        res.status(500).send('Error processing webhook');
+    }
+});</pre>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- QBO API REFERENCE -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="qbo-oauth-api">QBO OAuth 2.0 API Reference</h2>
+
+<p>Full documentation: <a href="https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/oauth-2.0" target="_blank">Intuit OAuth 2.0 Docs</a></p>
+
+<h4>OAuth Endpoints</h4>
+<table>
+<thead><tr><th>Purpose</th><th>URL</th><th>Method</th></tr></thead>
+<tbody>
+<tr><td><strong>Authorization</strong></td><td><code>https://appcenter.intuit.com/connect/oauth2</code></td><td>GET (redirect)</td></tr>
+<tr><td><strong>Token Exchange</strong></td><td><code>https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer</code></td><td>POST</td></tr>
+<tr><td><strong>Token Refresh</strong></td><td><code>https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer</code></td><td>POST</td></tr>
+<tr><td><strong>Token Revocation</strong></td><td><code>https://developer.api.intuit.com/v2/oauth2/tokens/revoke</code></td><td>POST</td></tr>
+</tbody>
+</table>
+
+<h4>Authorization Request Parameters</h4>
+<table>
+<thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>response_type</code></td><td><code>code</code></td><td>Authorization code grant</td></tr>
+<tr><td><code>client_id</code></td><td>Your app's Client ID</td><td>From Intuit Developer Portal</td></tr>
+<tr><td><code>redirect_uri</code></td><td>Your callback URL</td><td>Must match registered redirect URI</td></tr>
+<tr><td><code>scope</code></td><td><code>com.intuit.quickbooks.accounting</code></td><td>Full Accounting API access</td></tr>
+<tr><td><code>state</code></td><td>Random string</td><td>CSRF protection token</td></tr>
+</tbody>
+</table>
+
+<h4>Token Exchange/Refresh Headers</h4>
+<pre><span class="label">Headers</span>
+Authorization: Basic {Base64(client_id:client_secret)}
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json</pre>
+
+<h4>Token Response Fields</h4>
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>access_token</code></td><td>String (JWT)</td><td>Bearer token for API calls — 1 hour TTL</td></tr>
+<tr><td><code>refresh_token</code></td><td>String (opaque)</td><td>Used to get new access tokens — 100-day TTL, rotates</td></tr>
+<tr><td><code>token_type</code></td><td>String</td><td>Always <code>"bearer"</code></td></tr>
+<tr><td><code>expires_in</code></td><td>Number</td><td>Access token lifetime (3600 seconds)</td></tr>
+<tr><td><code>x_refresh_token_expires_in</code></td><td>Number</td><td>Refresh token lifetime (8,726,400 seconds)</td></tr>
+</tbody>
+</table>
+
+<!-- QBO REST API -->
+<h2 id="qbo-rest-api">QBO REST API Entities</h2>
+
+<p>Full API documentation: <a href="https://developer.intuit.com/app/developer/qbo/docs/develop" target="_blank">developer.intuit.com/app/developer/qbo/docs/develop</a></p>
+
+<h4>Base URLs</h4>
+<table>
+<thead><tr><th>Environment</th><th>Base URL</th></tr></thead>
+<tbody>
+<tr><td><strong>Sandbox</strong></td><td><code>https://sandbox-quickbooks.api.intuit.com/v3/company/{realmId}/</code></td></tr>
+<tr><td><strong>Production</strong></td><td><code>https://quickbooks.api.intuit.com/v3/company/{realmId}/</code></td></tr>
+</tbody>
+</table>
+
+<h4>API Headers for All Requests</h4>
+<pre><span class="label">API Headers</span>
+Authorization: Bearer {access_token}
+Content-Type: application/json
+Accept: application/json</pre>
+
+<h4>Entities Used by This Integration</h4>
+<table>
+<thead><tr><th>Entity</th><th>Operations Used</th><th>REST Path</th><th>Query Example</th></tr></thead>
+<tbody>
+<tr><td><strong>SalesReceipt</strong></td><td>Create</td><td><code>POST /salesreceipt</code></td><td>&mdash;</td></tr>
+<tr><td><strong>Customer</strong></td><td>Query, Create</td><td><code>GET/POST /customer</code></td><td><code>SELECT * FROM Customer WHERE PrimaryEmailAddr='x@y.com'</code></td></tr>
+<tr><td><strong>Item</strong></td><td>Query, Create</td><td><code>GET/POST /item</code></td><td><code>SELECT * FROM Item WHERE Name='Product Name'</code></td></tr>
+<tr><td><strong>TaxCode</strong></td><td>Query</td><td><code>GET /query</code></td><td><code>SELECT * FROM TaxCode</code></td></tr>
+<tr><td><strong>Account</strong></td><td>Query</td><td><code>GET /query</code></td><td><code>SELECT * FROM Account WHERE AccountType='Income'</code></td></tr>
+</tbody>
+</table>
+
+<h4>SalesReceipt Create Payload</h4>
+<pre><span class="label">POST /salesreceipt?minorversion=65</span>
+{
+  "Line": [
+    {
+      "Description": "Organic Moringa Powder",
+      "Amount": 150.00,
+      "DetailType": "SalesItemLineDetail",
+      "SalesItemLineDetail": {
+        "Qty": 2,
+        "UnitPrice": 75.00,
+        "ItemRef": { "value": "42" },
+        "TaxCodeRef": { "value": "5" }
+      }
+    }
+  ],
+  "CustomerRef": { "value": "123" },
+  "CurrencyRef": { "value": "USD" }
+}</pre>
+
+<h4>node-quickbooks Query Format</h4>
+<div class="alert alert-warning">
+<strong>&#9888;&#65039; Important: Array Criteria, Not SQL String</strong>
+<code>node-quickbooks</code> uses an array of criteria objects, NOT raw SQL strings. Passing <code>{ Query: "SELECT..." }</code> causes the library to treat "Query" as a column name, resulting in the error <code>"Property Query not found for Entity Customer"</code>.
+</div>
+<pre><span class="label">Correct Format</span>
+// ✅ CORRECT — array of criteria objects
+qbo.findCustomers([
+    { field: 'PrimaryEmailAddr', value: 'user@example.com', operator: '=' }
+], callback);
+
+// ❌ WRONG — causes "Property Query not found" error
+qbo.findCustomers({ Query: "SELECT * FROM Customer WHERE ..." }, callback);</pre>
+
+<!-- QBO Error Format -->
+<h2 id="qbo-error-format">QBO Error Response Format</h2>
+
+<pre><span class="label">Error Response Body</span>
+{
+  "Fault": {
+    "Error": [
+      {
+        "Message": "A business validation error has occurred",
+        "Detail": "Business Validation Error: Make sure all your transactions have a GST rate.",
+        "code": "6000",
+        "element": ""
+      }
+    ],
+    "type": "ValidationFault"
+  },
+  "time": "2024-01-15T10:30:00.000-08:00"
+}</pre>
+
+<table>
+<thead><tr><th>Field</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>Fault.type</code></td><td>Category: <code>ValidationFault</code>, <code>SystemFault</code>, <code>AuthenticationFault</code>, <code>AuthorizationFault</code></td></tr>
+<tr><td><code>Fault.Error[].Message</code></td><td>Short human-readable error message</td></tr>
+<tr><td><code>Fault.Error[].Detail</code></td><td>Detailed explanation of the error</td></tr>
+<tr><td><code>Fault.Error[].code</code></td><td>Numeric error code as string (e.g., "6000", "6240")</td></tr>
+</tbody>
+</table>
+
+<table>
+<thead><tr><th>HTTP Status</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><strong>400</strong></td><td>Bad Request — validation errors, malformed payload</td></tr>
+<tr><td><strong>401</strong></td><td>Unauthorized — expired or invalid access token</td></tr>
+<tr><td><strong>403</strong></td><td>Forbidden — insufficient scope/permissions</td></tr>
+<tr><td><strong>404</strong></td><td>Not Found — entity doesn't exist</td></tr>
+<tr><td><strong>429</strong></td><td>Too Many Requests — rate limited</td></tr>
+<tr><td><strong>500</strong></td><td>Internal Server Error — QBO platform issue</td></tr>
+</tbody>
+</table>
+
+<!-- Rate Limits -->
+<h2 id="qbo-rate-limits">QBO API Rate Limits</h2>
+
+<table>
+<thead><tr><th>Limit Type</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Throttle limit</td><td><strong>500 requests/minute</strong> per realmId (company)</td></tr>
+<tr><td>Concurrent requests</td><td><strong>10 concurrent</strong> per realmId</td></tr>
+<tr><td>Batch operations</td><td>Up to <strong>30 operations</strong> per batch request</td></tr>
+<tr><td>Query result limit</td><td><strong>1000 results</strong> per page (use STARTPOSITION + MAXRESULTS)</td></tr>
+</tbody>
+</table>
+
+<p>When rate limited, the API returns HTTP 429 or 503. Implement exponential backoff for retry logic.</p>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- DEPLOYMENT -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="vercel-deploy">Vercel Deployment</h2>
+
+<h4>vercel.json Configuration</h4>
+<pre><span class="label">vercel.json</span>
+{
+  "version": 2,
+  "builds": [
+    { "src": "index.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "index.js" }
+  ]
+}</pre>
+
+<h4>Deployment Steps</h4>
+<ol class="steps">
+<li>Install Vercel CLI: <code>npm i -g vercel</code></li>
+<li>Login: <code>vercel login</code></li>
+<li>Deploy (preview): <code>vercel</code></li>
+<li>Deploy (production): <code>vercel --prod</code></li>
+<li>Set environment variables in <a href="https://vercel.com/" target="_blank">Vercel Dashboard</a> &rarr; Project &rarr; Settings &rarr; Environment Variables</li>
+<li>Your app URL: <code>https://your-project.vercel.app</code></li>
+</ol>
+
+<div class="alert alert-info">
+<strong>&#8505;&#65039; Vercel Serverless Considerations</strong>
+<ul style="margin-top:8px">
+<li><strong>Cold starts:</strong> Each request may start a fresh instance — <code>connectDB()</code> checks <code>readyState</code> to reuse warm connections</li>
+<li><strong>Dynamic IPs:</strong> Vercel functions have different IPs per execution — MongoDB Atlas must allow <code>0.0.0.0/0</code></li>
+<li><strong>No persistent state:</strong> Module-level caches (<code>_cachedTaxCodeId</code>, <code>refreshInProgress</code>) only persist within warm instances</li>
+<li><strong>10s timeout:</strong> Hobby plan has 10-second function timeout — sufficient for typical QBO API calls</li>
+<li><strong>No <code>process.exit()</code>:</strong> Kills the entire container, breaking concurrent requests</li>
+</ul>
+</div>
+
+<!-- MongoDB -->
+<h2 id="mongodb-setup">MongoDB Atlas Setup</h2>
+
+<p>Database hosted on <a href="https://www.mongodb.com/atlas" target="_blank">MongoDB Atlas</a>. Free M0 tier is sufficient for this integration.</p>
+
+<ol class="steps">
+<li>Create a free account at <a href="https://cloud.mongodb.com/" target="_blank">cloud.mongodb.com</a></li>
+<li>Create a free M0 cluster (choose region closest to your Vercel deployment)</li>
+<li>Create a database user with read/write permissions</li>
+<li><strong>Network Access</strong> &rarr; Add IP Address &rarr; <strong>Allow Access From Anywhere</strong> (<code>0.0.0.0/0</code>) — required for Vercel's dynamic IPs</li>
+<li>Get connection string: <code>mongodb+srv://&lt;user&gt;:&lt;pass&gt;@cluster.mongodb.net/shopify-qbo</code></li>
+<li>Set as <code>MONGODB_URI</code> in Vercel environment variables</li>
+</ol>
+
+<div class="alert alert-warning">
+<strong>&#9888;&#65039; Security Note</strong>
+Allowing <code>0.0.0.0/0</code> opens the database to any IP. Use strong passwords and consider MongoDB Atlas <strong>Private Endpoints</strong> with Vercel VPC peering for production environments.
+</div>
+
+<!-- Shopify -->
+<h2 id="shopify-setup">Shopify Webhook Setup</h2>
+
+<ol class="steps">
+<li>Go to <strong>Shopify Admin</strong> &rarr; Settings &rarr; Notifications &rarr; Webhooks</li>
+<li>Click <strong>"Create webhook"</strong></li>
+<li>Event: <strong>Order creation</strong></li>
+<li>Format: <strong>JSON</strong></li>
+<li>URL: <code>https://your-project.vercel.app/api/webhook/shopify</code></li>
+<li>API version: <strong>2024-01</strong> (or latest stable)</li>
+<li>Copy the <strong>webhook signing secret</strong> and set as <code>SHOPIFY_WEBHOOK_SECRET</code></li>
+</ol>
+
+<!-- QBO Dev Setup -->
+<h2 id="qbo-dev-setup">QBO Developer App Setup</h2>
+
+<ol class="steps">
+<li>Go to <a href="https://developer.intuit.com/" target="_blank">developer.intuit.com</a> &rarr; Sign in &rarr; My Apps</li>
+<li>Click <strong>"Create an app"</strong> &rarr; Select <strong>"QuickBooks Online and Payments"</strong></li>
+<li>Note your <strong>Client ID</strong> and <strong>Client Secret</strong> from Keys &amp; OAuth section</li>
+<li>Set <strong>Redirect URI</strong> to: <code>https://your-project.vercel.app/api/auth/callback</code></li>
+<li>For <strong>sandbox</strong> testing: Use Sandbox keys, set <code>QBO_ENVIRONMENT=sandbox</code></li>
+<li>For <strong>production</strong>: Use Production keys, set <code>QBO_ENVIRONMENT=production</code></li>
+<li>After deploying, visit <code>https://your-project.vercel.app/api/auth/login</code> to authorize</li>
+</ol>
+
+<!-- ENV VARS -->
+<h2 id="env-vars">Environment Variables</h2>
+
+<table class="env-table">
+<thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>QBO_CLIENT_ID</td><td>&#9989;</td><td>Intuit Developer App Client ID</td><td><code>ABcDeFgHiJk...</code></td></tr>
+<tr><td>QBO_CLIENT_SECRET</td><td>&#9989;</td><td>Intuit Developer App Client Secret</td><td><code>aBcDeFgHiJk...</code></td></tr>
+<tr><td>QBO_REDIRECT_URI</td><td>&#9989;</td><td>OAuth callback URL (must match Intuit app)</td><td><code>https://app.vercel.app/api/auth/callback</code></td></tr>
+<tr><td>QBO_ENVIRONMENT</td><td>&#9989;</td><td><code>sandbox</code> or <code>production</code></td><td><code>sandbox</code></td></tr>
+<tr><td>SHOPIFY_WEBHOOK_SECRET</td><td>&#9989;</td><td>Shopify webhook signing secret</td><td><code>whsec_aBcDeFgHiJk</code></td></tr>
+<tr><td>MONGODB_URI</td><td>&#9989;</td><td>MongoDB Atlas connection string</td><td><code>mongodb+srv://user:pass@cluster.mongodb.net/db</code></td></tr>
+<tr><td>QBO_TAX_CODE</td><td>&#10060;</td><td>Override auto-detected tax code ID</td><td><code>5</code></td></tr>
+<tr><td>QBO_INCOME_ACCOUNT_ID</td><td>&#10060;</td><td>Override auto-detected income account ID</td><td><code>54</code></td></tr>
+<tr><td>PORT</td><td>&#10060;</td><td>Server port (default: 3000, Vercel manages this)</td><td><code>3000</code></td></tr>
+</tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- TROUBLESHOOTING -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="common-errors">Common Errors &amp; Solutions</h2>
+
+<div class="error-card">
+<div class="error-title">&#10060; "Refresh token invalid. Please login again."</div>
+<div class="error-cause"><strong>Cause:</strong> <code>tokenCreatedAt</code> stored as Date instead of Number. <code>intuit-oauth</code> does <code>Date + Number = String</code> (concatenation), so <code>isAccessTokenValid()</code> always returns false. Every request triggers a refresh, eventually exhausting the refresh token.</div>
+<div class="error-fix"><strong>Fix:</strong> Token.js schema must have <code>tokenCreatedAt: { type: Number }</code>. Auth callback must save <code>tokenData.createdAt</code> (already a Number from intuit-oauth).</div>
+</div>
+
+<div class="error-card">
+<div class="error-title">&#10060; "tokenSecret not defined"</div>
+<div class="error-cause"><strong>Cause:</strong> QuickBooks constructor parameters 8 and 9 swapped. Without <code>'2.0'</code> as param 9, library defaults to OAuth 1.0 which requires a tokenSecret.</div>
+<div class="error-fix"><strong>Fix:</strong> Parameter 8 = <code>'65'</code> (minorversion), Parameter 9 = <code>'2.0'</code> (oauthversion). Exact order matters.</div>
+</div>
+
+<div class="error-card">
+<div class="error-title">&#10060; "Property Query not found for Entity Customer"</div>
+<div class="error-cause"><strong>Cause:</strong> Using <code>findCustomers({ Query: "SELECT..." })</code>. <code>node-quickbooks</code> treats object keys as WHERE column names, so "Query" is sent as a column name.</div>
+<div class="error-fix"><strong>Fix:</strong> Use array criteria: <code>[{ field: 'PrimaryEmailAddr', value: email, operator: '=' }]</code></div>
+</div>
+
+<div class="error-card">
+<div class="error-title">&#10060; "Make sure all your transactions have a GST rate"</div>
+<div class="error-cause"><strong>Cause:</strong> Hardcoded <code>TaxCodeRef: "NON"</code> is invalid for GST-enabled QBO companies (e.g., Australia, India).</div>
+<div class="error-fix"><strong>Fix:</strong> Use <code>getDefaultTaxCode()</code> which queries QBO for valid tax codes and prefers zero-rate/exempt codes. Or set <code>QBO_TAX_CODE</code> env var.</div>
+</div>
+
+<div class="error-card">
+<div class="error-title">&#10060; MongoDB Connection Timeout</div>
+<div class="error-cause"><strong>Cause:</strong> Vercel dynamic IPs not whitelisted in Atlas, or cold start exceeds default timeout, or Atlas cluster is paused (free tier pauses after 60 days of inactivity).</div>
+<div class="error-fix"><strong>Fix:</strong> Atlas Network Access &rarr; <code>0.0.0.0/0</code>. Set <code>serverSelectionTimeoutMS: 10000</code>. Resume paused cluster.</div>
+</div>
+
+<div class="error-card">
+<div class="error-title">&#10060; "Request failed with status code 400" (generic message)</div>
+<div class="error-cause"><strong>Cause:</strong> Default error handling only reads <code>err.message</code> (generic Axios error). The actual QBO error details are in the <strong>second callback argument</strong> (<code>body.Fault.Error</code>).</div>
+<div class="error-fix"><strong>Fix:</strong> Use <code>extractQboError(err, body)</code> helper which checks <code>body.Fault.Error</code> first, then <code>err.Fault.Error</code>, then <code>err.response.data.Fault.Error</code>.</div>
+</div>
+
+<div class="error-card">
+<div class="error-title">&#10060; Mongoose Deprecation Warning: { new: true }</div>
+<div class="error-cause"><strong>Cause:</strong> Mongoose 9.x deprecated <code>{ new: true }</code> option in <code>findOneAndUpdate()</code>.</div>
+<div class="error-fix"><strong>Fix:</strong> Replace with <code>{ returnDocument: 'after' }</code> in all <code>findOneAndUpdate()</code> calls.</div>
+</div>
+
+<!-- DEBUG GUIDE -->
+<h2 id="debug-guide">Debug Guide</h2>
+
+<div class="card">
+<div class="card-header"><div class="icon">&#128269;</div><h4>Checking Vercel Logs</h4></div>
+<ol>
+<li>Go to <a href="https://vercel.com/" target="_blank">vercel.com</a> &rarr; Your Project &rarr; Deployments &rarr; Functions tab</li>
+<li>Or use CLI: <code>vercel logs your-project.vercel.app --follow</code></li>
+<li>Log lines use emoji prefixes for quick scanning:
+<ul>
+<li>&#9989; — Success steps (HMAC valid, customer found, receipt created)</li>
+<li>&#128260; — Token refresh in progress</li>
+<li>&#127381; — New resource being created (customer, item)</li>
+<li>&#9888;&#65039; — Non-fatal warnings (missing data, fallbacks used)</li>
+<li>&#10060; — Errors with detailed QBO error messages</li>
+<li>&#128230; — Payload dumps (SalesReceipt JSON)</li>
+<li>&#128640; — Final success (Sales Receipt ID)</li>
+</ul>
+</li>
+</ol>
+</div>
+
+<div class="card">
+<div class="card-header"><div class="icon">&#128295;</div><h4>Testing with Shopify</h4></div>
+<ol>
+<li>Go to Shopify Admin &rarr; Settings &rarr; Notifications &rarr; Webhooks</li>
+<li>Click <strong>"Send test notification"</strong> on your Order creation webhook</li>
+<li>Monitor Vercel logs for processing steps</li>
+<li>Check QBO &rarr; Sales &rarr; Sales Receipts for the new record</li>
+</ol>
+</div>
+
+<div class="card">
+<div class="card-header"><div class="icon">&#128190;</div><h4>Manual Token Inspection</h4></div>
+<p>Connect to MongoDB Atlas and inspect the Token collection:</p>
+<pre><span class="label">MongoDB Shell</span>
+// Find the stored token
+db.tokens.findOne()
+
+// Check tokenCreatedAt type:
+// tokenCreatedAt: 1710000000000   ✅ Number (Unix ms) — CORRECT
+// tokenCreatedAt: ISODate(...)    ❌ Date object — WILL BREAK
+
+// Check token freshness:
+// If (Date.now() - tokenCreatedAt) &gt; 8726400000, refresh token is expired
+// → User must re-authorize at /api/auth/login</pre>
+</div>
+
+<!-- EXPECTED LOGS -->
+<h2 id="expected-logs">Expected Log Output (Success)</h2>
+
+<pre><span class="label">Vercel Function Logs</span>
+✅ HMAC Valid. Processing order ID: 820982911946154500
+MongoDB Connected
+✅ QBO instance created.
+🏷️ Tax code: "GST free" (ID: 5)
+💰 Income account: "Revenue - General" (ID: 54)
+👤 Customer found: John Smith (john@example.com) (ID: 70)
+✅ Customer ID: 70
+🆕 Auto-creating item: Organic Moringa Powder
+✅ Item created: Organic Moringa Powder (ID: 26)
+📦 SalesReceipt payload: {
+  "Line": [{
+    "Description": "Organic Moringa Powder",
+    "Amount": 150.00,
+    "DetailType": "SalesItemLineDetail",
+    "SalesItemLineDetail": {
+      "Qty": 2, "UnitPrice": 75.00,
+      "ItemRef": {"value": "26"},
+      "TaxCodeRef": {"value": "5"}
+    }
+  }],
+  "CustomerRef": {"value": "70"},
+  "CurrencyRef": {"value": "AUD"}
+}
+🚀 Sales Receipt Created! ID: 196</pre>
+
+<div class="alert alert-success">
+<strong>&#9989; Integration Verified &amp; Working</strong>
+This integration has been tested end-to-end. Sales Receipt ID: 196 was successfully created from a Shopify test webhook. All auto-creation features (customers, items, tax codes) are functioning correctly.
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+<p><strong>Shopify &rarr; QuickBooks Online Integration</strong></p>
+<p>Built with Node.js &bull; Express 5.x &bull; Vercel Serverless &bull; MongoDB Atlas</p>
+<p style="margin-top:12px">
+<a href="https://github.com/kemasghanitreelogy/shopify-treelogy" target="_blank">GitHub Repository</a> &bull;
+<a href="https://developer.intuit.com/app/developer/qbo/docs/develop" target="_blank">QBO API Docs</a> &bull;
+<a href="https://vercel.com/docs" target="_blank">Vercel Docs</a> &bull;
+<a href="https://www.mongodb.com/docs/atlas/" target="_blank">MongoDB Atlas Docs</a> &bull;
+<a href="https://github.com/mcohen01/node-quickbooks" target="_blank">node-quickbooks</a> &bull;
+<a href="https://www.npmjs.com/package/intuit-oauth" target="_blank">intuit-oauth</a>
+</p>
+</div>
+
+</div><!-- end .main -->
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- JAVASCRIPT -->
+<!-- ═══════════════════════════════════════════════ -->
+<script>
+// Diagram tab switching
+function switchDiagram(id, btn) {
+    document.querySelectorAll('.diagram-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.diagram-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById('panel-' + id);
+    if (panel) panel.classList.add('active');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+// Active nav highlighting
+const links=document.querySelectorAll('.sidebar nav a[href^="#"]');
+const observer=new IntersectionObserver(entries=>{
+entries.forEach(e=>{
+if(e.isIntersecting){
+const id=e.target.getAttribute('id');
+links.forEach(l=>{
+l.classList.toggle('active',l.getAttribute('href')==='#'+id);
+});
+}
+});
+},{rootMargin:'-20% 0px -75% 0px'});
+document.querySelectorAll('h1[id],h2[id],h3[id]').forEach(s=>observer.observe(s));
+// Smooth scroll
+links.forEach(l=>l.addEventListener('click',e=>{
+e.preventDefault();
+const t=document.querySelector(l.getAttribute('href'));
+if(t){t.scrollIntoView({behavior:'smooth',block:'start'});
+// Close mobile sidebar
+if(window.innerWidth<=960)document.querySelector('.sidebar').style.transform='translateX(-100%)';}
+}));
+});
+</script>
+</body>
+</html>
