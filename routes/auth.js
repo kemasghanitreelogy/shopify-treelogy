@@ -43,4 +43,26 @@ router.get('/callback', async (req, res) => {
     }
 });
 
+// Debug: list tokens in DB (sanitized). Remove after diagnosis.
+router.get('/debug-tokens', async (_req, res) => {
+    const tokens = await Token.find().sort({ updatedAt: -1 }).lean();
+    res.json(tokens.map(t => ({
+        realmId: t.realmId,
+        token_type: t.token_type,
+        expires_in: t.expires_in,
+        access_token_head: (t.access_token || '').slice(0, 16) + '…',
+        refresh_token_head: (t.refresh_token || '').slice(0, 16) + '…',
+        tokenCreatedAt: t.tokenCreatedAt,
+        tokenCreatedAtHuman: t.tokenCreatedAt ? new Date(Number(t.tokenCreatedAt)).toISOString() : null,
+        access_exp_human: t.tokenCreatedAt ? new Date(Number(t.tokenCreatedAt) + (t.expires_in || 0) * 1000).toISOString() : null,
+        updatedAt: t.updatedAt,
+    })));
+});
+
+// Debug: delete all stale tokens (so you start from clean state, then re-login)
+router.post('/debug-reset', async (_req, res) => {
+    const r = await Token.deleteMany({});
+    res.json({ deleted: r.deletedCount });
+});
+
 module.exports = router;
