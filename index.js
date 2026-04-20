@@ -7,14 +7,24 @@ const jubelioWebhookRoutes = require('./routes/jubelioWebhook');
 
 const app = express();
 
-connectDB();
-
 app.use(cors());
 app.use(express.json({
     verify: (req, res, buf) => {
         req.rawBody = buf;
     }
 }));
+
+// Ensure MongoDB is connected on EVERY request (Vercel serverless cold starts).
+// Without this, handlers can fire before mongoose is ready → 10s buffer timeout → 500.
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error('❌ DB connect error:', err.message);
+        res.status(503).send('Database unavailable');
+    }
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
