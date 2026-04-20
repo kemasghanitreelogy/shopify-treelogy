@@ -42,6 +42,53 @@ const verifyJubelioSignature = (req) => {
     return crypto.timingSafeEqual(a, b);
 };
 
+// ─── Channel prefix mapping (Jubelio `source_name` → customer prefix) ───
+// Per business rules: Shopee=SP, Tokopedia=TP, Shopify=SF, etc.
+// Match is case-insensitive against source_name (Jubelio mixes case: "SHOPEE" / "Shopee").
+const CHANNEL_PREFIX = [
+    { match: /shopee/i,     prefix: 'SP' },
+    { match: /tokopedia/i,  prefix: 'TP' },
+    { match: /shopify/i,    prefix: 'SF' },
+    { match: /lazada/i,     prefix: 'LZ' },
+    { match: /tiktok/i,     prefix: 'TT' },
+    { match: /blibli/i,     prefix: 'BL' },
+    { match: /elevenia/i,   prefix: 'EL' },
+    { match: /bukalapak/i,  prefix: 'BK' },
+    { match: /webstore/i,   prefix: 'WS' },
+    { match: /internal/i,   prefix: 'INT' },
+];
+const getChannelPrefix = (so) => {
+    const source = String(so.source_name || so.source || so.store || '').trim();
+    if (source) {
+        const hit = CHANNEL_PREFIX.find(c => c.match.test(source));
+        if (hit) return hit.prefix;
+    }
+    // Fallback: parse prefix from salesorder_no (e.g. "SP-260420...")
+    const m = String(so.salesorder_no || '').match(/^([A-Z]{2,3})-/);
+    return m ? m[1] : 'JUB';
+};
+
+// Default invoice terms in days. Override via JUBELIO_CONSIGNMENT_CHANNELS (comma list)
+// to mark those source_names as consignment (Net 7). Everything else = Net 14.
+const CONSIGNMENT_CHANNELS = new Set(
+    (process.env.JUBELIO_CONSIGNMENT_CHANNELS || '')
+        .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+);
+const getTermDays = (so) => {
+    const src = String(so.source_name || so.source || '').toLowerCase();
+    return CONSIGNMENT_CHANNELS.has(src) ? 7 : 14;
+};
+const addDays = (isoDate, days) => {
+    const d = new Date(isoDate);
+    if (Number.isNaN(d.getTime())) return undefined;
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().substring(0, 10);
+};
+
+const INVOICE_MEMO = `Crafted with care and passion, each product is a testament to our dedication to premium quality and ethical practices.
+
+Thank you for choosing Treelogy!`;
+
 // ─── QBO Error Helper ───
 const extractQboError = (err, body) => {
     if (body?.Fault?.Error) return body.Fault.Error.map(e => `${e.Message} - ${e.Detail}`).join('; ');
@@ -97,44 +144,88 @@ const getIncomeAccountId = (qbo) => {
     });
 };
 
-// ─── Customer lookup (by email or display name) ───
-const getOrCreateCustomer = (qbo, so) => {
+// ─── Customer lookup (by email, then DisplayName, else create) ───
+const findCustomersByField = (qbo, field, value) => new Promise((resolve, reject) => {
+    qbo.findCustomers([{ field, value, operator: '=' }], (err, body) => {
+        if (err) return reject(new Error('findCustomers: ' + extractQboError(err, body)));
+        resolve(body?.QueryResponse?.Customer || []);
+    });
+});
+
+const buildShipAddr = (so) => {
+    if (!so.shipping_address && !so.shipping_city) return undefined;
+    return {
+        Line1: so.shipping_full_name || so.customer_name || undefined,
+        Line2: so.shipping_address || undefined,
+        City: so.shipping_city || undefined,
+        CountrySubDivisionCode: so.shipping_province || undefined,
+        PostalCode: so.shipping_post_code ? String(so.shipping_post_code) : undefined,
+        Country: so.shipping_country || undefined,
+    };
+};
+
+const getOrCreateCustomer = async (qbo, so) => {
+    const email = so.customer_email;
+    const rawName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 80);
+    const prefix = getChannelPrefix(so);
+    // Business rule: DisplayName = "{PREFIX}-{customer_name}" — segmentasi per channel.
+    const prefixedName = `${prefix}-${rawName}`.substring(0, 100);
+
+    // 1. Match by email (most specific) — reuse existing customer across channels.
+    if (email) {
+        const byEmail = await findCustomersByField(qbo, 'PrimaryEmailAddr', email);
+        if (byEmail.length > 0) return byEmail[0].Id;
+    }
+    // 2. Match by prefixed DisplayName.
+    const byName = await findCustomersByField(qbo, 'DisplayName', prefixedName);
+    if (byName.length > 0) return byName[0].Id;
+
     return new Promise((resolve, reject) => {
-        const email = so.customer_email;
-        const displayName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 100);
-
-        const finish = (id) => resolve(id);
-        const createNew = () => {
-            const payload = {
-                DisplayName: email ? `${displayName} (${email})` : displayName,
-                GivenName: displayName.split(' ')[0] || 'Jubelio',
-                FamilyName: displayName.split(' ').slice(1).join(' ') || 'Customer',
-            };
-            if (email) payload.PrimaryEmailAddr = { Address: email };
-            if (so.customer_phone) payload.PrimaryPhone = { FreeFormNumber: String(so.customer_phone) };
-            qbo.createCustomer(payload, (errC, bodyC) => {
-                if (errC) return reject(new Error('createCustomer: ' + extractQboError(errC, bodyC)));
-                console.log(`✅ Customer baru: ${bodyC.Id}`);
-                finish(bodyC.Id);
-            });
+        const shipAddr = buildShipAddr(so);
+        const payload = {
+            DisplayName: prefixedName,
+            CompanyName: prefix,
+            GivenName: rawName.split(' ')[0] || 'Jubelio',
+            FamilyName: rawName.split(' ').slice(1).join(' ') || 'Customer',
         };
-
-        if (email) {
-            qbo.findCustomers(
-                [{ field: 'PrimaryEmailAddr', value: email, operator: '=' }],
-                (err, body) => {
-                    if (err) return reject(new Error('findCustomers: ' + extractQboError(err, body)));
-                    if (body?.QueryResponse?.Customer?.length > 0) {
-                        return finish(body.QueryResponse.Customer[0].Id);
-                    }
-                    createNew();
-                }
-            );
-        } else {
-            createNew();
+        if (email) payload.PrimaryEmailAddr = { Address: email };
+        if (so.customer_phone) payload.PrimaryPhone = { FreeFormNumber: String(so.customer_phone) };
+        if (shipAddr) {
+            payload.ShipAddr = shipAddr;
+            payload.BillAddr = shipAddr; // Jubelio only exposes shipping address — use as billing too.
         }
+        qbo.createCustomer(payload, (errC, bodyC) => {
+            if (errC) return reject(new Error('createCustomer: ' + extractQboError(errC, bodyC)));
+            console.log(`✅ Customer baru: ${bodyC.Id} (${prefixedName})`);
+            resolve(bodyC.Id);
+        });
     });
 };
+
+// ─── ShipMethod lookup (by courier/shipper name) ───
+const _shipMethodCache = new Map();
+const getOrCreateShipMethod = (qbo, name) => new Promise((resolve) => {
+    const clean = String(name || '').trim().substring(0, 31);
+    if (!clean) return resolve(null);
+    if (_shipMethodCache.has(clean)) return resolve(_shipMethodCache.get(clean));
+
+    qbo.findShipMethods([{ field: 'Name', value: clean, operator: '=' }], (err, body) => {
+        const existing = body?.QueryResponse?.ShipMethod?.[0];
+        if (!err && existing) {
+            _shipMethodCache.set(clean, existing.Id);
+            return resolve(existing.Id);
+        }
+        qbo.createShipMethod({ Name: clean, Active: true }, (errC, bodyC) => {
+            if (errC) {
+                console.log(`⚠️ createShipMethod '${clean}' gagal:`, extractQboError(errC, bodyC));
+                return resolve(null);
+            }
+            _shipMethodCache.set(clean, bodyC.Id);
+            console.log(`🚚 ShipMethod created: ${clean} (ID: ${bodyC.Id})`);
+            resolve(bodyC.Id);
+        });
+    });
+});
 
 // ─── Item lookup (by item_code or item_name) ───
 const getOrCreateItem = (qbo, item, incomeAccountId) => {
@@ -167,22 +258,41 @@ const getOrCreateItem = (qbo, item, incomeAccountId) => {
 };
 
 // ─── Build QBO Invoice Line array from Jubelio SO ───
+// Per Jubelio spec (openapijubelio.md):
+//   items[].disc        = discount % (number)
+//   items[].disc_amount = discount in IDR (number)
+//   items[].amount      = already has disc_amount subtracted
+// We embed discount info in Description so audit trail is visible in QBO.
 const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     const lines = [];
     const items = Array.isArray(so.items) ? so.items : [];
+    const serviceDate = so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined;
+
     for (const it of items) {
         const qty = Number(it.qty_in_base ?? it.qty ?? 1) || 1;
         const price = Number(it.sell_price ?? it.price ?? 0) || 0;
-        const lineAmount = Number(it.amount ?? (qty * price));
+        const discPct = Number(it.disc ?? 0) || 0;
+        const discAmt = Number(it.disc_amount ?? 0) || 0;
+        const gross = qty * price;
+        const lineAmount = Number(it.amount ?? (gross - discAmt));
         const amount = Math.round(lineAmount * 100) / 100;
 
         const itemId = await getOrCreateItem(qbo, it, incomeAccountId);
         const detail = { Qty: qty, UnitPrice: price };
         if (itemId) detail.ItemRef = { value: itemId };
         if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
+        if (serviceDate) detail.ServiceDate = serviceDate;
+
+        let description = it.description || it.item_name || it.item_code || '';
+        if (discAmt > 0 || discPct > 0) {
+            const parts = [];
+            if (discPct > 0) parts.push(`${discPct}%`);
+            if (discAmt > 0) parts.push(`Rp${discAmt.toLocaleString('id-ID')}`);
+            description = `${description} [disc: ${parts.join(' / ')}]`.trim();
+        }
 
         lines.push({
-            Description: it.description || it.item_name || it.item_code,
+            Description: description.substring(0, 4000),
             Amount: amount,
             DetailType: 'SalesItemLineDetail',
             SalesItemLineDetail: detail,
@@ -194,6 +304,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     if (shipping > 0) {
         const detail = { Qty: 1, UnitPrice: shipping };
         if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
+        if (serviceDate) detail.ServiceDate = serviceDate;
         lines.push({
             Description: `Shipping (${so.courier || so.shipper || 'N/A'})`,
             Amount: Math.round(shipping * 100) / 100,
@@ -215,6 +326,78 @@ const qboCreateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
 const qboUpdateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
     qbo.updateInvoice(payload, (err, body) => err ? reject(new Error('updateInvoice: ' + extractQboError(err, body))) : resolve(body));
 });
+const qboVoidInvoice = (qbo, id) => new Promise((resolve, reject) => {
+    qbo.voidInvoice(id, (err, body) => err ? reject(new Error('voidInvoice: ' + extractQboError(err, body))) : resolve(body));
+});
+const qboCreatePayment = (qbo, payload) => new Promise((resolve, reject) => {
+    qbo.createPayment(payload, (err, body) => err ? reject(new Error('createPayment: ' + extractQboError(err, body))) : resolve(body));
+});
+const qboFindPayments = (qbo, criteria) => new Promise((resolve, reject) => {
+    qbo.findPayments(criteria, (err, body) => err ? reject(new Error('findPayments: ' + extractQboError(err, body))) : resolve(body?.QueryResponse?.Payment || []));
+});
+
+// Retry on QBO "stale SyncToken" when two webhooks for the same SO race.
+const STALE_TOKEN_RE = /stale|synctoken|object version|out[- ]of[- ]date/i;
+const qboUpdateInvoiceSafe = async (qbo, invoiceId, mutatePayload) => {
+    let lastErr;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        const current = await qboGetInvoice(qbo, invoiceId);
+        try {
+            return await qboUpdateInvoice(qbo, {
+                ...mutatePayload(current),
+                Id: invoiceId,
+                SyncToken: current.SyncToken,
+                sparse: true,
+            });
+        } catch (err) {
+            lastErr = err;
+            if (attempt < 3 && STALE_TOKEN_RE.test(err.message)) {
+                console.warn(`⚠️ SyncToken stale invoice ${invoiceId}, retry ${attempt}/3`);
+                continue;
+            }
+            throw err;
+        }
+    }
+    throw lastErr;
+};
+
+// Paid statuses from Jubelio SO that should auto-mark the QBO invoice paid.
+const PAID_STATUSES = new Set(['PAID', 'COMPLETED']);
+
+const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
+    const invoiceId = String(invoice.Id);
+    const balance = Number(invoice.Balance ?? invoice.TotalAmt ?? 0);
+    if (balance <= 0) {
+        console.log(`ℹ️ Invoice ${invoiceId} sudah 0 balance — skip payment.`);
+        return null;
+    }
+
+    // Idempotency: scan recent payments for this customer; skip if one already links this invoice.
+    const payments = await qboFindPayments(qbo, [
+        { field: 'CustomerRef', value: String(customerId), operator: '=' },
+    ]);
+    const alreadyLinked = payments.some(p =>
+        (p.Line || []).some(l => (l.LinkedTxn || []).some(t => String(t.TxnId) === invoiceId && t.TxnType === 'Invoice'))
+    );
+    if (alreadyLinked) {
+        console.log(`ℹ️ Payment untuk invoice ${invoiceId} sudah ada — skip.`);
+        return null;
+    }
+
+    const payload = {
+        CustomerRef: { value: String(customerId) },
+        TotalAmt: balance,
+        TxnDate: so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined,
+        PrivateNote: `Auto-paid from Jubelio SO #${so.salesorder_no} status=${so.status}`,
+        Line: [{
+            Amount: balance,
+            LinkedTxn: [{ TxnId: invoiceId, TxnType: 'Invoice' }],
+        }],
+    };
+    const created = await qboCreatePayment(qbo, payload);
+    console.log(`💰 Payment created: ${created.Id} for invoice ${invoiceId} (${balance})`);
+    return created;
+};
 
 // ─── Upsert Invoice ───
 const upsertQboInvoice = async (qbo, so, realmId) => {
@@ -232,23 +415,40 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
 
     const existing = await JubelioOrderMap.findOne({ salesorder_id: so.salesorder_id });
 
+    const txnDate = so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined;
+    const termDays = getTermDays(so);
+    const dueDate = txnDate ? addDays(txnDate, termDays) : undefined;
+    const shipAddr = buildShipAddr(so);
+    const courier = so.courier || so.shipper;
+    const shipMethodId = courier ? await getOrCreateShipMethod(qbo, courier) : null;
+    // Invoice # = invoice_no kalau sudah ada di Jubelio, fallback ke salesorder_no.
+    const docNumber = String(so.invoice_no || so.salesorder_no || '').substring(0, 21) || undefined;
+    const shipDate = so.shipped_date ? String(so.shipped_date).substring(0, 10) : undefined;
+    const trackingNum = so.tracking_no || so.tracking_number || undefined;
+
     const basePayload = {
         Line: lines,
         CustomerRef: { value: String(customerId) },
-        DocNumber: String(so.salesorder_no || '').substring(0, 21) || undefined,
-        TxnDate: so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined,
-        PrivateNote: `Jubelio SO #${so.salesorder_no} (id ${so.salesorder_id})`,
+        DocNumber: docNumber,
+        TxnDate: txnDate,
+        DueDate: dueDate,
+        // Tax=NO VAT. GlobalTaxCalculation=NotApplicable supaya QBO tidak kenakan tax apapun.
+        GlobalTaxCalculation: 'NotApplicable',
+        CustomerMemo: { value: INVOICE_MEMO },
+        PrivateNote: `Jubelio SO #${so.salesorder_no} (id ${so.salesorder_id}) · channel=${so.source_name || so.source || 'N/A'} · term=Net${termDays}`,
     };
+    // Jubelio only exposes shipping address → pakai sebagai billing juga.
+    if (shipAddr) {
+        basePayload.BillAddr = shipAddr;
+        basePayload.ShipAddr = shipAddr;
+    }
+    if (shipMethodId) basePayload.ShipMethodRef = { value: String(shipMethodId) };
+    if (shipDate) basePayload.ShipDate = shipDate;
+    if (trackingNum) basePayload.TrackingNum = String(trackingNum);
 
     if (existing) {
         console.log(`♻️ Update QBO Invoice ${existing.qbo_invoice_id} untuk SO ${so.salesorder_no}`);
-        const current = await qboGetInvoice(qbo, existing.qbo_invoice_id);
-        const updated = await qboUpdateInvoice(qbo, {
-            ...basePayload,
-            Id: existing.qbo_invoice_id,
-            SyncToken: current.SyncToken,
-            sparse: true,
-        });
+        const updated = await qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => basePayload);
         await JubelioOrderMap.updateOne(
             { salesorder_id: so.salesorder_id },
             {
@@ -258,7 +458,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
                 last_synced_at: new Date(),
             }
         );
-        return { action: 'updated', qbo_invoice_id: updated.Id };
+        return { action: 'updated', invoice: updated, customerId };
     }
 
     console.log(`🆕 Create QBO Invoice untuk SO ${so.salesorder_no}`);
@@ -273,7 +473,24 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         last_grand_total: so.grand_total,
         last_synced_at: new Date(),
     });
-    return { action: 'created', qbo_invoice_id: String(created.Id) };
+    return { action: 'created', invoice: created, customerId };
+};
+
+// Shared helper: void a QBO invoice by Jubelio SO identifier. Idempotent.
+const voidMappedInvoice = async (qbo, query, reason) => {
+    const mapping = await JubelioOrderMap.findOne(query);
+    if (!mapping) return { voided: false, reason: 'no-mapping' };
+    if (mapping.last_status === 'VOIDED') {
+        console.log(`ℹ️ Invoice ${mapping.qbo_invoice_id} sudah VOIDED — skip.`);
+        return { voided: false, reason: 'already-voided', qbo_invoice_id: mapping.qbo_invoice_id };
+    }
+    await qboVoidInvoice(qbo, mapping.qbo_invoice_id);
+    await JubelioOrderMap.updateOne(
+        { _id: mapping._id },
+        { last_status: 'VOIDED', last_synced_at: new Date() }
+    );
+    console.log(`🗑️ Void QBO Invoice ${mapping.qbo_invoice_id} (${reason}).`);
+    return { voided: true, qbo_invoice_id: mapping.qbo_invoice_id };
 };
 
 // ─── Webhook: Pesanan / Sales Order (create, update, status change) ───
@@ -288,28 +505,52 @@ router.post('/pesanan', async (req, res) => {
     console.log(`✅ Jubelio /pesanan: action=${payload.action} SO=${payload.salesorder_no} id=${payload.salesorder_id} status=${payload.status}`);
 
     try {
-        // Webhook already carries full SO; fall back to API only if items missing.
-        let so = payload;
-        if (!Array.isArray(so.items) || so.items.length === 0) {
-            console.log('ℹ️ items kosong di webhook, fetch dari Jubelio API...');
-            so = await getSalesOrder(payload.salesorder_id);
-        }
-
-        if (!so.salesorder_id) {
+        if (!payload.salesorder_id) {
             return res.status(400).send('Missing salesorder_id');
-        }
-
-        if (so.is_canceled) {
-            console.log(`⚠️ SO ${so.salesorder_no} dibatalkan — skipping (tambahkan void logic jika perlu).`);
-            return res.status(200).send('Skipped (canceled)');
         }
 
         const qbo = await getQboInstance();
         const realmId = qbo.realmId;
 
-        const result = await upsertQboInvoice(qbo, so, realmId);
-        console.log(`🚀 QBO Invoice ${result.action}: ${result.qbo_invoice_id}`);
-        res.status(200).json({ ok: true, ...result });
+        // Canceled SO needs only the id — short-circuit before any item fetch.
+        if (payload.is_canceled) {
+            const result = await voidMappedInvoice(
+                qbo,
+                { salesorder_id: payload.salesorder_id },
+                `SO ${payload.salesorder_no} canceled: ${payload.cancel_reason || 'no-reason'}`,
+            );
+            return res.status(200).json({ ok: true, canceled: true, ...result });
+        }
+
+        // Always fetch full SO from Jubelio — webhook payload lacks courier,
+        // tracking_no, shipped_date, source_name, and detailed discount fields.
+        // If fetch fails (e.g. API creds missing), fall back to webhook payload.
+        let so = payload;
+        try {
+            so = await getSalesOrder(payload.salesorder_id);
+            console.log(`📥 Fetched full SO ${so.salesorder_no} — courier=${so.courier || '-'} tracking=${so.tracking_no || '-'}`);
+        } catch (fetchErr) {
+            console.warn(`⚠️ Fetch full SO gagal, pakai payload webhook: ${fetchErr.message}`);
+        }
+        if (!Array.isArray(so.items) || so.items.length === 0) {
+            return res.status(400).send('SO has no items');
+        }
+
+        const upserted = await upsertQboInvoice(qbo, so, realmId);
+        console.log(`🚀 QBO Invoice ${upserted.action}: ${upserted.invoice.Id}`);
+
+        // Auto-mark Paid when Jubelio status is PAID/COMPLETED.
+        let payment = null;
+        if (PAID_STATUSES.has(String(so.status || '').toUpperCase())) {
+            payment = await markQboInvoicePaid(qbo, upserted.invoice, upserted.customerId, so);
+        }
+
+        res.status(200).json({
+            ok: true,
+            action: upserted.action,
+            qbo_invoice_id: String(upserted.invoice.Id),
+            qbo_payment_id: payment ? String(payment.Id) : null,
+        });
     } catch (error) {
         console.error('❌ Jubelio → QBO error:', error.message);
         // 500 → Jubelio akan retry (up to 3x per docs)
@@ -339,26 +580,13 @@ router.post('/faktur', async (req, res) => {
     }
 
     try {
-        const mapping = await JubelioOrderMap.findOne({ salesorder_no: ref_no });
-        if (!mapping) {
-            console.log(`ℹ️ Tidak ada mapping QBO untuk SO ${ref_no} — nothing to void.`);
-            return res.status(200).send('No mapping');
-        }
-
         const qbo = await getQboInstance();
-        const current = await qboGetInvoice(qbo, mapping.qbo_invoice_id);
-        await qboUpdateInvoice(qbo, {
-            Id: mapping.qbo_invoice_id,
-            SyncToken: current.SyncToken,
-            sparse: true,
-            PrivateNote: `${current.PrivateNote || ''}\n[VOIDED] Jubelio Faktur ${invoice_no} deleted @ ${new Date().toISOString()}`.trim(),
-        });
-        await JubelioOrderMap.updateOne(
+        const result = await voidMappedInvoice(
+            qbo,
             { salesorder_no: ref_no },
-            { last_status: 'VOIDED', last_synced_at: new Date() }
+            `Jubelio Faktur ${invoice_no} deleted`,
         );
-        console.log(`🗑️ QBO Invoice ${mapping.qbo_invoice_id} ditandai VOIDED (SO ${ref_no}).`);
-        res.status(200).json({ ok: true, voided: mapping.qbo_invoice_id });
+        res.status(200).json({ ok: true, ...result });
     } catch (error) {
         console.error('❌ /faktur delete error:', error.message);
         res.status(500).send(`Error: ${error.message}`);
