@@ -5,41 +5,87 @@ const { getQboInstance } = require('../services/qboService');
 const { getSalesOrder } = require('../services/jubelioService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 
-// ─── Jubelio HMAC Verification ───
+// ─── Jubelio HMAC Verification (with diagnostics) ───
 // Per docs: SHA256( JSON.stringify(payload) + secret_key )
-// NOTE: Jubelio displays the secret with a literal `base64:` prefix in the UI.
-// That prefix is part of the secret string — store it verbatim in
-// JUBELIO_WEBHOOK_SECRET (e.g. `base64:GDVcKSmLA2lX...`). Do not base64-decode.
+// Jubelio does not publish the exact header name / digest format, so we try
+// multiple candidate headers and both hex + base64 digests. On mismatch we
+// dump all x-* headers so you can pin down the right name + format.
+//
+// Env knobs:
+//   JUBELIO_WEBHOOK_SECRET        — required secret (store with `base64:` prefix literal)
+//   JUBELIO_SIGNATURE_HEADER      — pin exact header (e.g. "x-hook-signature")
+//   JUBELIO_SKIP_SIGNATURE=1      — TEMPORARY bypass for debugging only
+const SIG_HEADER_CANDIDATES = [
+    'x-hook-signature',
+    'x-jubelio-signature',
+    'x-jubelio-hmac-sha256',
+    'x-signature',
+    'x-hmac-sha256',
+    'x-hub-signature-256',
+    'x-hub-signature',
+    'signature',
+];
+
+const stripPrefix = (s) => String(s).trim().replace(/^sha256=/i, '');
+
 const verifyJubelioSignature = (req) => {
+    if (process.env.JUBELIO_SKIP_SIGNATURE === '1') {
+        console.warn('⚠️ JUBELIO_SKIP_SIGNATURE=1 — signature check DI-SKIP (debug mode).');
+        return true;
+    }
     const secret = process.env.JUBELIO_WEBHOOK_SECRET;
     if (!secret) {
         console.warn('⚠️ JUBELIO_WEBHOOK_SECRET belum di-set — signature check di-skip.');
         return true;
     }
 
-    const headerName = (process.env.JUBELIO_SIGNATURE_HEADER || 'x-hook-signature').toLowerCase();
-    const received = req.headers[headerName]
-        || req.headers['x-jubelio-hmac-sha256']
-        || req.headers['x-signature'];
-
-    if (!received) {
-        console.error(`⚠️ Signature header "${headerName}" tidak ditemukan.`);
-        return false;
-    }
+    // Dump headers once per failure for diagnostics.
+    const dumpHeaders = (reason) => {
+        const xHeaders = Object.fromEntries(
+            Object.entries(req.headers).filter(([k]) => k.toLowerCase().startsWith('x-') || k.toLowerCase() === 'signature')
+        );
+        console.error(`🔐 Signature FAIL (${reason}). x-* headers:`, JSON.stringify(xHeaders));
+        console.error(`🔐 rawBody preview: ${(req.rawBody || '').toString('utf8').substring(0, 200)}`);
+    };
 
     if (!req.rawBody) {
-        console.error('⚠️ req.rawBody tidak ditemukan.');
+        dumpHeaders('rawBody missing');
         return false;
     }
 
-    // Jubelio spec: stringify(payload) + secret. rawBody is the exact string payload.
-    const base = req.rawBody.toString('utf8') + secret;
-    const expected = crypto.createHash('sha256').update(base).digest('hex');
+    // Collect candidate signatures from every known header name.
+    const explicit = process.env.JUBELIO_SIGNATURE_HEADER?.toLowerCase();
+    const headerNames = explicit ? [explicit, ...SIG_HEADER_CANDIDATES] : SIG_HEADER_CANDIDATES;
+    const candidates = [];
+    for (const h of headerNames) {
+        const v = req.headers[h];
+        if (v) candidates.push({ header: h, value: stripPrefix(v) });
+    }
+    if (candidates.length === 0) {
+        dumpHeaders('no signature header found');
+        return false;
+    }
 
-    const a = Buffer.from(expected, 'utf8');
-    const b = Buffer.from(String(received).trim(), 'utf8');
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
+    // Compute expected signatures (hex + base64) per Jubelio spec.
+    const raw = req.rawBody.toString('utf8');
+    const hash = crypto.createHash('sha256').update(raw + secret).digest();
+    const hex = hash.toString('hex');
+    const b64 = hash.toString('base64');
+
+    const timingSafe = (a, b) => {
+        const A = Buffer.from(a, 'utf8');
+        const B = Buffer.from(b, 'utf8');
+        return A.length === B.length && crypto.timingSafeEqual(A, B);
+    };
+
+    for (const c of candidates) {
+        if (timingSafe(c.value, hex) || timingSafe(c.value, b64)) {
+            console.log(`🔐 Signature OK via header "${c.header}"`);
+            return true;
+        }
+    }
+    dumpHeaders(`mismatch — tried ${candidates.length} header(s). expected hex=${hex.substring(0, 12)}… or base64=${b64.substring(0, 12)}…, got first=${candidates[0].value.substring(0, 12)}…`);
+    return false;
 };
 
 // ─── Channel prefix mapping (Jubelio `source_name` → customer prefix) ───
