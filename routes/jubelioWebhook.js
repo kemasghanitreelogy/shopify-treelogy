@@ -5,16 +5,15 @@ const { getQboInstance } = require('../services/qboService');
 const { getSalesOrder } = require('../services/jubelioService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 
-// ─── Jubelio HMAC Verification (with diagnostics) ───
-// Per docs: SHA256( JSON.stringify(payload) + secret_key )
-// Jubelio does not publish the exact header name / digest format, so we try
-// multiple candidate headers and both hex + base64 digests. On mismatch we
-// dump all x-* headers so you can pin down the right name + format.
-//
-// Env knobs:
-//   JUBELIO_WEBHOOK_SECRET        — required secret (store with `base64:` prefix literal)
-//   JUBELIO_SIGNATURE_HEADER      — pin exact header (e.g. "x-hook-signature")
-//   JUBELIO_SKIP_SIGNATURE=1      — TEMPORARY bypass for debugging only
+// ─── Jubelio Webhook Verification ───
+// Confirmed via production log: Jubelio does NOT send a signature header on
+// webhook callbacks (only Vercel infra x-* headers arrived). Their docs describe
+// the SHA256(payload + secret) formula but don't specify the header name, and
+// in practice the signature is absent. We fall back to URL-secrecy + optional
+// checks:
+//   JUBELIO_ENFORCE_SIGNATURE=1   — strict: require valid HMAC header (rejects all current Jubelio traffic — for future use if they start signing)
+//   JUBELIO_ALLOWED_IPS=1.2.3.4,5.6.7.8  — allowlist of Jubelio source IPs (comma separated)
+//   JUBELIO_WEBHOOK_SECRET        — still used if a signature header is present
 const SIG_HEADER_CANDIDATES = [
     'x-hook-signature',
     'x-jubelio-signature',
@@ -28,32 +27,15 @@ const SIG_HEADER_CANDIDATES = [
 
 const stripPrefix = (s) => String(s).trim().replace(/^sha256=/i, '');
 
-const verifyJubelioSignature = (req) => {
-    if (process.env.JUBELIO_SKIP_SIGNATURE === '1') {
-        console.warn('⚠️ JUBELIO_SKIP_SIGNATURE=1 — signature check DI-SKIP (debug mode).');
-        return true;
-    }
+const ALLOWED_IPS = new Set(
+    (process.env.JUBELIO_ALLOWED_IPS || '').split(',').map(s => s.trim()).filter(Boolean)
+);
+
+// Returns { ok: boolean, reason: string }
+const tryVerifyHmac = (req) => {
     const secret = process.env.JUBELIO_WEBHOOK_SECRET;
-    if (!secret) {
-        console.warn('⚠️ JUBELIO_WEBHOOK_SECRET belum di-set — signature check di-skip.');
-        return true;
-    }
+    if (!secret || !req.rawBody) return { ok: false, reason: 'no-secret-or-body' };
 
-    // Dump headers once per failure for diagnostics.
-    const dumpHeaders = (reason) => {
-        const xHeaders = Object.fromEntries(
-            Object.entries(req.headers).filter(([k]) => k.toLowerCase().startsWith('x-') || k.toLowerCase() === 'signature')
-        );
-        console.error(`🔐 Signature FAIL (${reason}). x-* headers:`, JSON.stringify(xHeaders));
-        console.error(`🔐 rawBody preview: ${(req.rawBody || '').toString('utf8').substring(0, 200)}`);
-    };
-
-    if (!req.rawBody) {
-        dumpHeaders('rawBody missing');
-        return false;
-    }
-
-    // Collect candidate signatures from every known header name.
     const explicit = process.env.JUBELIO_SIGNATURE_HEADER?.toLowerCase();
     const headerNames = explicit ? [explicit, ...SIG_HEADER_CANDIDATES] : SIG_HEADER_CANDIDATES;
     const candidates = [];
@@ -61,32 +43,66 @@ const verifyJubelioSignature = (req) => {
         const v = req.headers[h];
         if (v) candidates.push({ header: h, value: stripPrefix(v) });
     }
-    if (candidates.length === 0) {
-        dumpHeaders('no signature header found');
-        return false;
-    }
+    if (candidates.length === 0) return { ok: false, reason: 'no-header' };
 
-    // Compute expected signatures (hex + base64) per Jubelio spec.
     const raw = req.rawBody.toString('utf8');
     const hash = crypto.createHash('sha256').update(raw + secret).digest();
     const hex = hash.toString('hex');
     const b64 = hash.toString('base64');
-
     const timingSafe = (a, b) => {
         const A = Buffer.from(a, 'utf8');
         const B = Buffer.from(b, 'utf8');
         return A.length === B.length && crypto.timingSafeEqual(A, B);
     };
-
     for (const c of candidates) {
         if (timingSafe(c.value, hex) || timingSafe(c.value, b64)) {
-            console.log(`🔐 Signature OK via header "${c.header}"`);
-            return true;
+            return { ok: true, reason: `matched on ${c.header}` };
         }
     }
-    dumpHeaders(`mismatch — tried ${candidates.length} header(s). expected hex=${hex.substring(0, 12)}… or base64=${b64.substring(0, 12)}…, got first=${candidates[0].value.substring(0, 12)}…`);
-    return false;
+    return { ok: false, reason: 'mismatch' };
 };
+
+const checkJubelioRequest = (req) => {
+    // 1. HMAC check (if Jubelio ever starts sending signatures, we accept).
+    const hmac = tryVerifyHmac(req);
+    if (hmac.ok) {
+        console.log(`🔐 HMAC verified (${hmac.reason})`);
+        return true;
+    }
+
+    // 2. Strict mode: require HMAC to pass — reject otherwise.
+    if (process.env.JUBELIO_ENFORCE_SIGNATURE === '1') {
+        const xHeaders = Object.fromEntries(
+            Object.entries(req.headers).filter(([k]) => k.toLowerCase().startsWith('x-') || k.toLowerCase() === 'signature')
+        );
+        console.error(`🔐 ENFORCE mode, HMAC failed (${hmac.reason}). x-* headers:`, JSON.stringify(xHeaders));
+        return false;
+    }
+
+    // 3. IP allowlist (if configured).
+    if (ALLOWED_IPS.size > 0) {
+        const candidateIps = [
+            req.headers['x-forwarded-for'],
+            req.headers['x-real-ip'],
+            req.headers['x-vercel-forwarded-for'],
+            req.ip,
+        ].flatMap(v => String(v || '').split(',').map(s => s.trim())).filter(Boolean);
+        const match = candidateIps.find(ip => ALLOWED_IPS.has(ip));
+        if (match) {
+            console.log(`🌐 IP allowlist OK (${match})`);
+            return true;
+        }
+        console.error(`🌐 IP not in allowlist. candidates=${JSON.stringify(candidateIps)}`);
+        return false;
+    }
+
+    // 4. Fallback: accept by URL secrecy (the current Jubelio behaviour is no-sig).
+    console.warn(`⚠️ Webhook accepted via URL-secrecy (HMAC ${hmac.reason}). Set JUBELIO_ALLOWED_IPS for extra safety.`);
+    return true;
+};
+
+// Backward-compatible alias used by route handlers below.
+const verifyJubelioSignature = checkJubelioRequest;
 
 // ─── Channel prefix mapping (Jubelio `source_name` → customer prefix) ───
 // Per business rules: Shopee=SP, Tokopedia=TP, Shopify=SF, etc.
