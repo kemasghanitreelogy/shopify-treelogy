@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
-const webhookRoutes = require('./routes/webhook');
+const jubelioWebhookRoutes = require('./routes/jubelioWebhook');
 
 const app = express();
 
@@ -18,10 +18,10 @@ app.use(express.json({
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/webhook', webhookRoutes);
+app.use('/api/webhook/jubelio', jubelioWebhookRoutes);
 
 app.get('/', (req, res) => {
-    res.send('Shopify to QBO Integration is running.');
+    res.send('Jubelio to QBO Integration is running.');
 });
 
 const PORT = process.env.PORT || 3000;
