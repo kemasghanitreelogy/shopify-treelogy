@@ -426,15 +426,21 @@ const qboFetch = async (qbo, path, opts = {}) => {
     return body;
 };
 
-// ShipMethod find-or-create (node-quickbooks SDK doesn't expose this entity).
+// QBO ShipMethod entity is NOT supported in QuickBooks Australia/UK editions
+// (verified: QBO sandbox AU returns "Metadata not found for Entity: ShipMethod").
+// So "Ship via" field cannot be populated programmatically on those editions —
+// must be set manually in QBO UI. Courier info tetap visible di shipping line
+// description + PrivateNote.
 const _shipMethodCache = new Map();
 const getOrCreateShipMethod = async (qbo, name) => {
     const clean = String(name || '').trim().substring(0, 31);
     if (!clean) return null;
     if (_shipMethodCache.has(clean)) return _shipMethodCache.get(clean);
 
+    // Skip entirely if we already know this QBO region doesn't support it.
+    if (_shipMethodCache.get('__UNSUPPORTED__')) return null;
+
     try {
-        // Query by name (escape single quotes per QBO SQL-like syntax)
         const escaped = clean.replace(/'/g, "\\'");
         const query = encodeURIComponent(`SELECT * FROM ShipMethod WHERE Name = '${escaped}'`);
         const found = await qboFetch(qbo, `/query?query=${query}`);
@@ -443,7 +449,6 @@ const getOrCreateShipMethod = async (qbo, name) => {
             _shipMethodCache.set(clean, existing.Id);
             return existing.Id;
         }
-        // Create new ShipMethod
         const created = await qboFetch(qbo, '/shipmethod', {
             method: 'POST',
             body: JSON.stringify({ Name: clean, Active: true }),
@@ -454,11 +459,15 @@ const getOrCreateShipMethod = async (qbo, name) => {
             console.log(`🚚 ShipMethod created: ${clean} (ID: ${id})`);
             return id;
         }
-        return null;
     } catch (err) {
-        console.log(`⚠️ getOrCreateShipMethod '${clean}' gagal: ${err.message}`);
-        return null;
+        if (/Metadata not found for Entity: ShipMethod/i.test(err.message)) {
+            console.warn('⚠️ ShipMethod entity tidak tersedia di QBO edition ini (AU/UK). Ship via akan kosong, isi manual di QBO UI.');
+            _shipMethodCache.set('__UNSUPPORTED__', true);
+        } else {
+            console.log(`⚠️ ShipMethod '${clean}' gagal: ${err.message}`);
+        }
     }
+    return null;
 };
 
 // ─── Promisified QBO helpers ───
@@ -567,11 +576,18 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const courier = so.courier || so.shipper;
     // Invoice # = invoice_no kalau sudah ada di Jubelio, fallback ke salesorder_no.
     const docNumber = String(so.invoice_no || so.salesorder_no || '').substring(0, 21) || undefined;
-    // Shipping date: prefer shipped_date, fallback to completed_date / received_date.
-    // Jubelio may send "-" or "" when not yet shipped — treat those as missing.
-    const rawShipDate = so.shipped_date || so.completed_date || so.received_date || '';
-    const validShipDate = rawShipDate && String(rawShipDate).trim() !== '-' && String(rawShipDate).trim() !== ''
-        ? String(rawShipDate).substring(0, 10) : undefined;
+    // Shipping date fallback chain (Jubelio doesn't consistently fill shipped_date):
+    //   shipped_date → tn_created_date (tracking no. issued) → mp_completed_date
+    //   → completed_date → received_date
+    // Treat "-" or "" as missing.
+    const dateCandidates = [
+        so.shipped_date,
+        so.tn_created_date,
+        so.mp_completed_date,
+        so.completed_date,
+        so.received_date,
+    ].map(v => (v ? String(v).trim() : '')).filter(v => v && v !== '-');
+    const validShipDate = dateCandidates[0] ? dateCandidates[0].substring(0, 10) : undefined;
     const rawTracking = (so.tracking_no || so.tracking_number || '').toString().trim();
     const trackingNum = rawTracking && rawTracking !== '-' ? rawTracking : undefined;
     const shipMethodId = courier ? await getOrCreateShipMethod(qbo, courier) : null;
