@@ -103,24 +103,6 @@ const checkJubelioRequest = (req) => {
 // Backward-compatible alias used by route handlers below.
 const verifyJubelioSignature = checkJubelioRequest;
 
-// ─── Channel prefix (match 1:1 dengan prefix SO number di Jubelio) ───
-// Jubelio format: Shopee → "SP-...", Tokopedia → "TP-...", Shopify → "SHF-...".
-// Primary source: parse langsung dari salesorder_no → prefix customer sama
-// dengan yang merchant lihat di Jubelio UI.
-const getChannelPrefix = (so) => {
-    // Primary: prefix langsung dari nomor SO (e.g. "SP-", "TP-", "SHF-")
-    const m = String(so.salesorder_no || '').match(/^([A-Z]{2,5})-/);
-    if (m) return m[1];
-    // Fallback bila SO number tidak ber-prefix: gunakan source_name
-    const src = String(so.source_name || so.source || '').toLowerCase();
-    if (src.includes('shopee')) return 'SP';
-    if (src.includes('tokopedia')) return 'TP';
-    if (src.includes('shopify')) return 'SHF';
-    if (src.includes('lazada')) return 'LZ';
-    if (src.includes('tiktok')) return 'TT';
-    return 'JUB';
-};
-
 // Default invoice terms in days. Override via JUBELIO_CONSIGNMENT_CHANNELS (comma list)
 // to mark those source_names as consignment (Net 7). Everything else = Net 14.
 const CONSIGNMENT_CHANNELS = new Set(
@@ -219,27 +201,23 @@ const buildShipAddr = (so) => {
 
 const getOrCreateCustomer = async (qbo, so) => {
     const email = so.customer_email;
-    const rawName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 80);
-    const prefix = getChannelPrefix(so);
-    // Business rule: DisplayName = "{PREFIX}-{customer_name}" — segmentasi per channel.
-    const prefixedName = `${prefix}-${rawName}`.substring(0, 100);
+    const displayName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 100);
 
-    // 1. Match by email (most specific) — reuse existing customer across channels.
+    // 1. Match by email (most specific).
     if (email) {
         const byEmail = await findCustomersByField(qbo, 'PrimaryEmailAddr', email);
         if (byEmail.length > 0) return byEmail[0].Id;
     }
-    // 2. Match by prefixed DisplayName.
-    const byName = await findCustomersByField(qbo, 'DisplayName', prefixedName);
+    // 2. Match by DisplayName.
+    const byName = await findCustomersByField(qbo, 'DisplayName', displayName);
     if (byName.length > 0) return byName[0].Id;
 
     return new Promise((resolve, reject) => {
         const shipAddr = buildShipAddr(so);
         const payload = {
-            DisplayName: prefixedName,
-            CompanyName: prefix,
-            GivenName: rawName.split(' ')[0] || 'Jubelio',
-            FamilyName: rawName.split(' ').slice(1).join(' ') || 'Customer',
+            DisplayName: displayName,
+            GivenName: displayName.split(' ')[0] || 'Jubelio',
+            FamilyName: displayName.split(' ').slice(1).join(' ') || 'Customer',
         };
         if (email) payload.PrimaryEmailAddr = { Address: email };
         if (so.customer_phone) payload.PrimaryPhone = { FreeFormNumber: String(so.customer_phone) };
@@ -249,7 +227,7 @@ const getOrCreateCustomer = async (qbo, so) => {
         }
         qbo.createCustomer(payload, (errC, bodyC) => {
             if (errC) return reject(new Error('createCustomer: ' + extractQboError(errC, bodyC)));
-            console.log(`✅ Customer baru: ${bodyC.Id} (${prefixedName})`);
+            console.log(`✅ Customer baru: ${bodyC.Id} (${displayName})`);
             resolve(bodyC.Id);
         });
     });
