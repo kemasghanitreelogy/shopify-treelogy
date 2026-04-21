@@ -317,8 +317,16 @@ const getOrCreateItem = (qbo, item, incomeAccountId) => {
             }, (errC, bodyC) => {
                 if (errC) {
                     const detail = extractQboError(errC, bodyC);
+                    // QBO "Duplicate Name Exists" error returns the existing Id
+                    // in the error detail: "... : Id=53". Reuse it instead of
+                    // falling back to the generic item.
+                    const dupMatch = /Id=(\d+)/i.exec(detail);
+                    if (dupMatch) {
+                        const existingId = dupMatch[1];
+                        console.log(`ℹ️ Item '${lookupName}' sudah ada (ID ${existingId}) — pakai existing.`);
+                        return resolve(existingId);
+                    }
                     console.log(`⚠️ createItem gagal '${lookupName}': ${detail} — fallback ke generic item`);
-                    // Fallback to the shared generic item so invoice line still has ItemRef.
                     return getGenericItem(qbo, incomeAccountId).then(id => resolve(id));
                 }
                 console.log(`✅ Item created: ${lookupName} (ID: ${bodyC.Id})`);
@@ -347,9 +355,14 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         const gross = qty * price;
         const lineAmount = Number(it.amount ?? (gross - discAmt));
         const amount = Math.round(lineAmount * 100) / 100;
+        // QBO hard-validates Amount == Qty * UnitPrice on each line. Jubelio
+        // `amount` often already has discount baked in (< gross), so we must
+        // derive an effective UnitPrice from the final amount instead of the
+        // original sell price. Original price is preserved in the description.
+        const effectiveUnitPrice = qty > 0 ? Math.round((amount / qty) * 100) / 100 : amount;
 
         const itemId = await getOrCreateItem(qbo, it, incomeAccountId);
-        const detail = { Qty: qty, UnitPrice: price };
+        const detail = { Qty: qty, UnitPrice: effectiveUnitPrice };
         if (itemId) detail.ItemRef = { value: itemId };
         if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
         if (serviceDate) detail.ServiceDate = serviceDate;
@@ -359,7 +372,8 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
             const parts = [];
             if (discPct > 0) parts.push(`${discPct}%`);
             if (discAmt > 0) parts.push(`Rp${discAmt.toLocaleString('id-ID')}`);
-            description = `${description} [disc: ${parts.join(' / ')}]`.trim();
+            const original = `@Rp${price.toLocaleString('id-ID')}`;
+            description = `${description} [${original} · disc: ${parts.join(' / ')}]`.trim();
         }
 
         lines.push({
