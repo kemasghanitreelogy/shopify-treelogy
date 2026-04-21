@@ -256,17 +256,57 @@ const getOrCreateCustomer = async (qbo, so) => {
     });
 };
 
-// ─── Item lookup (by item_code or item_name) ───
+// QBO Item Name rules: max 100 chars, cannot contain `:`, must be unique.
+// Jubelio item names can have `/`, parens, Indonesian words — usually fine
+// after stripping colons and collapsing whitespace.
+const sanitizeItemName = (raw) => {
+    const cleaned = String(raw || '')
+        .replace(/:/g, '-')        // colons are hard-forbidden in QBO item names
+        .replace(/[\u0000-\u001F]/g, '')  // control chars
+        .replace(/\s+/g, ' ')
+        .replace(/'/g, '')
+        .trim();
+    return cleaned.substring(0, 100);
+};
+
+// ─── Item lookup (by item_code → item_name → generic fallback) ───
+let _genericItemId = null;
+const getGenericItem = async (qbo, incomeAccountId) => {
+    if (_genericItemId) return _genericItemId;
+    const NAME = 'Jubelio Sync Item';
+    try {
+        const q = encodeURIComponent(`SELECT * FROM Item WHERE Name = '${NAME}'`);
+        const found = await qboFetch(qbo, `/query?query=${q}`);
+        const existing = found?.QueryResponse?.Item?.[0];
+        if (existing) { _genericItemId = existing.Id; return _genericItemId; }
+        if (!incomeAccountId) return null;
+        const created = await qboFetch(qbo, '/item', {
+            method: 'POST',
+            body: JSON.stringify({
+                Name: NAME,
+                Type: 'Service',
+                IncomeAccountRef: { value: incomeAccountId },
+            }),
+        });
+        _genericItemId = created?.Item?.Id || null;
+        if (_genericItemId) console.log(`✅ Generic Item dibuat: ${NAME} (ID: ${_genericItemId})`);
+        return _genericItemId;
+    } catch (e) {
+        console.log(`⚠️ getGenericItem gagal: ${e.message}`);
+        return null;
+    }
+};
+
 const getOrCreateItem = (qbo, item, incomeAccountId) => {
     return new Promise((resolve) => {
-        const lookupName = (item.item_name || item.description || 'Jubelio Item').replace(/'/g, '').substring(0, 100);
+        const lookupName = sanitizeItemName(item.item_name || item.item_code || item.description) || 'Jubelio Item';
 
         qbo.findItems([{ field: 'Name', value: lookupName, operator: '=' }], (err, body) => {
             if (!err && body?.QueryResponse?.Item?.length > 0) {
                 return resolve(body.QueryResponse.Item[0].Id);
             }
             if (!incomeAccountId) {
-                console.log(`⚠️ Item '${lookupName}' tidak ada & tidak bisa auto-create`);
+                console.log(`⚠️ Item '${lookupName}' tidak ada & tidak bisa auto-create (no income account)`);
                 return resolve(null);
             }
             qbo.createItem({
@@ -276,8 +316,10 @@ const getOrCreateItem = (qbo, item, incomeAccountId) => {
                 UnitPrice: Number(item.sell_price || item.price) || 0,
             }, (errC, bodyC) => {
                 if (errC) {
-                    console.log(`⚠️ createItem gagal '${lookupName}':`, extractQboError(errC, bodyC));
-                    return resolve(null);
+                    const detail = extractQboError(errC, bodyC);
+                    console.log(`⚠️ createItem gagal '${lookupName}': ${detail} — fallback ke generic item`);
+                    // Fallback to the shared generic item so invoice line still has ItemRef.
+                    return getGenericItem(qbo, incomeAccountId).then(id => resolve(id));
                 }
                 console.log(`✅ Item created: ${lookupName} (ID: ${bodyC.Id})`);
                 resolve(bodyC.Id);
@@ -653,6 +695,7 @@ router.post('/pesanan', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Jubelio → QBO error:', error.message);
+        if (error.stack) console.error(error.stack.split('\n').slice(0, 4).join('\n'));
         // 500 → Jubelio akan retry (up to 3x per docs)
         res.status(500).send(`Error: ${error.message}`);
     }
