@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
+const { getSalesOrder } = require('../services/jubelioService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 
 // ─── Jubelio Webhook Verification ───
@@ -103,30 +104,22 @@ const checkJubelioRequest = (req) => {
 // Backward-compatible alias used by route handlers below.
 const verifyJubelioSignature = checkJubelioRequest;
 
-// ─── Channel prefix mapping (Jubelio `source_name` → customer prefix) ───
-// Per business rules: Shopee=SP, Tokopedia=TP, Shopify=SF, etc.
-// Match is case-insensitive against source_name (Jubelio mixes case: "SHOPEE" / "Shopee").
-const CHANNEL_PREFIX = [
-    { match: /shopee/i,     prefix: 'SP' },
-    { match: /tokopedia/i,  prefix: 'TP' },
-    { match: /shopify/i,    prefix: 'SF' },
-    { match: /lazada/i,     prefix: 'LZ' },
-    { match: /tiktok/i,     prefix: 'TT' },
-    { match: /blibli/i,     prefix: 'BL' },
-    { match: /elevenia/i,   prefix: 'EL' },
-    { match: /bukalapak/i,  prefix: 'BK' },
-    { match: /webstore/i,   prefix: 'WS' },
-    { match: /internal/i,   prefix: 'INT' },
-];
+// ─── Channel prefix (match 1:1 dengan prefix SO number di Jubelio) ───
+// Jubelio format: Shopee → "SP-...", Tokopedia → "TP-...", Shopify → "SHF-...".
+// Primary source: parse langsung dari salesorder_no → prefix customer sama
+// dengan yang merchant lihat di Jubelio UI.
 const getChannelPrefix = (so) => {
-    const source = String(so.source_name || so.source || so.store || '').trim();
-    if (source) {
-        const hit = CHANNEL_PREFIX.find(c => c.match.test(source));
-        if (hit) return hit.prefix;
-    }
-    // Fallback: parse prefix from salesorder_no (e.g. "SP-260420...")
-    const m = String(so.salesorder_no || '').match(/^([A-Z]{2,3})-/);
-    return m ? m[1] : 'JUB';
+    // Primary: prefix langsung dari nomor SO (e.g. "SP-", "TP-", "SHF-")
+    const m = String(so.salesorder_no || '').match(/^([A-Z]{2,5})-/);
+    if (m) return m[1];
+    // Fallback bila SO number tidak ber-prefix: gunakan source_name
+    const src = String(so.source_name || so.source || '').toLowerCase();
+    if (src.includes('shopee')) return 'SP';
+    if (src.includes('tokopedia')) return 'TP';
+    if (src.includes('shopify')) return 'SHF';
+    if (src.includes('lazada')) return 'LZ';
+    if (src.includes('tiktok')) return 'TT';
+    return 'JUB';
 };
 
 // Default invoice terms in days. Override via JUBELIO_CONSIGNMENT_CHANNELS (comma list)
@@ -352,6 +345,67 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     return lines;
 };
 
+// ─── Raw QBO REST helpers (for entities node-quickbooks doesn't expose) ───
+const qboBaseUrl = (qbo) => {
+    const host = qbo.useSandbox ? 'sandbox-quickbooks.api.intuit.com' : 'quickbooks.api.intuit.com';
+    return `https://${host}/v3/company/${qbo.realmId}`;
+};
+
+const qboFetch = async (qbo, path, opts = {}) => {
+    const url = `${qboBaseUrl(qbo)}${path}${path.includes('?') ? '&' : '?'}minorversion=${qbo.minorversion || '65'}`;
+    const res = await fetch(url, {
+        ...opts,
+        headers: {
+            Authorization: `Bearer ${qbo.token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ...(opts.headers || {}),
+        },
+    });
+    const text = await res.text();
+    let body;
+    try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+    if (!res.ok) {
+        throw new Error(`QBO ${opts.method || 'GET'} ${path} (${res.status}): ${extractQboError(null, body)}`);
+    }
+    return body;
+};
+
+// ShipMethod find-or-create (node-quickbooks SDK doesn't expose this entity).
+const _shipMethodCache = new Map();
+const getOrCreateShipMethod = async (qbo, name) => {
+    const clean = String(name || '').trim().substring(0, 31);
+    if (!clean) return null;
+    if (_shipMethodCache.has(clean)) return _shipMethodCache.get(clean);
+
+    try {
+        // Query by name (escape single quotes per QBO SQL-like syntax)
+        const escaped = clean.replace(/'/g, "\\'");
+        const query = encodeURIComponent(`SELECT * FROM ShipMethod WHERE Name = '${escaped}'`);
+        const found = await qboFetch(qbo, `/query?query=${query}`);
+        const existing = found?.QueryResponse?.ShipMethod?.[0];
+        if (existing) {
+            _shipMethodCache.set(clean, existing.Id);
+            return existing.Id;
+        }
+        // Create new ShipMethod
+        const created = await qboFetch(qbo, '/shipmethod', {
+            method: 'POST',
+            body: JSON.stringify({ Name: clean, Active: true }),
+        });
+        const id = created?.ShipMethod?.Id;
+        if (id) {
+            _shipMethodCache.set(clean, id);
+            console.log(`🚚 ShipMethod created: ${clean} (ID: ${id})`);
+            return id;
+        }
+        return null;
+    } catch (err) {
+        console.log(`⚠️ getOrCreateShipMethod '${clean}' gagal: ${err.message}`);
+        return null;
+    }
+};
+
 // ─── Promisified QBO helpers ───
 const qboGetInvoice = (qbo, id) => new Promise((resolve, reject) => {
     qbo.getInvoice(id, (err, body) => err ? reject(new Error('getInvoice: ' + extractQboError(err, body))) : resolve(body));
@@ -460,10 +514,8 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const docNumber = String(so.invoice_no || so.salesorder_no || '').substring(0, 21) || undefined;
     const shipDate = so.shipped_date ? String(so.shipped_date).substring(0, 10) : undefined;
     const trackingNum = so.tracking_no || so.tracking_number || undefined;
+    const shipMethodId = courier ? await getOrCreateShipMethod(qbo, courier) : null;
 
-    // Courier info goes into PrivateNote (node-quickbooks SDK doesn't expose
-    // ShipMethod find/create, and QBO rejects ShipMethodRef without a valid ID).
-    // It's also already embedded in the shipping line description.
     const privateParts = [
         `Jubelio SO #${so.salesorder_no} (id ${so.salesorder_id})`,
         `channel=${so.source_name || so.source || 'N/A'}`,
@@ -487,6 +539,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         basePayload.BillAddr = shipAddr;
         basePayload.ShipAddr = shipAddr;
     }
+    if (shipMethodId) basePayload.ShipMethodRef = { value: String(shipMethodId) };
     if (shipDate) basePayload.ShipDate = shipDate;
     if (trackingNum) basePayload.TrackingNum = String(trackingNum);
 
@@ -553,19 +606,17 @@ router.post('/pesanan', async (req, res) => {
             return res.status(400).send('Missing salesorder_id');
         }
 
-        // Rely on webhook payload — no outbound API fetch (avoids storing
-        // Jubelio email/password in env). Jubelio fires update-salesorder on
-        // every status change, so courier/tracking/shipped_date will arrive
-        // in the SHIPPED status webhook if Jubelio includes them.
-        const so = payload;
-
-        // DIAGNOSTIC: dump field inventory so we can see which optional fields
-        // (courier, tracking_no, source_name, shipped_date) Jubelio actually
-        // sends. Set JUBELIO_DUMP_PAYLOAD=0 to disable after confirming.
-        if (process.env.JUBELIO_DUMP_PAYLOAD !== '0') {
-            const keys = Object.keys(so).sort();
-            console.log(`🔍 Payload keys [${keys.length}]: ${keys.join(', ')}`);
-            console.log(`🔍 Snapshot: source_name=${so.source_name || '-'} source=${so.source || '-'} courier=${so.courier || '-'} shipper=${so.shipper || '-'} tracking_no=${so.tracking_no || '-'} shipped_date=${so.shipped_date || '-'}`);
+        // Fetch full SO from Jubelio API to get courier, tracking_no,
+        // shipped_date, source_name — these are NOT in webhook payload.
+        // Requires JUBELIO_EMAIL/JUBELIO_PASSWORD of a service account.
+        // If fetch fails, fall back to webhook payload (invoice still creates,
+        // but Ship via / Shipping date / Tracking no akan kosong).
+        let so = payload;
+        try {
+            so = await getSalesOrder(payload.salesorder_id);
+            console.log(`📥 Full SO fetched — courier=${so.courier || '-'} tracking=${so.tracking_no || '-'} shipped=${so.shipped_date || '-'} source=${so.source_name || '-'}`);
+        } catch (fetchErr) {
+            console.warn(`⚠️ Fetch full SO gagal: ${fetchErr.message}. Fallback ke payload webhook (field shipping akan kosong).`);
         }
 
         const qbo = await getQboInstance();
