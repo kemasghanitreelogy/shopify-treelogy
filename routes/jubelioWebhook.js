@@ -518,6 +518,15 @@ const qboUpdateInvoiceSafe = async (qbo, invoiceId, mutatePayload) => {
 // Paid statuses from Jubelio SO that should auto-mark the QBO invoice paid.
 const PAID_STATUSES = new Set(['PAID', 'COMPLETED']);
 
+// Only sync to QBO once the SO has SHIPPED (courier, tracking_no, shipped_date
+// are populated). Earlier statuses (PENDING, INVOICED, PAID, PROCESSING) are
+// acknowledged but skipped so the final invoice has complete data.
+// Override via env JUBELIO_SYNC_STATUSES=SHIPPED,COMPLETED (comma list).
+const SYNC_STATUSES = new Set(
+    (process.env.JUBELIO_SYNC_STATUSES || 'SHIPPED,COMPLETED')
+        .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+);
+
 const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
     const invoiceId = String(invoice.Id);
     const balance = Number(invoice.Balance ?? invoice.TotalAmt ?? 0);
@@ -687,12 +696,22 @@ router.post('/pesanan', async (req, res) => {
         // source_name, shipping address, items with disc_amount, etc.) — no
         // outbound API call required.
         const so = payload;
+        const statusUpper = String(so.status || '').toUpperCase();
+        const shouldVoid = !!payload.is_canceled;
+        const shouldSync = SYNC_STATUSES.has(statusUpper);
+
+        // Skip early (before QBO connect) if status hasn't matured. Saves latency
+        // and avoids rate-limiting QBO for webhooks we'd drop anyway.
+        if (!shouldVoid && !shouldSync) {
+            console.log(`⏸️  SO ${so.salesorder_no} status=${statusUpper} — skip (tunggu ${[...SYNC_STATUSES].join('/')}).`);
+            return res.status(200).json({ ok: true, skipped: true, reason: 'waiting-for-status', status: statusUpper });
+        }
 
         const qbo = await getQboInstance();
         const realmId = qbo.realmId;
 
-        // Canceled SO needs only the id — short-circuit before any item check.
-        if (payload.is_canceled) {
+        // Canceled SO: void the mapped invoice (if any) and we're done.
+        if (shouldVoid) {
             const result = await voidMappedInvoice(
                 qbo,
                 { salesorder_id: payload.salesorder_id },
