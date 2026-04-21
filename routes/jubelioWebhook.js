@@ -2,7 +2,6 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
-const { getSalesOrder } = require('../services/jubelioService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 
 // ─── Jubelio Webhook Verification ───
@@ -662,18 +661,10 @@ router.post('/pesanan', async (req, res) => {
             return res.status(400).send('Missing salesorder_id');
         }
 
-        // Fetch full SO from Jubelio API to get courier, tracking_no,
-        // shipped_date, source_name — these are NOT in webhook payload.
-        // Requires JUBELIO_EMAIL/JUBELIO_PASSWORD of a service account.
-        // If fetch fails, fall back to webhook payload (invoice still creates,
-        // but Ship via / Shipping date / Tracking no akan kosong).
-        let so = payload;
-        try {
-            so = await getSalesOrder(payload.salesorder_id);
-            console.log(`📥 Full SO fetched — courier=${so.courier || '-'} tracking=${so.tracking_no || '-'} shipped=${so.shipped_date || '-'} source=${so.source_name || '-'}`);
-        } catch (fetchErr) {
-            console.warn(`⚠️ Fetch full SO gagal: ${fetchErr.message}. Fallback ke payload webhook (field shipping akan kosong).`);
-        }
+        // Webhook payload carries all 167 fields we need (courier, tracking_no,
+        // source_name, shipping address, items with disc_amount, etc.) — no
+        // outbound API call required.
+        const so = payload;
 
         const qbo = await getQboInstance();
         const realmId = qbo.realmId;
