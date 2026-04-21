@@ -2,7 +2,6 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
-const { getSalesOrder } = require('../services/jubelioService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 
 // ─── Jubelio Webhook Verification ───
@@ -554,10 +553,25 @@ router.post('/pesanan', async (req, res) => {
             return res.status(400).send('Missing salesorder_id');
         }
 
+        // Rely on webhook payload — no outbound API fetch (avoids storing
+        // Jubelio email/password in env). Jubelio fires update-salesorder on
+        // every status change, so courier/tracking/shipped_date will arrive
+        // in the SHIPPED status webhook if Jubelio includes them.
+        const so = payload;
+
+        // DIAGNOSTIC: dump field inventory so we can see which optional fields
+        // (courier, tracking_no, source_name, shipped_date) Jubelio actually
+        // sends. Set JUBELIO_DUMP_PAYLOAD=0 to disable after confirming.
+        if (process.env.JUBELIO_DUMP_PAYLOAD !== '0') {
+            const keys = Object.keys(so).sort();
+            console.log(`🔍 Payload keys [${keys.length}]: ${keys.join(', ')}`);
+            console.log(`🔍 Snapshot: source_name=${so.source_name || '-'} source=${so.source || '-'} courier=${so.courier || '-'} shipper=${so.shipper || '-'} tracking_no=${so.tracking_no || '-'} shipped_date=${so.shipped_date || '-'}`);
+        }
+
         const qbo = await getQboInstance();
         const realmId = qbo.realmId;
 
-        // Canceled SO needs only the id — short-circuit before any item fetch.
+        // Canceled SO needs only the id — short-circuit before any item check.
         if (payload.is_canceled) {
             const result = await voidMappedInvoice(
                 qbo,
@@ -567,16 +581,6 @@ router.post('/pesanan', async (req, res) => {
             return res.status(200).json({ ok: true, canceled: true, ...result });
         }
 
-        // Always fetch full SO from Jubelio — webhook payload lacks courier,
-        // tracking_no, shipped_date, source_name, and detailed discount fields.
-        // If fetch fails (e.g. API creds missing), fall back to webhook payload.
-        let so = payload;
-        try {
-            so = await getSalesOrder(payload.salesorder_id);
-            console.log(`📥 Fetched full SO ${so.salesorder_no} — courier=${so.courier || '-'} tracking=${so.tracking_no || '-'}`);
-        } catch (fetchErr) {
-            console.warn(`⚠️ Fetch full SO gagal, pakai payload webhook: ${fetchErr.message}`);
-        }
         if (!Array.isArray(so.items) || so.items.length === 0) {
             return res.status(400).send('SO has no items');
         }
