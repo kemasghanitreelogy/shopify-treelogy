@@ -567,9 +567,15 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const courier = so.courier || so.shipper;
     // Invoice # = invoice_no kalau sudah ada di Jubelio, fallback ke salesorder_no.
     const docNumber = String(so.invoice_no || so.salesorder_no || '').substring(0, 21) || undefined;
-    const shipDate = so.shipped_date ? String(so.shipped_date).substring(0, 10) : undefined;
-    const trackingNum = so.tracking_no || so.tracking_number || undefined;
+    // Shipping date: prefer shipped_date, fallback to completed_date / received_date.
+    // Jubelio may send "-" or "" when not yet shipped — treat those as missing.
+    const rawShipDate = so.shipped_date || so.completed_date || so.received_date || '';
+    const validShipDate = rawShipDate && String(rawShipDate).trim() !== '-' && String(rawShipDate).trim() !== ''
+        ? String(rawShipDate).substring(0, 10) : undefined;
+    const rawTracking = (so.tracking_no || so.tracking_number || '').toString().trim();
+    const trackingNum = rawTracking && rawTracking !== '-' ? rawTracking : undefined;
     const shipMethodId = courier ? await getOrCreateShipMethod(qbo, courier) : null;
+    console.log(`🧾 Invoice build: courier=${courier || '-'} shipMethodId=${shipMethodId || '-'} tracking=${trackingNum || '-'} shipDate=${validShipDate || '-'}`);
 
     const privateParts = [
         `Jubelio SO #${so.salesorder_no} (id ${so.salesorder_id})`,
@@ -595,8 +601,8 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         basePayload.ShipAddr = shipAddr;
     }
     if (shipMethodId) basePayload.ShipMethodRef = { value: String(shipMethodId) };
-    if (shipDate) basePayload.ShipDate = shipDate;
-    if (trackingNum) basePayload.TrackingNum = String(trackingNum);
+    if (validShipDate) basePayload.ShipDate = validShipDate;
+    if (trackingNum) basePayload.TrackingNum = trackingNum;
 
     if (existing) {
         console.log(`♻️ Update QBO Invoice ${existing.qbo_invoice_id} untuk SO ${so.salesorder_no}`);
