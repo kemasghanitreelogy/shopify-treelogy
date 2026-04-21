@@ -264,31 +264,6 @@ const getOrCreateCustomer = async (qbo, so) => {
     });
 };
 
-// ─── ShipMethod lookup (by courier/shipper name) ───
-const _shipMethodCache = new Map();
-const getOrCreateShipMethod = (qbo, name) => new Promise((resolve) => {
-    const clean = String(name || '').trim().substring(0, 31);
-    if (!clean) return resolve(null);
-    if (_shipMethodCache.has(clean)) return resolve(_shipMethodCache.get(clean));
-
-    qbo.findShipMethods([{ field: 'Name', value: clean, operator: '=' }], (err, body) => {
-        const existing = body?.QueryResponse?.ShipMethod?.[0];
-        if (!err && existing) {
-            _shipMethodCache.set(clean, existing.Id);
-            return resolve(existing.Id);
-        }
-        qbo.createShipMethod({ Name: clean, Active: true }, (errC, bodyC) => {
-            if (errC) {
-                console.log(`⚠️ createShipMethod '${clean}' gagal:`, extractQboError(errC, bodyC));
-                return resolve(null);
-            }
-            _shipMethodCache.set(clean, bodyC.Id);
-            console.log(`🚚 ShipMethod created: ${clean} (ID: ${bodyC.Id})`);
-            resolve(bodyC.Id);
-        });
-    });
-});
-
 // ─── Item lookup (by item_code or item_name) ───
 const getOrCreateItem = (qbo, item, incomeAccountId) => {
     return new Promise((resolve) => {
@@ -482,11 +457,20 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const dueDate = txnDate ? addDays(txnDate, termDays) : undefined;
     const shipAddr = buildShipAddr(so);
     const courier = so.courier || so.shipper;
-    const shipMethodId = courier ? await getOrCreateShipMethod(qbo, courier) : null;
     // Invoice # = invoice_no kalau sudah ada di Jubelio, fallback ke salesorder_no.
     const docNumber = String(so.invoice_no || so.salesorder_no || '').substring(0, 21) || undefined;
     const shipDate = so.shipped_date ? String(so.shipped_date).substring(0, 10) : undefined;
     const trackingNum = so.tracking_no || so.tracking_number || undefined;
+
+    // Courier info goes into PrivateNote (node-quickbooks SDK doesn't expose
+    // ShipMethod find/create, and QBO rejects ShipMethodRef without a valid ID).
+    // It's also already embedded in the shipping line description.
+    const privateParts = [
+        `Jubelio SO #${so.salesorder_no} (id ${so.salesorder_id})`,
+        `channel=${so.source_name || so.source || 'N/A'}`,
+        `term=Net${termDays}`,
+    ];
+    if (courier) privateParts.push(`courier=${courier}`);
 
     const basePayload = {
         Line: lines,
@@ -497,14 +481,13 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         // Tax=NO VAT. GlobalTaxCalculation=NotApplicable supaya QBO tidak kenakan tax apapun.
         GlobalTaxCalculation: 'NotApplicable',
         CustomerMemo: { value: INVOICE_MEMO },
-        PrivateNote: `Jubelio SO #${so.salesorder_no} (id ${so.salesorder_id}) · channel=${so.source_name || so.source || 'N/A'} · term=Net${termDays}`,
+        PrivateNote: privateParts.join(' · '),
     };
     // Jubelio only exposes shipping address → pakai sebagai billing juga.
     if (shipAddr) {
         basePayload.BillAddr = shipAddr;
         basePayload.ShipAddr = shipAddr;
     }
-    if (shipMethodId) basePayload.ShipMethodRef = { value: String(shipMethodId) };
     if (shipDate) basePayload.ShipDate = shipDate;
     if (trackingNum) basePayload.TrackingNum = String(trackingNum);
 
