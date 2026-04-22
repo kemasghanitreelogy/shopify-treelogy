@@ -561,8 +561,14 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const dueDate = txnDate ? addDays(txnDate, termDays) : undefined;
     const shipAddr = buildShipAddr(so);
     const courier = so.courier || so.shipper;
-    // Invoice # = invoice_no kalau sudah ada di Jubelio, fallback ke salesorder_no.
-    const docNumber = String(so.invoice_no || so.salesorder_no || '').substring(0, 21) || undefined;
+    // Invoice # = No Pesanan Jubelio (salesorder_no), bukan invoice_no internal.
+    // QBO DocNumber default max 21 chars — enable "Custom transaction numbers"
+    // di QBO (Settings → Advanced → Sales form content) untuk support lebih panjang.
+    const rawSoNo = String(so.salesorder_no || so.invoice_no || '');
+    if (rawSoNo.length > 21) {
+        console.warn(`⚠️ salesorder_no ${rawSoNo.length} chars > QBO DocNumber limit (21). Akan di-truncate. Enable "Custom transaction numbers" di QBO untuk support penuh.`);
+    }
+    const docNumber = rawSoNo.substring(0, 21) || undefined;
     // Shipping date fallback chain (Jubelio doesn't consistently fill shipped_date):
     //   shipped_date → tn_created_date (tracking no. issued) → mp_completed_date
     //   → completed_date → received_date
@@ -603,13 +609,32 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         basePayload.BillAddr = shipAddr;
         basePayload.ShipAddr = shipAddr;
     }
-    if (shipMethodId) basePayload.ShipMethodRef = { value: String(shipMethodId) };
+    if (shipMethodId) {
+        // Real ShipMethod entity exists (QBO US/others)
+        basePayload.ShipMethodRef = { value: String(shipMethodId) };
+    } else if (courier) {
+        // Fallback (QBO AU etc): pass courier as free-text ShipMethodRef.
+        // Some QBO editions accept name-only reference and display it in "Ship via".
+        basePayload.ShipMethodRef = { value: courier, name: courier };
+    }
     if (validShipDate) basePayload.ShipDate = validShipDate;
     if (trackingNum) basePayload.TrackingNum = trackingNum;
 
+    // If QBO rejects ShipMethodRef (e.g. AU edition quirks), strip it and retry.
+    const stripShipMethod = (p) => { const clone = { ...p }; delete clone.ShipMethodRef; return clone; };
+    const isShipMethodErr = (msg) => /ShipMethod|ShipMethodRef|Ship Via|Invalid Reference/i.test(msg);
+
     if (existing) {
         console.log(`♻️ Update QBO Invoice ${existing.qbo_invoice_id} untuk SO ${so.salesorder_no}`);
-        const updated = await qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => basePayload);
+        let updated;
+        try {
+            updated = await qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => basePayload);
+        } catch (err) {
+            if (basePayload.ShipMethodRef && isShipMethodErr(err.message)) {
+                console.warn(`⚠️ updateInvoice gagal karena ShipMethodRef — retry tanpa Ship via: ${err.message}`);
+                updated = await qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => stripShipMethod(basePayload));
+            } else { throw err; }
+        }
         await JubelioOrderMap.updateOne(
             { salesorder_id: so.salesorder_id },
             {
@@ -623,7 +648,15 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     }
 
     console.log(`🆕 Create QBO Invoice untuk SO ${so.salesorder_no}`);
-    const created = await qboCreateInvoice(qbo, basePayload);
+    let created;
+    try {
+        created = await qboCreateInvoice(qbo, basePayload);
+    } catch (err) {
+        if (basePayload.ShipMethodRef && isShipMethodErr(err.message)) {
+            console.warn(`⚠️ createInvoice gagal karena ShipMethodRef — retry tanpa Ship via: ${err.message}`);
+            created = await qboCreateInvoice(qbo, stripShipMethod(basePayload));
+        } else { throw err; }
+    }
     await JubelioOrderMap.create({
         salesorder_id: so.salesorder_id,
         salesorder_no: so.salesorder_no,
