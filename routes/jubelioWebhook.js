@@ -105,14 +105,14 @@ const verifyJubelioSignature = checkJubelioRequest;
 
 // Invoice term days by channel prefix di salesorder_no.
 //   CS (Consignment) → Net 7
-//   SP/TP/SHF/LB/DP/DW/... (semua selain CS) → Net 30
+//   SP/TP/SHF/LB/DP/DW/... (semua selain CS) → Net 14
 const getSoPrefix = (so) => {
     const m = String(so.salesorder_no || '').match(/^([A-Z]{2,5})-/);
     return m ? m[1] : '';
 };
 const getTermDays = (so) => {
     const prefix = getSoPrefix(so);
-    return prefix === 'CS' ? 7 : 30;
+    return prefix === 'CS' ? 7 : 14;
 };
 const addDays = (isoDate, days) => {
     const d = new Date(isoDate);
