@@ -103,15 +103,16 @@ const checkJubelioRequest = (req) => {
 // Backward-compatible alias used by route handlers below.
 const verifyJubelioSignature = checkJubelioRequest;
 
-// Default invoice terms in days. Override via JUBELIO_CONSIGNMENT_CHANNELS (comma list)
-// to mark those source_names as consignment (Net 7). Everything else = Net 14.
-const CONSIGNMENT_CHANNELS = new Set(
-    (process.env.JUBELIO_CONSIGNMENT_CHANNELS || '')
-        .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
-);
+// Invoice term days by channel prefix di salesorder_no.
+//   CS (Consignment) → Net 7
+//   SP/TP/SHF/LB/DP/DW/... (semua selain CS) → Net 30
+const getSoPrefix = (so) => {
+    const m = String(so.salesorder_no || '').match(/^([A-Z]{2,5})-/);
+    return m ? m[1] : '';
+};
 const getTermDays = (so) => {
-    const src = String(so.source_name || so.source || '').toLowerCase();
-    return CONSIGNMENT_CHANNELS.has(src) ? 7 : 14;
+    const prefix = getSoPrefix(so);
+    return prefix === 'CS' ? 7 : 30;
 };
 const addDays = (isoDate, days) => {
     const d = new Date(isoDate);
@@ -448,6 +449,37 @@ const getOrCreateShipMethod = async (qbo, name) => {
     return null;
 };
 
+// ─── Term (payment terms) find-or-create ───
+const _termCache = new Map();
+const getOrCreateTerm = (qbo, days) => new Promise((resolve) => {
+    if (!days || days <= 0) return resolve(null);
+    if (_termCache.has(days)) return resolve(_termCache.get(days));
+    const name = `Net ${days}`;
+    qbo.findTerms([{ field: 'Name', value: name, operator: '=' }], (err, body) => {
+        const existing = body?.QueryResponse?.Term?.[0];
+        if (!err && existing) {
+            _termCache.set(days, existing.Id);
+            return resolve(existing.Id);
+        }
+        qbo.createTerm({ Name: name, Type: 'STANDARD', DueDays: days, Active: true }, (errC, bodyC) => {
+            if (errC) {
+                const detail = extractQboError(errC, bodyC);
+                // Reuse existing id if duplicate error surfaces it (like Item).
+                const dup = /Id=(\d+)/i.exec(detail);
+                if (dup) {
+                    _termCache.set(days, dup[1]);
+                    return resolve(dup[1]);
+                }
+                console.log(`⚠️ createTerm '${name}' gagal: ${detail}`);
+                return resolve(null);
+            }
+            _termCache.set(days, bodyC.Id);
+            console.log(`📅 Term created: ${name} (ID: ${bodyC.Id})`);
+            resolve(bodyC.Id);
+        });
+    });
+});
+
 // ─── Promisified QBO helpers ───
 const qboGetInvoice = (qbo, id) => new Promise((resolve, reject) => {
     qbo.getInvoice(id, (err, body) => err ? reject(new Error('getInvoice: ' + extractQboError(err, body))) : resolve(body));
@@ -584,7 +616,8 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const rawTracking = (so.tracking_no || so.tracking_number || '').toString().trim();
     const trackingNum = rawTracking && rawTracking !== '-' ? rawTracking : undefined;
     const shipMethodId = courier ? await getOrCreateShipMethod(qbo, courier) : null;
-    console.log(`🧾 Invoice build: courier=${courier || '-'} shipMethodId=${shipMethodId || '-'} tracking=${trackingNum || '-'} shipDate=${validShipDate || '-'}`);
+    const termId = await getOrCreateTerm(qbo, termDays);
+    console.log(`🧾 Invoice build: docNo=${docNumber || '-'} courier=${courier || '-'} shipMethodId=${shipMethodId || '-'} tracking=${trackingNum || '-'} shipDate=${validShipDate || '-'} termId=${termId || '-'} (Net${termDays})`);
 
     const privateParts = [
         `Jubelio SO #${so.salesorder_no} (id ${so.salesorder_id})`,
@@ -604,6 +637,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         CustomerMemo: { value: INVOICE_MEMO },
         PrivateNote: privateParts.join(' · '),
     };
+    if (termId) basePayload.SalesTermRef = { value: String(termId) };
     // Jubelio only exposes shipping address → pakai sebagai billing juga.
     if (shipAddr) {
         basePayload.BillAddr = shipAddr;
