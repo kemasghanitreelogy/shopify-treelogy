@@ -628,8 +628,29 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         so.received_date,
     ].map(v => (v ? String(v).trim() : '')).filter(v => v && v !== '-');
     const validShipDate = dateCandidates[0] ? dateCandidates[0].substring(0, 10) : undefined;
-    const rawTracking = (so.tracking_no || so.tracking_number || '').toString().trim();
-    const trackingNum = rawTracking && rawTracking !== '-' ? rawTracking : undefined;
+    // Shopify and some other channels send a full URL as tracking_no
+    // (e.g. "https://lionparcel.com/track/stt?q=11LP1776…"). QBO TrackingNum
+    // max is 31 chars, so extract the actual tracking code from the URL.
+    const normalizeTracking = (raw) => {
+        if (!raw) return undefined;
+        const s = String(raw).trim();
+        if (!s || s === '-') return undefined;
+        let code = s;
+        if (/^https?:\/\//i.test(s)) {
+            try {
+                const u = new URL(s);
+                code = u.searchParams.get('q')
+                    || u.searchParams.get('no')
+                    || u.searchParams.get('awb')
+                    || u.searchParams.get('tracking')
+                    || u.searchParams.get('tracking_no')
+                    || u.pathname.split('/').filter(Boolean).pop()
+                    || s;
+            } catch { /* keep code = s */ }
+        }
+        return code.substring(0, 31) || undefined;
+    };
+    const trackingNum = normalizeTracking(so.tracking_no || so.tracking_number);
     const shipMethodId = courier ? await getOrCreateShipMethod(qbo, courier) : null;
     const termId = await getOrCreateTerm(qbo, termDays);
     console.log(`🧾 Invoice build: docNo=${docNumber || '-'} courier=${courier || '-'} shipMethodId=${shipMethodId || '-'} tracking=${trackingNum || '-'} shipDate=${validShipDate || '-'} termId=${termId || '-'} (Net${termDays})`);
