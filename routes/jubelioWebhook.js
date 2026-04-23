@@ -730,15 +730,30 @@ const voidMappedInvoice = async (qbo, query, reason) => {
 // Jubelio action examples: "update-salesorder"
 // Full payload carries items, customer, shipping, totals — no extra fetch needed.
 router.post('/pesanan', async (req, res) => {
+    const t0 = Date.now();
+    const reqId = `req_${t0.toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+    const log = (msg) => console.log(`[${reqId}] ${msg}`);
+    const warn = (msg) => console.warn(`[${reqId}] ${msg}`);
+    const err = (msg) => console.error(`[${reqId}] ${msg}`);
+
+    log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    log(`📥 [1/8] REQUEST RECEIVED POST /api/webhook/jubelio/pesanan`);
+    log(`    ip=${req.headers['x-forwarded-for'] || req.ip} ua=${(req.headers['user-agent'] || '').slice(0, 60)}`);
+    log(`    content-length=${req.headers['content-length'] || '?'} content-type=${req.headers['content-type'] || '?'}`);
+
     if (!verifyJubelioSignature(req)) {
+        err(`🚫 [AUTH] Rejected — unauthorized`);
         return res.status(401).send('Unauthorized');
     }
+    log(`🔓 [2/8] AUTH PASSED`);
 
     const payload = req.body || {};
-    console.log(`✅ Jubelio /pesanan: action=${payload.action} SO=${payload.salesorder_no} id=${payload.salesorder_id} status=${payload.status}`);
+    const statusUpper = String(payload.status || '').toUpperCase();
+    log(`📦 [3/8] PAYLOAD action=${payload.action || '-'} SO=${payload.salesorder_no || '-'} id=${payload.salesorder_id || '-'} status=${statusUpper || '-'} canceled=${!!payload.is_canceled} items=${Array.isArray(payload.items) ? payload.items.length : 0} grandTotal=${payload.grand_total ?? '-'}`);
 
     try {
         if (!payload.salesorder_id) {
+            warn(`⚠️ [VALIDATION] Missing salesorder_id — abort`);
             return res.status(400).send('Missing salesorder_id');
         }
 
@@ -746,52 +761,68 @@ router.post('/pesanan', async (req, res) => {
         // source_name, shipping address, items with disc_amount, etc.) — no
         // outbound API call required.
         const so = payload;
-        const statusUpper = String(so.status || '').toUpperCase();
         const shouldVoid = !!payload.is_canceled;
         const shouldSync = SYNC_STATUSES.has(statusUpper);
+        log(`🧭 [4/8] DECISION shouldVoid=${shouldVoid} shouldSync=${shouldSync} syncStatuses=[${[...SYNC_STATUSES].join(',')}]`);
 
         // Skip early (before QBO connect) if status hasn't matured. Saves latency
         // and avoids rate-limiting QBO for webhooks we'd drop anyway.
         if (!shouldVoid && !shouldSync) {
-            console.log(`⏸️  SO ${so.salesorder_no} status=${statusUpper} — skip (tunggu ${[...SYNC_STATUSES].join('/')}).`);
-            return res.status(200).json({ ok: true, skipped: true, reason: 'waiting-for-status', status: statusUpper });
+            log(`⏸️  [DONE-SKIP] SO ${so.salesorder_no} status=${statusUpper} — skip (waiting for ${[...SYNC_STATUSES].join('/')}) ${Date.now() - t0}ms`);
+            return res.status(200).json({ ok: true, skipped: true, reason: 'waiting-for-status', status: statusUpper, reqId });
         }
 
+        log(`🔌 [5/8] CONNECTING to QBO…`);
         const qbo = await getQboInstance();
         const realmId = qbo.realmId;
+        log(`    ✅ QBO connected realmId=${realmId} env=${process.env.QBO_ENVIRONMENT || 'sandbox'}`);
 
         // Canceled SO: void the mapped invoice (if any) and we're done.
         if (shouldVoid) {
+            log(`🗑️ [6/8] VOIDING mapped invoice (SO canceled)…`);
             const result = await voidMappedInvoice(
                 qbo,
                 { salesorder_id: payload.salesorder_id },
                 `SO ${payload.salesorder_no} canceled: ${payload.cancel_reason || 'no-reason'}`,
             );
-            return res.status(200).json({ ok: true, canceled: true, ...result });
+            log(`✅ [DONE-VOID] ${JSON.stringify(result)} duration=${Date.now() - t0}ms`);
+            return res.status(200).json({ ok: true, canceled: true, reqId, ...result });
         }
 
         if (!Array.isArray(so.items) || so.items.length === 0) {
+            warn(`⚠️ [VALIDATION] SO has no items — abort`);
             return res.status(400).send('SO has no items');
         }
 
+        log(`🧾 [6/8] UPSERT QBO Invoice…`);
         const upserted = await upsertQboInvoice(qbo, so, realmId);
-        console.log(`🚀 QBO Invoice ${upserted.action}: ${upserted.invoice.Id}`);
+        log(`    ✅ Invoice ${upserted.action}: id=${upserted.invoice.Id} docNo=${upserted.invoice.DocNumber || '-'} total=${upserted.invoice.TotalAmt ?? '-'} balance=${upserted.invoice.Balance ?? '-'}`);
 
         // Auto-mark Paid when Jubelio status is PAID/COMPLETED.
         let payment = null;
-        if (PAID_STATUSES.has(String(so.status || '').toUpperCase())) {
+        if (PAID_STATUSES.has(statusUpper)) {
+            log(`💰 [7/8] Status ${statusUpper} — marking Invoice as PAID…`);
             payment = await markQboInvoicePaid(qbo, upserted.invoice, upserted.customerId, so);
+            log(`    ✅ Payment created: id=${payment?.Id || '-'} amount=${payment?.TotalAmt ?? '-'}`);
+        } else {
+            log(`💰 [7/8] Status ${statusUpper} — skip payment (not in ${[...PAID_STATUSES].join('/')})`);
         }
 
+        log(`🎉 [8/8] DONE action=${upserted.action} invoiceId=${upserted.invoice.Id} paymentId=${payment?.Id || '-'} duration=${Date.now() - t0}ms`);
         res.status(200).json({
             ok: true,
             action: upserted.action,
             qbo_invoice_id: String(upserted.invoice.Id),
             qbo_payment_id: payment ? String(payment.Id) : null,
+            reqId,
         });
     } catch (error) {
-        console.error('❌ Jubelio → QBO error:', error.message);
-        if (error.stack) console.error(error.stack.split('\n').slice(0, 4).join('\n'));
+        err(`❌ [FAIL] Jubelio → QBO: ${error.message}`);
+        if (error.stack) err(error.stack.split('\n').slice(0, 6).join('\n'));
+        if (error.intuit_tid || error.Fault) {
+            err(`    intuit_tid=${error.intuit_tid || '-'} fault=${JSON.stringify(error.Fault || error.fault || {}).slice(0, 300)}`);
+        }
+        err(`    duration=${Date.now() - t0}ms`);
         // 500 → Jubelio akan retry (up to 3x per docs)
         res.status(500).send(`Error: ${error.message}`);
     }
