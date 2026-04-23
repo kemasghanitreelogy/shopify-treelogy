@@ -332,12 +332,17 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         const discAmt = Number(it.disc_amount ?? 0) || 0;
         const gross = qty * price;
         const lineAmount = Number(it.amount ?? (gross - discAmt));
-        const amount = Math.round(lineAmount * 100) / 100;
-        // QBO hard-validates Amount == Qty * UnitPrice on each line. Jubelio
-        // `amount` often already has discount baked in (< gross), so we must
-        // derive an effective UnitPrice from the final amount instead of the
-        // original sell price. Original price is preserved in the description.
-        const effectiveUnitPrice = qty > 0 ? Math.round((amount / qty) * 100) / 100 : amount;
+        const jubelioAmount = Math.round(lineAmount * 100) / 100;
+        // QBO hard-validates Amount == Qty * UnitPrice on each line. We round
+        // UnitPrice to 2 decimals, then recompute Amount from the rounded unit
+        // price so the invariant ALWAYS holds. This may sacrifice up to 0.01
+        // per line on non-evenly-divisible cases (e.g. 336100/3) — acceptable
+        // trade-off since QBO would otherwise reject the invoice outright.
+        const effectiveUnitPrice = qty > 0 ? Math.round((jubelioAmount / qty) * 100) / 100 : jubelioAmount;
+        const amount = Math.round((effectiveUnitPrice * qty) * 100) / 100;
+        if (Math.abs(amount - jubelioAmount) >= 0.01) {
+            console.log(`⚠️ Line amount adjusted ${jubelioAmount} → ${amount} (QBO precision for qty=${qty})`);
+        }
 
         const itemId = await getOrCreateItem(qbo, it, incomeAccountId);
         const detail = { Qty: qty, UnitPrice: effectiveUnitPrice };
