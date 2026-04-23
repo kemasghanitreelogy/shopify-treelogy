@@ -542,6 +542,13 @@ const SYNC_STATUSES = new Set(
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
 
+// Prefix-based bypass: walk-in (DW) has no shipping flow, so sync immediately
+// regardless of status. Override via env JUBELIO_BYPASS_STATUS_PREFIXES.
+const BYPASS_STATUS_PREFIXES = new Set(
+    (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'DW')
+        .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+);
+
 const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
     const invoiceId = String(invoice.Id);
     const balance = Number(invoice.Balance ?? invoice.TotalAmt ?? 0);
@@ -764,8 +771,10 @@ router.post('/pesanan', async (req, res) => {
         // outbound API call required.
         const so = payload;
         const shouldVoid = !!payload.is_canceled;
-        const shouldSync = SYNC_STATUSES.has(statusUpper);
-        log(`🧭 [4/8] DECISION shouldVoid=${shouldVoid} shouldSync=${shouldSync} syncStatuses=[${[...SYNC_STATUSES].join(',')}]`);
+        const prefix = getSoPrefix(so);
+        const bypassStatus = BYPASS_STATUS_PREFIXES.has(prefix);
+        const shouldSync = bypassStatus || SYNC_STATUSES.has(statusUpper);
+        log(`🧭 [4/8] DECISION shouldVoid=${shouldVoid} shouldSync=${shouldSync} prefix=${prefix || '-'} bypassStatus=${bypassStatus} syncStatuses=[${[...SYNC_STATUSES].join(',')}]`);
 
         // Skip early (before QBO connect) if status hasn't matured. Saves latency
         // and avoids rate-limiting QBO for webhooks we'd drop anyway.
