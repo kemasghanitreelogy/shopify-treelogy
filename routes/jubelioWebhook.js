@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
+const { alertWebhookError, alertAuthRejected, sendTestAlert, isConfigured: alertsConfigured } = require('../services/alertService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 
 // ─── Jubelio Webhook Verification ───
@@ -776,6 +777,11 @@ router.post('/pesanan', async (req, res) => {
 
     if (!verifyJubelioSignature(req)) {
         err(`🚫 [AUTH] Rejected — unauthorized`);
+        alertAuthRejected({
+            endpoint: 'POST /api/webhook/jubelio/pesanan',
+            ip: req.headers['x-forwarded-for'] || req.ip,
+            reason: 'signature verification failed',
+        });
         return res.status(401).send('Unauthorized');
     }
     log(`🔓 [2/8] AUTH PASSED`);
@@ -858,6 +864,13 @@ router.post('/pesanan', async (req, res) => {
             err(`    intuit_tid=${error.intuit_tid || '-'} fault=${JSON.stringify(error.Fault || error.fault || {}).slice(0, 300)}`);
         }
         err(`    duration=${Date.now() - t0}ms`);
+        alertWebhookError({
+            endpoint: 'POST /api/webhook/jubelio/pesanan',
+            reqId,
+            payload: req.body,
+            error,
+            intuitTid: error.intuit_tid,
+        });
         // 500 → Jubelio akan retry (up to 3x per docs)
         res.status(500).send(`Error: ${error.message}`);
     }
@@ -869,7 +882,14 @@ router.post('/pesanan', async (req, res) => {
 // Primary sync happens on /pesanan; /faktur mostly acknowledges, but handles
 // delete by voiding the mapped QBO Invoice so QBO stays in sync.
 router.post('/faktur', async (req, res) => {
-    if (!verifyJubelioSignature(req)) return res.status(401).send('Unauthorized');
+    if (!verifyJubelioSignature(req)) {
+        alertAuthRejected({
+            endpoint: 'POST /api/webhook/jubelio/faktur',
+            ip: req.headers['x-forwarded-for'] || req.ip,
+            reason: 'signature verification failed',
+        });
+        return res.status(401).send('Unauthorized');
+    }
 
     const { action, invoice_no, ref_no } = req.body || {};
     console.log(`📄 Jubelio /faktur: action=${action} invoice=${invoice_no} ref=${ref_no}`);
@@ -894,11 +914,28 @@ router.post('/faktur', async (req, res) => {
         res.status(200).json({ ok: true, ...result });
     } catch (error) {
         console.error('❌ /faktur delete error:', error.message);
+        alertWebhookError({
+            endpoint: 'POST /api/webhook/jubelio/faktur',
+            reqId: `faktur_${Date.now().toString(36)}`,
+            payload: { salesorder_no: ref_no, action, invoice_no },
+            error,
+            intuitTid: error.intuit_tid,
+        });
         res.status(500).send(`Error: ${error.message}`);
     }
 });
 
 // ─── Health ───
-router.get('/ping', (_req, res) => res.json({ ok: true, integration: 'jubelio-qbo' }));
+router.get('/ping', (_req, res) => res.json({
+    ok: true,
+    integration: 'jubelio-qbo',
+    alerts: alertsConfigured() ? 'enabled' : 'disabled',
+}));
+
+// ─── Debug: send a test Telegram alert ───
+router.get('/debug-alert', async (_req, res) => {
+    const result = await sendTestAlert();
+    res.status(result.ok ? 200 : 400).json(result);
+});
 
 module.exports = router;
