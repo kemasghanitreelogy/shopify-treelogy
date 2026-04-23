@@ -591,7 +591,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         throw new Error('Jubelio SO tidak punya items — tidak bisa buat Invoice.');
     }
 
-    const existing = await JubelioOrderMap.findOne({ salesorder_id: so.salesorder_id });
+    const existing = await JubelioOrderMap.findOne({ salesorder_id: so.salesorder_id, qbo_realm_id: realmId });
 
     const txnDate = so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined;
     const termDays = getTermDays(so);
@@ -675,7 +675,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
             } else { throw err; }
         }
         await JubelioOrderMap.updateOne(
-            { salesorder_id: so.salesorder_id },
+            { salesorder_id: so.salesorder_id, qbo_realm_id: realmId },
             {
                 qbo_doc_number: updated.DocNumber,
                 last_status: so.status,
@@ -710,8 +710,10 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
 };
 
 // Shared helper: void a QBO invoice by Jubelio SO identifier. Idempotent.
+// Filters by current realm so sandbox mappings never get voided from production (and vice versa).
 const voidMappedInvoice = async (qbo, query, reason) => {
-    const mapping = await JubelioOrderMap.findOne(query);
+    const scopedQuery = { ...query, qbo_realm_id: qbo.realmId };
+    const mapping = await JubelioOrderMap.findOne(scopedQuery);
     if (!mapping) return { voided: false, reason: 'no-mapping' };
     if (mapping.last_status === 'VOIDED') {
         console.log(`ℹ️ Invoice ${mapping.qbo_invoice_id} sudah VOIDED — skip.`);
