@@ -182,12 +182,12 @@ const getIncomeAccountId = (qbo) => {
 };
 
 // ─── Customer lookup (by email, then DisplayName, else create) ───
-const findCustomersByField = (qbo, field, value) => new Promise((resolve, reject) => {
+const findCustomersByField = (qbo, field, value) => withQboRetry('findCustomers', () => new Promise((resolve, reject) => {
     qbo.findCustomers([{ field, value, operator: '=' }], (err, body) => {
         if (err) return reject(new Error('findCustomers: ' + extractQboError(err, body)));
         resolve(body?.QueryResponse?.Customer || []);
     });
-});
+}));
 
 const buildShipAddr = (so) => {
     if (!so.shipping_address && !so.shipping_city) return undefined;
@@ -214,7 +214,7 @@ const getOrCreateCustomer = async (qbo, so) => {
     const byName = await findCustomersByField(qbo, 'DisplayName', displayName);
     if (byName.length > 0) return byName[0].Id;
 
-    return new Promise((resolve, reject) => {
+    return withQboRetry('createCustomer', () => new Promise((resolve, reject) => {
         const shipAddr = buildShipAddr(so);
         const payload = {
             DisplayName: displayName,
@@ -232,7 +232,7 @@ const getOrCreateCustomer = async (qbo, so) => {
             console.log(`✅ Customer baru: ${bodyC.Id} (${displayName})`);
             resolve(bodyC.Id);
         });
-    });
+    }));
 };
 
 // QBO Item Name rules: max 100 chars, cannot contain `:`, must be unique.
@@ -486,25 +486,56 @@ const getOrCreateTerm = (qbo, days) => new Promise((resolve) => {
     });
 });
 
-// ─── Promisified QBO helpers ───
-const qboGetInvoice = (qbo, id) => new Promise((resolve, reject) => {
+// Detects QBO throttle/transient errors that are safe to retry.
+// QBO returns HTTP 429 + errorCode 003001 ("ThrottleExceeded"), and
+// occasionally 5xx for transient platform issues.
+const isRetryableQboError = (err) => {
+    if (!err) return false;
+    const msg = String(err.message || err);
+    return /ThrottleExceeded|statusCode=429|errorCode=003001|"code":"?3001|"code":"?3002/i.test(msg)
+        || /statusCode=5\d\d|HTTP 5\d\d|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg);
+};
+
+// Wraps a QBO call with exponential-backoff retry on throttle/transient errors.
+// Attempts: 1, 2, 3, 4 → waits 1s, 2s, 4s between (plus ±300ms jitter).
+const withQboRetry = async (label, fn, { maxAttempts = 4, baseDelayMs = 1000 } = {}) => {
+    let lastErr;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastErr = err;
+            if (attempt < maxAttempts && isRetryableQboError(err)) {
+                const delay = baseDelayMs * 2 ** (attempt - 1) + Math.floor(Math.random() * 300);
+                console.warn(`⏳ QBO retry ${label} attempt ${attempt}/${maxAttempts} (wait ${delay}ms): ${String(err.message).slice(0, 120)}`);
+                await new Promise(r => setTimeout(r, delay));
+                continue;
+            }
+            throw err;
+        }
+    }
+    throw lastErr;
+};
+
+// ─── Promisified QBO helpers (all wrapped with throttle-aware retry) ───
+const qboGetInvoice = (qbo, id) => withQboRetry('getInvoice', () => new Promise((resolve, reject) => {
     qbo.getInvoice(id, (err, body) => err ? reject(new Error('getInvoice: ' + extractQboError(err, body))) : resolve(body));
-});
-const qboCreateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
+}));
+const qboCreateInvoice = (qbo, payload) => withQboRetry('createInvoice', () => new Promise((resolve, reject) => {
     qbo.createInvoice(payload, (err, body) => err ? reject(new Error('createInvoice: ' + extractQboError(err, body))) : resolve(body));
-});
-const qboUpdateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
+}));
+const qboUpdateInvoice = (qbo, payload) => withQboRetry('updateInvoice', () => new Promise((resolve, reject) => {
     qbo.updateInvoice(payload, (err, body) => err ? reject(new Error('updateInvoice: ' + extractQboError(err, body))) : resolve(body));
-});
-const qboVoidInvoice = (qbo, id) => new Promise((resolve, reject) => {
+}));
+const qboVoidInvoice = (qbo, id) => withQboRetry('voidInvoice', () => new Promise((resolve, reject) => {
     qbo.voidInvoice(id, (err, body) => err ? reject(new Error('voidInvoice: ' + extractQboError(err, body))) : resolve(body));
-});
-const qboCreatePayment = (qbo, payload) => new Promise((resolve, reject) => {
+}));
+const qboCreatePayment = (qbo, payload) => withQboRetry('createPayment', () => new Promise((resolve, reject) => {
     qbo.createPayment(payload, (err, body) => err ? reject(new Error('createPayment: ' + extractQboError(err, body))) : resolve(body));
-});
-const qboFindPayments = (qbo, criteria) => new Promise((resolve, reject) => {
+}));
+const qboFindPayments = (qbo, criteria) => withQboRetry('findPayments', () => new Promise((resolve, reject) => {
     qbo.findPayments(criteria, (err, body) => err ? reject(new Error('findPayments: ' + extractQboError(err, body))) : resolve(body?.QueryResponse?.Payment || []));
-});
+}));
 
 // Retry on QBO "stale SyncToken" when two webhooks for the same SO race.
 const STALE_TOKEN_RE = /stale|synctoken|object version|out[- ]of[- ]date/i;
