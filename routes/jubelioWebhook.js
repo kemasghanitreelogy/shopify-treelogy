@@ -542,10 +542,13 @@ const SYNC_STATUSES = new Set(
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
 
-// Prefix-based bypass: walk-in (DW) has no shipping flow, so sync immediately
-// regardless of status. Override via env JUBELIO_BYPASS_STATUS_PREFIXES.
+// Prefix-based bypass: direct-sale channels (La Brisa, Consignment, WhatsApp,
+// Walk-in) have no courier shipping flow, so sync immediately regardless of
+// status. Marketplace channels (SP Shopee, TP Tokopedia) still gate on
+// SYNC_STATUSES because they carry courier/tracking data. Override via env
+// JUBELIO_BYPASS_STATUS_PREFIXES.
 const BYPASS_STATUS_PREFIXES = new Set(
-    (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'DW')
+    (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'LB,CS,DP,DW')
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
 
