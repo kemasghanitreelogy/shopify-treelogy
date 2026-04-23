@@ -445,4 +445,3 @@ MongoDB Connected
 
 ## License
 
-ISC
