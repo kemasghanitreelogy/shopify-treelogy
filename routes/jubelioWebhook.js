@@ -276,43 +276,82 @@ const getGenericItem = async (qbo, incomeAccountId) => {
     }
 };
 
-const getOrCreateItem = (qbo, item, incomeAccountId) => {
-    return new Promise((resolve) => {
-        const lookupName = sanitizeItemName(item.item_name || item.item_code || item.description) || 'Jubelio Item';
+// QBO Item types that can be used as Invoice line items.
+// "Category" is organizational-only and will cause createInvoice to fail with
+// "Invalid Reference Id : An item in this transaction is set up as a category
+// instead of a product or service." — must be skipped on lookup.
+const SAFE_ITEM_TYPES = new Set(['Service', 'Inventory', 'NonInventory']);
 
-        qbo.findItems([{ field: 'Name', value: lookupName, operator: '=' }], (err, body) => {
-            if (!err && body?.QueryResponse?.Item?.length > 0) {
-                return resolve(body.QueryResponse.Item[0].Id);
-            }
-            if (!incomeAccountId) {
-                console.log(`⚠️ Item '${lookupName}' tidak ada & tidak bisa auto-create (no income account)`);
-                return resolve(null);
-            }
+const qboFindItemsByName = (qbo, name) => new Promise((resolve) => {
+    qbo.findItems([{ field: 'Name', value: name, operator: '=' }], (err, body) => {
+        if (err) return resolve([]);
+        resolve(body?.QueryResponse?.Item || []);
+    });
+});
+
+const qboGetItemType = (qbo, id) => new Promise((resolve) => {
+    qbo.getItem(id, (err, body) => resolve(err ? null : (body?.Type || null)));
+});
+
+const getOrCreateItem = async (qbo, item, incomeAccountId) => {
+    const baseName = sanitizeItemName(item.item_name || item.item_code || item.description) || 'Jubelio Item';
+    // Try base name first, then suffixed variants if we hit a Category collision.
+    const candidates = [
+        baseName,
+        sanitizeItemName(`${baseName} (Item)`),
+        sanitizeItemName(`${baseName} (Service)`),
+    ];
+
+    for (const lookupName of candidates) {
+        const found = await qboFindItemsByName(qbo, lookupName);
+        const usable = found.find(i => SAFE_ITEM_TYPES.has(i.Type));
+        if (usable) return usable.Id;
+
+        if (found.some(i => i.Type === 'Category')) {
+            console.log(`⚠️ Item name '${lookupName}' bentrok dengan Category di QBO — coba nama alternatif`);
+            continue;
+        }
+
+        if (!incomeAccountId) {
+            console.log(`⚠️ Item '${lookupName}' tidak ada & tidak bisa auto-create (no income account)`);
+            return null;
+        }
+
+        const { errC, bodyC } = await new Promise((resolve) => {
             qbo.createItem({
                 Name: lookupName,
                 Type: 'Service',
                 IncomeAccountRef: { value: incomeAccountId },
                 UnitPrice: Number(item.sell_price || item.price) || 0,
-            }, (errC, bodyC) => {
-                if (errC) {
-                    const detail = extractQboError(errC, bodyC);
-                    // QBO "Duplicate Name Exists" error returns the existing Id
-                    // in the error detail: "... : Id=53". Reuse it instead of
-                    // falling back to the generic item.
-                    const dupMatch = /Id=(\d+)/i.exec(detail);
-                    if (dupMatch) {
-                        const existingId = dupMatch[1];
-                        console.log(`ℹ️ Item '${lookupName}' sudah ada (ID ${existingId}) — pakai existing.`);
-                        return resolve(existingId);
-                    }
-                    console.log(`⚠️ createItem gagal '${lookupName}': ${detail} — fallback ke generic item`);
-                    return getGenericItem(qbo, incomeAccountId).then(id => resolve(id));
-                }
-                console.log(`✅ Item created: ${lookupName} (ID: ${bodyC.Id})`);
-                resolve(bodyC.Id);
-            });
+            }, (e, b) => resolve({ errC: e, bodyC: b }));
         });
-    });
+        if (!errC) {
+            console.log(`✅ Item created: ${lookupName} (ID: ${bodyC.Id})`);
+            return bodyC.Id;
+        }
+
+        const detail = extractQboError(errC, bodyC);
+        // QBO "Duplicate Name Exists" returns the existing Id in the error
+        // detail ("... : Id=53"). Verify the existing record is a usable type
+        // before reusing — if it's a Category, try an alternative name.
+        const dupMatch = /Id=(\d+)/i.exec(detail);
+        if (dupMatch) {
+            const existingId = dupMatch[1];
+            const existingType = await qboGetItemType(qbo, existingId);
+            if (existingType && SAFE_ITEM_TYPES.has(existingType)) {
+                console.log(`ℹ️ Item '${lookupName}' sudah ada (ID ${existingId}, Type ${existingType}) — pakai existing.`);
+                return existingId;
+            }
+            console.log(`⚠️ Item '${lookupName}' bentrok dengan ${existingType || 'unknown'} (ID ${existingId}) — coba nama alternatif`);
+            continue;
+        }
+
+        console.log(`⚠️ createItem gagal '${lookupName}': ${detail}`);
+        break;
+    }
+
+    console.log(`⚠️ Semua nama kandidat gagal untuk item '${baseName}' — fallback ke generic item`);
+    return await getGenericItem(qbo, incomeAccountId);
 };
 
 // ─── Build QBO Invoice Line array from Jubelio SO ───
