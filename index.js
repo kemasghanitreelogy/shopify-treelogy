@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const jubelioWebhookRoutes = require('./routes/jubelioWebhook');
 const codeRoutes = require('./routes/generateCode');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/webhook/jubelio', jubelioWebhookRoutes);
 app.use('/api/codes', codeRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
     res.send('Jubelio to QBO Integration is running.');

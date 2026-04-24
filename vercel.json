@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "index.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/admin/audit-txndate?days=14&fix=1",
+      "schedule": "0 1 * * *"
+    }
   ]
 }

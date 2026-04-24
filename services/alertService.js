@@ -158,9 +158,29 @@ const sendTestAlert = async () => {
     }
 };
 
+// Audit summary alert — sent by scheduled date-correctness reconciliation.
+const alertAuditReport = ({ scope, scanned, mismatches, fixed, errors }) => {
+    if (!isConfigured()) return;
+    const ok = mismatches === 0 && errors === 0;
+    const title = ok ? '✅ TxnDate Audit OK' : '⚠️ TxnDate Audit FOUND DRIFT';
+    const lines = [
+        `<b>${title}</b>`,
+        '',
+        `🔍 Scope: ${escapeHtml(scope)}`,
+        `📊 Scanned: ${scanned}`,
+        `❌ Mismatches: ${mismatches}`,
+        `🔧 Auto-fixed: ${fixed}`,
+        `⚠️ Errors: ${errors}`,
+        '',
+        `🕐 ${fmtWib()} WIB`,
+    ];
+    fireAndForget(sendRaw(lines.join('\n')));
+};
+
 module.exports = {
     isConfigured,
     alertWebhookError,
     alertAuthRejected,
+    alertAuditReport,
     sendTestAlert,
 };
