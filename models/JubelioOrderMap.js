@@ -9,6 +9,10 @@ const JubelioOrderMapSchema = new mongoose.Schema({
     last_status: String,
     last_grand_total: Number,
     last_synced_at: { type: Date, default: Date.now },
+    // Audit fields for date-correctness reconciliation. Stored on every upsert
+    // so we can later compare what Jubelio sent vs what landed on QBO.
+    last_transaction_date_raw: String,   // raw value from Jubelio webhook
+    last_txn_date: String,                // YYYY-MM-DD computed (Asia/Jakarta)
 }, { timestamps: true });
 
 // Compound unique so sandbox & production mappings can coexist for the same SO.

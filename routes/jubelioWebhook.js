@@ -799,6 +799,8 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
                 last_status: so.status,
                 last_grand_total: so.grand_total,
                 last_synced_at: new Date(),
+                last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
+                last_txn_date: txnDate || null,
             }
         );
         return { action: 'updated', invoice: updated, customerId };
@@ -823,6 +825,8 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         last_status: so.status,
         last_grand_total: so.grand_total,
         last_synced_at: new Date(),
+        last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
+        last_txn_date: txnDate || null,
     });
     return { action: 'created', invoice: created, customerId };
 };
