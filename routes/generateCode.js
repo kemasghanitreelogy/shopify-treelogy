@@ -65,15 +65,8 @@ router.post('/generate', async (req, res) => {
         code,
         prefix,
         body,
-        length: {
-            full: code.length,
-            body: body.length,
-        },
-        channel: {
-            prefix,
-            name: channel.name,
-            terms: channel.terms,
-        },
+        length: { full: code.length, body: body.length },
+        channel: { prefix, name: channel.name, terms: channel.terms },
         uniqueness: {
             checked: true,
             source: 'JubelioOrderMap.salesorder_no',
@@ -89,7 +82,7 @@ router.post('/generate', async (req, res) => {
     });
 });
 
-// GET /api/codes/generator — HTML UI
+// GET /api/codes/generator — HTML UI (single-screen, no scroll)
 router.get('/generator', (_req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
@@ -107,20 +100,20 @@ const HTML = `<!doctype html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { -webkit-font-smoothing: antialiased; }
+  *, *::before, *::after { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
   body { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
   .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: 'ss02'; }
 
-  .bg-grid {
-    background-image:
-      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0);
-    background-size: 24px 24px;
-  }
   .bg-aurora {
     background:
-      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(139, 92, 246, 0.18), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 80% 30%, rgba(99, 102, 241, 0.12), transparent 60%),
-      radial-gradient(ellipse 50% 30% at 50% 100%, rgba(16, 185, 129, 0.10), transparent 60%);
+      radial-gradient(ellipse 60% 50% at 15% 10%, rgba(139, 92, 246, 0.20), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 30%, rgba(99, 102, 241, 0.14), transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 110%, rgba(16, 185, 129, 0.10), transparent 60%);
+  }
+  .bg-grid {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0);
+    background-size: 24px 24px;
   }
   .glass {
     background: rgba(255,255,255,0.03);
@@ -128,7 +121,6 @@ const HTML = `<!doctype html>
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255,255,255,0.08);
   }
-  .chip-glow { box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.25); }
   .btn-primary {
     background-image: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%);
     box-shadow: 0 10px 30px -10px rgba(99,102,241,0.55), inset 0 1px 0 rgba(255,255,255,0.15);
@@ -137,17 +129,16 @@ const HTML = `<!doctype html>
   .btn-primary:active { transform: translateY(1px); }
 
   @keyframes popIn {
-    from { opacity: 0; transform: translateY(12px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(8px) scale(0.99); }
+    to   { opacity: 1; transform: none; }
   }
-  .pop-in { animation: popIn 420ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .pop-in { animation: popIn 360ms cubic-bezier(0.22, 1, 0.36, 1); }
 
   @keyframes shimmerChar {
-    0%   { opacity: 0; transform: translateY(-4px); }
-    30%  { opacity: 1; transform: translateY(0); }
-    100% { opacity: 1; transform: translateY(0); }
+    0%   { opacity: 0; transform: translateY(-4px); filter: blur(4px); }
+    100% { opacity: 1; transform: translateY(0); filter: blur(0); }
   }
-  .char-reveal > span { display: inline-block; animation: shimmerChar 500ms ease forwards; opacity: 0; }
+  .char-reveal > span { display: inline-block; animation: shimmerChar 420ms ease forwards; opacity: 0; }
 
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinner { animation: spin 0.8s linear infinite; }
@@ -158,16 +149,16 @@ const HTML = `<!doctype html>
   }
   .toast { animation: fadeSlide 220ms ease; }
 
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
 
   kbd {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 6px;
+    font-size: 10.5px;
+    padding: 1px 5px;
+    border-radius: 5px;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.12);
     border-bottom-width: 2px;
@@ -176,197 +167,194 @@ const HTML = `<!doctype html>
 
   .channel-btn {
     position: relative;
-    transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+    transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   }
-  .channel-btn:hover { transform: translateY(-2px); }
+  .channel-btn:hover { transform: translateY(-1px); }
   .channel-btn[data-selected="true"] {
-    border-color: rgba(139, 92, 246, 0.6);
+    border-color: rgba(139, 92, 246, 0.55);
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(99, 102, 241, 0.08));
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12), 0 12px 32px -10px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.14), 0 12px 32px -10px rgba(139, 92, 246, 0.4);
   }
   .channel-btn[data-selected="true"] .channel-check { opacity: 1; transform: scale(1); }
-  .channel-check { opacity: 0; transform: scale(0.6); transition: all 0.2s ease; }
+  .channel-check { opacity: 0; transform: scale(0.6); transition: all 0.2s ease; position: absolute; top: 10px; right: 10px; }
+
+  /* Fit-to-viewport container: no page scroll, inner panes scroll independently if needed */
+  .app-shell {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100svh;
+    min-height: 100vh;
+    max-height: 100vh;
+  }
+  .main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 14px;
+    min-height: 0;
+  }
+  @media (max-width: 880px) {
+    .main-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, auto); }
+    .history-panel { max-height: 190px; }
+  }
+
+  .code-display {
+    font-size: clamp(20px, 3.6vw, 38px);
+    letter-spacing: 0.03em;
+  }
 </style>
 </head>
-<body class="relative min-h-screen bg-zinc-950 text-zinc-100">
+<body class="relative bg-zinc-950 text-zinc-100">
   <div class="pointer-events-none absolute inset-0 bg-aurora"></div>
   <div class="pointer-events-none absolute inset-0 bg-grid opacity-40"></div>
 
-  <div class="relative mx-auto max-w-4xl px-5 py-10 sm:py-14">
-    <!-- Header -->
+  <div class="relative app-shell px-4 sm:px-6 py-3 sm:py-4 gap-3">
+
+    <!-- ░░ Header ░░ -->
     <header class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl chip-glow"
-             style="background: linear-gradient(135deg, #8b5cf6, #3b82f6);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg"
+             style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); box-shadow: 0 8px 20px -6px rgba(139,92,246,0.5);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
             <path d="M9 12l2 2 4-4"/>
           </svg>
         </div>
-        <div>
-          <div class="text-sm font-semibold text-white">SO Code Generator</div>
-          <div class="text-xs text-zinc-400">Jubelio ↔ QuickBooks · Treelogy</div>
+        <div class="leading-tight">
+          <div class="text-[13px] font-semibold text-white">SO Code Generator</div>
+          <div class="text-[11px] text-zinc-500">Jubelio ↔ QBO · Treelogy</div>
         </div>
       </div>
-      <div class="hidden sm:flex items-center gap-2 rounded-full glass px-3 py-1.5">
-        <div id="statusDot" class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
-        <span id="statusText" class="text-xs font-medium text-zinc-300">Ready</span>
+      <div class="flex items-center gap-2 rounded-full glass px-2.5 py-1">
+        <div id="statusDot" class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+        <span id="statusText" class="text-[11px] font-medium text-zinc-300">Ready</span>
       </div>
     </header>
 
-    <!-- Hero -->
-    <section class="mt-10 sm:mt-14">
-      <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">
-        <span class="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-          Generate a unique
-        </span>
-        <br>
-        <span class="bg-gradient-to-r from-violet-300 via-indigo-300 to-sky-300 bg-clip-text text-transparent">
-          Sales Order code.
-        </span>
-      </h1>
-      <p class="mt-4 max-w-xl text-sm sm:text-base text-zinc-400">
-        Pilih channel, tekan Generate. Kode 18 karakter acak akan di-cek ke MongoDB agar tidak bentrok dengan <code class="font-mono text-zinc-300">salesorder_no</code> yang sudah ada.
-      </p>
-    </section>
-
-    <!-- Channel picker -->
-    <section class="mt-10">
-      <div class="mb-3 flex items-center justify-between">
-        <div class="text-xs uppercase tracking-[0.12em] text-zinc-500 font-semibold">Channel</div>
-        <div class="text-xs text-zinc-500">Keyboard: <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></div>
-      </div>
-      <div id="channelGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <!-- filled by JS -->
-      </div>
-    </section>
-
-    <!-- Generate + Result -->
-    <section class="mt-8">
-      <div class="glass rounded-2xl p-6 sm:p-8">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div class="text-xs uppercase tracking-[0.12em] text-zinc-500 font-semibold">Action</div>
-            <div class="mt-1 text-sm text-zinc-300">
-              <span id="summaryLine">Pilih channel dulu.</span>
+    <!-- ░░ Main grid ░░ -->
+    <main class="main-grid">
+      <!-- Left column: channel picker + result -->
+      <section class="glass rounded-2xl p-4 sm:p-5 flex flex-col min-h-0 overflow-hidden">
+        <!-- Channel picker -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-bold">Channel</div>
+            <div class="text-[10px] text-zinc-500 hidden sm:flex gap-1 items-center">
+              <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>
             </div>
           </div>
-          <button id="generateBtn" type="button"
-                  class="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"
-                  disabled>
-            <svg id="genIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-            </svg>
-            <span id="genLabel">Generate Code</span>
-            <kbd class="ml-1 !bg-white/10 !border-white/20 !text-white">⏎</kbd>
-          </button>
+          <div id="channelGrid" class="grid grid-cols-4 gap-2"></div>
         </div>
 
-        <!-- Empty / Result -->
-        <div id="emptyState" class="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-14 text-center">
-          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-400">
-              <rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 1 1 8 0v2"/>
-            </svg>
+        <!-- Result area (flex-1) -->
+        <div class="mt-4 flex-1 flex flex-col min-h-0">
+          <!-- Empty -->
+          <div id="emptyState" class="flex-1 flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 text-center p-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-400">
+                <rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 1 1 8 0v2"/>
+              </svg>
+            </div>
+            <div class="mt-2 text-[13px] font-medium text-zinc-300">Pilih channel untuk mulai</div>
+            <div class="text-[11px] text-zinc-500">Lalu tekan <kbd>Enter</kbd> atau klik Generate</div>
           </div>
-          <div class="mt-3 text-sm font-medium text-zinc-300">Belum ada kode</div>
-          <div class="mt-1 text-xs text-zinc-500">Pilih channel, generate akan muncul di sini</div>
-        </div>
 
-        <div id="result" class="hidden mt-8">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <span id="resChannelPill" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"></span>
-              <span class="text-xs text-zinc-500">·</span>
-              <span id="resTerms" class="text-xs text-zinc-400"></span>
+          <!-- Result -->
+          <div id="result" class="hidden flex-1 flex flex-col min-h-0">
+            <!-- Meta pills -->
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span id="resChannelPill" class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold"></span>
+                <span id="resTerms" class="text-[11px] text-zinc-400"></span>
+                <span class="text-[11px] text-zinc-600">·</span>
+                <span class="text-[11px] text-zinc-400">
+                  <span id="resLength" class="font-mono">—</span> chars
+                </span>
+              </div>
+              <div class="text-[11px] text-zinc-500">
+                <span id="resTime">—</span>
+              </div>
             </div>
-            <div class="text-xs text-zinc-500">
-              Length <span id="resLength" class="font-mono text-zinc-300">—</span>
+
+            <!-- Big code display -->
+            <div class="relative flex-1 rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-transparent p-4 sm:p-5 flex items-center justify-center min-h-0">
+              <div id="resCode" class="char-reveal font-mono font-semibold code-display break-all select-all text-center leading-tight"></div>
             </div>
-          </div>
-          <div class="group relative rounded-xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-            <div id="resCode" class="char-reveal font-mono text-xl sm:text-3xl md:text-4xl font-semibold tracking-[0.04em] break-all select-all"></div>
-            <div class="mt-4 flex flex-wrap items-center gap-2">
+
+            <!-- Actions + meta -->
+            <div class="mt-3 flex flex-wrap items-center gap-2">
               <button id="copyBtn" type="button"
-                      class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-white/10 transition">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-medium text-zinc-200 hover:bg-white/10 transition">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
                 <span id="copyBtnLabel">Copy</span>
-                <kbd class="!py-0.5 !px-1.5">C</kbd>
+                <kbd class="!py-0 !px-1 text-[10px]">C</kbd>
               </button>
               <button id="regenBtn" type="button"
-                      class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-white/10 transition">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-medium text-zinc-200 hover:bg-white/10 transition">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
                 </svg>
                 Regenerate
-                <kbd class="!py-0.5 !px-1.5">R</kbd>
+                <kbd class="!py-0 !px-1 text-[10px]">R</kbd>
               </button>
-              <button id="jsonBtn" type="button"
-                      class="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-white/10 transition">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
-                </svg>
-                View JSON
-              </button>
+
+              <!-- Inline meta -->
+              <div class="ml-auto flex items-center gap-3 text-[10.5px] text-zinc-500">
+                <span title="Collision checks before unique">↻ <span id="resAttempts" class="font-mono text-zinc-300">—</span></span>
+                <span title="Alphabet size">Σ <span id="resAlphabet" class="font-mono text-zinc-300">—</span></span>
+                <span title="Entropy (bits)">⚡ <span id="resEntropy" class="font-mono text-zinc-300">—</span></span>
+              </div>
             </div>
           </div>
 
-          <!-- Meta grid -->
-          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div class="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-              <div class="text-zinc-500">Collision checks</div>
-              <div id="resAttempts" class="mt-1 font-mono font-semibold text-zinc-200">—</div>
-            </div>
-            <div class="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-              <div class="text-zinc-500">Alphabet size</div>
-              <div id="resAlphabet" class="mt-1 font-mono font-semibold text-zinc-200">—</div>
-            </div>
-            <div class="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-              <div class="text-zinc-500">Entropy</div>
-              <div id="resEntropy" class="mt-1 font-mono font-semibold text-zinc-200">—</div>
-            </div>
-            <div class="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-              <div class="text-zinc-500">Generated</div>
-              <div id="resTime" class="mt-1 font-mono font-semibold text-zinc-200">—</div>
-            </div>
-          </div>
-
-          <!-- JSON drawer -->
-          <div id="jsonDrawer" class="hidden mt-4">
-            <pre id="jsonPre" class="overflow-x-auto rounded-lg border border-white/10 bg-zinc-950/60 p-4 text-xs font-mono text-emerald-200/90"></pre>
-          </div>
+          <div id="errorBox" class="hidden mt-2 rounded-lg border border-red-500/30 bg-red-500/10 p-2.5 text-[11.5px] text-red-200"></div>
         </div>
 
-        <div id="errorBox" class="hidden mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200"></div>
-      </div>
-    </section>
+        <!-- Generate bar -->
+        <div class="mt-4 flex items-center justify-between gap-3 border-t border-white/5 pt-4">
+          <div id="summaryLine" class="text-[11.5px] text-zinc-400 truncate">Pilih channel dulu untuk mulai generate.</div>
+          <button id="generateBtn" type="button"
+                  class="btn-primary shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled>
+            <svg id="genIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+            </svg>
+            <span id="genLabel">Generate</span>
+            <kbd class="ml-1 !bg-white/10 !border-white/20 !text-white">⏎</kbd>
+          </button>
+        </div>
+      </section>
 
-    <!-- History -->
-    <section class="mt-10">
-      <div class="flex items-center justify-between mb-3">
-        <div class="text-xs uppercase tracking-[0.12em] text-zinc-500 font-semibold">Recent</div>
-        <button id="clearHistoryBtn" class="text-xs text-zinc-500 hover:text-zinc-300">Clear</button>
-      </div>
-      <div id="history" class="space-y-2"></div>
-      <div id="historyEmpty" class="text-sm text-zinc-500">Belum ada history di sesi ini.</div>
-    </section>
+      <!-- Right column: history panel -->
+      <aside class="glass rounded-2xl p-4 flex flex-col min-h-0 history-panel">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[10px] uppercase tracking-[0.14em] text-zinc-500 font-bold">Recent</div>
+          <button id="clearHistoryBtn" class="text-[10px] text-zinc-500 hover:text-zinc-300 transition">Clear</button>
+        </div>
+        <div id="historyEmpty" class="flex-1 flex items-center justify-center text-[11px] text-zinc-500 text-center px-2">
+          Belum ada code di sesi ini.<br>Generate untuk mulai.
+        </div>
+        <div id="history" class="flex-1 overflow-y-auto pr-1 space-y-1.5 hidden"></div>
+      </aside>
+    </main>
 
-    <footer class="mt-14 pb-6 text-center text-xs text-zinc-600">
-      <div>
-        Endpoint <code class="font-mono text-zinc-400">POST /api/codes/generate</code>
-        · Unique against <code class="font-mono text-zinc-400">JubelioOrderMap.salesorder_no</code>
+    <!-- ░░ Footer ░░ -->
+    <footer class="flex flex-wrap items-center justify-between gap-2 text-[10.5px] text-zinc-500">
+      <div class="flex items-center gap-3">
+        <span>Endpoint <code class="font-mono text-zinc-400">POST /api/codes/generate</code></span>
+        <span class="text-zinc-700 hidden sm:inline">|</span>
+        <span class="hidden sm:inline">Unique vs <code class="font-mono text-zinc-400">JubelioOrderMap.salesorder_no</code></span>
       </div>
-      <div class="mt-2">
-        Shortcuts: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> pick · <kbd>Enter</kbd> generate · <kbd>C</kbd> copy · <kbd>R</kbd> regenerate
+      <div class="flex items-center gap-1.5 hidden md:flex">
+        <kbd>1-4</kbd>pick <kbd>⏎</kbd>gen <kbd>C</kbd>copy <kbd>R</kbd>regen
       </div>
     </footer>
   </div>
 
-  <!-- Toast -->
-  <div id="toastRoot" class="pointer-events-none fixed inset-x-0 bottom-6 flex justify-center"></div>
+  <!-- Toast root -->
+  <div id="toastRoot" class="pointer-events-none fixed inset-x-0 bottom-4 flex justify-center z-50"></div>
 
 <script>
 const CHANNELS = {
@@ -387,24 +375,22 @@ Object.entries(CHANNELS).forEach(([prefix, ch]) => {
   btn.type = 'button';
   btn.dataset.prefix = prefix;
   btn.dataset.selected = 'false';
-  btn.className = 'channel-btn group rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-left';
+  btn.className = 'channel-btn rounded-xl border border-white/10 bg-white/[0.02] p-2.5 text-left';
   btn.innerHTML = \`
-    <div class="flex items-start justify-between">
-      <div class="flex h-9 w-9 items-center justify-center rounded-lg text-lg"
-           style="background: \${ch.accent}22; color: \${ch.accent};">\${ch.emoji}</div>
-      <div class="channel-check">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/>
-        </svg>
-      </div>
+    <div class="channel-check">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/>
+      </svg>
     </div>
-    <div class="mt-3">
-      <div class="flex items-baseline gap-2">
-        <div class="font-mono text-sm font-semibold" style="color: \${ch.accent};">\${prefix}</div>
-        <div class="text-xs text-zinc-500">\${ch.keyNum}</div>
+    <div class="flex h-7 w-7 items-center justify-center rounded-md text-[14px]"
+         style="background: \${ch.accent}22; color: \${ch.accent};">\${ch.emoji}</div>
+    <div class="mt-2">
+      <div class="flex items-baseline gap-1.5">
+        <div class="font-mono text-[11px] font-bold" style="color: \${ch.accent};">\${prefix}</div>
+        <div class="text-[9px] text-zinc-600">\${ch.keyNum}</div>
       </div>
-      <div class="mt-0.5 text-sm font-semibold text-white">\${ch.name}</div>
-      <div class="mt-0.5 text-xs text-zinc-500">\${ch.terms}</div>
+      <div class="mt-0.5 text-[11.5px] font-semibold text-white leading-tight truncate">\${ch.name}</div>
+      <div class="text-[10px] text-zinc-500">\${ch.terms}</div>
     </div>\`;
   btn.addEventListener('click', () => select(prefix));
   channelGrid.appendChild(btn);
@@ -417,7 +403,7 @@ function select(prefix) {
   });
   const ch = CHANNELS[prefix];
   document.getElementById('summaryLine').innerHTML =
-    \`Channel <b>\${ch.name}</b> · Prefix <span class="font-mono" style="color:\${ch.accent}">\${prefix}</span> · Terms \${ch.terms}\`;
+    \`<b style="color:\${ch.accent}">\${prefix}</b> · \${ch.name} · \${ch.terms}\`;
   document.getElementById('generateBtn').disabled = false;
 }
 
@@ -455,7 +441,7 @@ async function generate() {
     setStatus('Error', 'red');
   } finally {
     icon.classList.remove('spinner');
-    label.textContent = 'Generate Code';
+    label.textContent = 'Generate';
     generateBtn.disabled = false;
     busy = false;
   }
@@ -467,7 +453,6 @@ function renderResult(j) {
   const wrap = document.getElementById('result');
   wrap.classList.remove('hidden');
   wrap.classList.remove('pop-in');
-  // Force reflow to restart animation
   void wrap.offsetWidth;
   wrap.classList.add('pop-in');
 
@@ -479,28 +464,22 @@ function renderResult(j) {
   pill.style.border = '1px solid ' + ch.accent + '33';
 
   document.getElementById('resTerms').textContent = j.channel.terms;
-  document.getElementById('resLength').textContent = j.length.full + ' chars';
+  document.getElementById('resLength').textContent = j.length.full;
 
-  // Char-by-char reveal
   const codeEl = document.getElementById('resCode');
   codeEl.innerHTML = '';
   j.code.split('').forEach((ch, i) => {
     const s = document.createElement('span');
     s.textContent = ch;
-    s.style.animationDelay = (i * 22) + 'ms';
+    s.style.animationDelay = (i * 20) + 'ms';
     codeEl.appendChild(s);
   });
 
   document.getElementById('resAttempts').textContent = j.uniqueness.collisionAttempts;
-  document.getElementById('resAlphabet').textContent = j.alphabet.size + ' chars';
+  document.getElementById('resAlphabet').textContent = j.alphabet.size;
   const entropyBits = Math.log2(j.alphabet.size) * j.length.body;
-  document.getElementById('resEntropy').textContent = entropyBits.toFixed(0) + ' bits';
-  const d = new Date(j.generatedAt);
-  document.getElementById('resTime').textContent = d.toLocaleTimeString('id-ID');
-
-  document.getElementById('jsonPre').textContent = JSON.stringify(j, null, 2);
-  document.getElementById('jsonDrawer').classList.add('hidden');
-  document.getElementById('jsonBtn').textContent = 'View JSON';
+  document.getElementById('resEntropy').textContent = entropyBits.toFixed(0) + 'b';
+  document.getElementById('resTime').textContent = new Date(j.generatedAt).toLocaleTimeString('id-ID');
 }
 
 // ── Copy ────────────────────────────────────────────────
@@ -508,26 +487,16 @@ async function copyCode() {
   if (!lastResult) return;
   try {
     await navigator.clipboard.writeText(lastResult.code);
-    toast('Copied to clipboard', 'emerald');
+    toast('Copied: ' + lastResult.code, 'emerald');
     const lbl = document.getElementById('copyBtnLabel');
     lbl.textContent = 'Copied';
     setTimeout(() => lbl.textContent = 'Copy', 1200);
-  } catch (e) {
+  } catch {
     toast('Copy failed', 'red');
   }
 }
 document.getElementById('copyBtn').addEventListener('click', copyCode);
 document.getElementById('regenBtn').addEventListener('click', generate);
-document.getElementById('jsonBtn').addEventListener('click', () => {
-  const d = document.getElementById('jsonDrawer');
-  const btn = document.getElementById('jsonBtn');
-  d.classList.toggle('hidden');
-  btn.querySelector('svg').nextSibling && (btn.childNodes[btn.childNodes.length - 1].textContent = '');
-  const isHidden = d.classList.contains('hidden');
-  const text = document.createTextNode(isHidden ? 'View JSON' : 'Hide JSON');
-  // Simpler: just re-render the label
-  btn.lastChild.textContent = isHidden ? 'View JSON' : 'Hide JSON';
-});
 
 // ── History ─────────────────────────────────────────────
 function loadHistory() {
@@ -536,9 +505,7 @@ function loadHistory() {
     return s ? JSON.parse(s) : [];
   } catch { return []; }
 }
-function saveHistory(items) {
-  sessionStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, 15)));
-}
+function saveHistory(items) { sessionStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, 20))); }
 function pushHistory(j) {
   const items = loadHistory();
   items.unshift({ code: j.code, prefix: j.prefix, channel: j.channel.name, time: j.generatedAt });
@@ -550,32 +517,39 @@ function renderHistory() {
   const wrap = document.getElementById('history');
   const empty = document.getElementById('historyEmpty');
   if (items.length === 0) {
-    wrap.innerHTML = '';
+    wrap.classList.add('hidden');
     empty.classList.remove('hidden');
+    wrap.innerHTML = '';
     return;
   }
   empty.classList.add('hidden');
-  wrap.innerHTML = items.map((it, i) => {
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = items.map((it) => {
     const ch = CHANNELS[it.prefix] || { accent: '#a3a3a3' };
-    const t = new Date(it.time).toLocaleTimeString('id-ID');
+    const t = new Date(it.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     return \`
-      <div class="group flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-4 py-3 hover:border-white/10 transition">
-        <div class="flex items-center gap-3 min-w-0">
-          <span class="inline-flex h-6 min-w-[2.5rem] items-center justify-center rounded-md text-[10px] font-bold"
+      <div class="group flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-2.5 py-2 hover:border-white/10 hover:bg-white/[0.04] transition">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="inline-flex h-5 min-w-[2.2rem] items-center justify-center rounded text-[9px] font-bold"
                 style="background:\${ch.accent}22;color:\${ch.accent};">\${it.prefix}</span>
-          <span class="font-mono text-sm text-zinc-200 truncate">\${it.code}</span>
+          <div class="min-w-0">
+            <div class="font-mono text-[10.5px] text-zinc-200 truncate">\${it.code}</div>
+            <div class="text-[9px] text-zinc-600">\${t}</div>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs text-zinc-500 hidden sm:inline">\${t}</span>
-          <button data-copy="\${it.code}" class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-zinc-300 hover:bg-white/10 transition">Copy</button>
-        </div>
+        <button data-copy="\${it.code}" title="Copy" class="opacity-0 group-hover:opacity-100 transition rounded border border-white/10 bg-white/5 p-1 text-zinc-300 hover:bg-white/10">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </button>
       </div>\`;
   }).join('');
   wrap.querySelectorAll('[data-copy]').forEach(b => {
-    b.addEventListener('click', async () => {
+    b.addEventListener('click', async (e) => {
+      e.stopPropagation();
       try {
         await navigator.clipboard.writeText(b.dataset.copy);
-        toast('Copied ' + b.dataset.copy, 'emerald');
+        toast('Copied', 'emerald');
       } catch { toast('Copy failed', 'red'); }
     });
   });
@@ -593,16 +567,16 @@ function setStatus(text, color) {
   const txt = document.getElementById('statusText');
   txt.textContent = text;
   const map = {
-    emerald: ['bg-emerald-400', 'shadow-[0_0_8px_rgba(52,211,153,0.8)]'],
-    amber:   ['bg-amber-400',   'shadow-[0_0_8px_rgba(251,191,36,0.8)]'],
-    red:     ['bg-red-400',     'shadow-[0_0_8px_rgba(248,113,113,0.8)]'],
-    zinc:    ['bg-zinc-400',    ''],
+    emerald: 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]',
+    amber:   'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]',
+    red:     'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]',
+    zinc:    'bg-zinc-400',
   };
-  dot.className = 'h-2 w-2 rounded-full ' + (map[color] || map.emerald).join(' ');
+  dot.className = 'h-1.5 w-1.5 rounded-full ' + (map[color] || map.emerald);
 }
 function showError(msg) {
   const b = document.getElementById('errorBox');
-  b.textContent = '❌ ' + msg;
+  b.textContent = '⚠ ' + msg;
   b.classList.remove('hidden');
 }
 function hideError() { document.getElementById('errorBox').classList.add('hidden'); }
@@ -610,12 +584,12 @@ function hideError() { document.getElementById('errorBox').classList.add('hidden
 function toast(text, color = 'emerald') {
   const root = document.getElementById('toastRoot');
   const n = document.createElement('div');
-  const bg = { emerald: 'bg-emerald-500/90', red: 'bg-red-500/90', zinc: 'bg-zinc-700/95' }[color] || 'bg-zinc-700/95';
-  n.className = 'toast pointer-events-auto rounded-full ' + bg + ' px-4 py-2 text-sm font-medium text-white shadow-lg';
+  const bg = { emerald: 'bg-emerald-500/95', red: 'bg-red-500/95', zinc: 'bg-zinc-700/95' }[color] || 'bg-zinc-700/95';
+  n.className = 'toast pointer-events-auto rounded-full ' + bg + ' px-3.5 py-1.5 text-[12px] font-medium text-white shadow-lg';
   n.textContent = text;
   root.appendChild(n);
-  setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translateY(6px)'; n.style.transition = 'all .2s'; }, 1600);
-  setTimeout(() => n.remove(), 1900);
+  setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translateY(6px)'; n.style.transition = 'all .2s'; }, 1500);
+  setTimeout(() => n.remove(), 1800);
 }
 
 // ── Keyboard shortcuts ───────────────────────────────────
