@@ -177,10 +177,33 @@ const alertAuditReport = ({ scope, scanned, mismatches, fixed, errors }) => {
     fireAndForget(sendRaw(lines.join('\n')));
 };
 
+// Per-invoice resync result — fired during audit auto-fix so the operator
+// gets a granular trail of exactly which invoices were touched.
+const alertResyncResult = ({ ok, so, invoiceId, layer, fromDate, toDate, error }) => {
+    if (!isConfigured()) return;
+    const title = ok ? '🔧 TxnDate Resync OK' : '❌ TxnDate Resync FAILED';
+    const lines = [
+        `<b>${title}</b>`,
+        '',
+        `📦 SO: ${escapeHtml(so)}`,
+        `🆔 QBO Invoice: ${escapeHtml(invoiceId)}`,
+        `🏷️  Layer: ${escapeHtml(layer)}`,
+    ];
+    if (ok) {
+        lines.push(`📅 ${escapeHtml(fromDate || '?')} → <b>${escapeHtml(toDate || '?')}</b>`);
+    } else {
+        lines.push(`📅 Current: ${escapeHtml(fromDate || '?')}  Target: ${escapeHtml(toDate || '?')}`);
+        if (error) lines.push(`💥 ${escapeHtml(String(error).slice(0, 250))}`);
+    }
+    lines.push('', `🕐 ${fmtWib()} WIB`);
+    fireAndForget(sendRaw(lines.join('\n')));
+};
+
 module.exports = {
     isConfigured,
     alertWebhookError,
     alertAuthRejected,
     alertAuditReport,
+    alertResyncResult,
     sendTestAlert,
 };

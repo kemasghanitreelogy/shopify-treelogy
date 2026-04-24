@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const { getQboInstance } = require('../services/qboService');
-const { alertAuditReport } = require('../services/alertService');
+const { alertAuditReport, alertResyncResult } = require('../services/alertService');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -54,12 +54,20 @@ const updateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
     qbo.updateInvoice(payload, (err, body) => err ? reject(err) : resolve(body));
 });
 
-// GET/POST /api/admin/audit-txndate?days=14&fix=1
-// Scans recent JubelioOrderMap entries, fetches each QBO Invoice, verifies
-// TxnDate, and (if fix=1) auto-patches mismatches that have ground truth.
+// GET/POST /api/admin/audit-txndate?days=14&fix=1&all=1&notify=1
+//   days   — lookback window (default 14, 0 = all time)
+//   fix    — set to 1 to auto-patch mismatches (default report-only)
+//   all    — also auto-fix legacy non-Shopee gap=1d (default off)
+//   notify — set to 0 to suppress per-invoice Telegram alerts (default on if fix=1)
+//
+// Scans JubelioOrderMap, fetches each QBO Invoice, verifies TxnDate, and
+// (when fix=1) re-syncs the invoice via sparse update. Per-invoice resync
+// outcome is sent to Telegram so the operator gets a granular trail.
 router.all('/audit-txndate', requireAdmin, async (req, res) => {
     const days = Number(req.query.days || 14);
     const doFix = String(req.query.fix || '0') === '1';
+    const allChannels = String(req.query.all || '0') === '1';
+    const notify = String(req.query.notify ?? '1') === '1';
     const t0 = Date.now();
 
     try {
@@ -69,7 +77,7 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
             .select('salesorder_no qbo_invoice_id last_transaction_date_raw')
             .lean();
 
-        const shopeeFix = [], verifiedFix = [], legacyReport = [], errors = [];
+        const shopeeFix = [], verifiedFix = [], legacyFix = [], legacyReport = [], errors = [];
         for (const r of rows) {
             const { inv, err } = await getInvoice(qbo, r.qbo_invoice_id);
             if (err) {
@@ -78,35 +86,44 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
             }
             const shopeeDate = parseShopeeDate(r.salesorder_no);
             if (shopeeDate) {
-                if (inv.TxnDate !== shopeeDate) shopeeFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken });
+                if (inv.TxnDate !== shopeeDate) shopeeFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken, layer: 'SHOPEE' });
                 continue;
             }
             if (r.last_transaction_date_raw) {
                 const expected = isoDateJakarta(r.last_transaction_date_raw);
-                if (expected && inv.TxnDate !== expected) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected, syncToken: inv.SyncToken });
+                if (expected && inv.TxnDate !== expected) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected, syncToken: inv.SyncToken, layer: 'VERIFIED' });
                 continue;
             }
             const jktCreate = isoDateJakarta(inv.MetaData?.CreateTime);
-            if (jktCreate && inv.TxnDate && dayDiff(jktCreate, inv.TxnDate) === 1) {
-                legacyReport.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, jktCreate });
+            if (!jktCreate || !inv.TxnDate) continue;
+            if (dayDiff(jktCreate, inv.TxnDate) === 1) {
+                if (allChannels) {
+                    legacyFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: jktCreate, syncToken: inv.SyncToken, layer: 'LEGACY' });
+                } else {
+                    legacyReport.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, jktCreate });
+                }
             }
         }
 
         const fixed = [];
         if (doFix) {
-            for (const m of [...shopeeFix, ...verifiedFix]) {
+            const queue = [...shopeeFix, ...verifiedFix, ...(allChannels ? legacyFix : [])];
+            for (const m of queue) {
                 try {
                     const updated = await updateInvoice(qbo, { Id: m.inv, SyncToken: m.syncToken, sparse: true, TxnDate: m.expected });
-                    fixed.push({ so: m.so, inv: m.inv, from: m.qbo, to: updated.TxnDate });
+                    fixed.push({ so: m.so, inv: m.inv, layer: m.layer, from: m.qbo, to: updated.TxnDate });
+                    if (notify) alertResyncResult({ ok: true, so: m.so, invoiceId: m.inv, layer: m.layer, fromDate: m.qbo, toDate: updated.TxnDate });
                 } catch (e) {
-                    errors.push({ so: m.so, inv: m.inv, err: e.message || 'updateInvoice failed' });
+                    const errMsg = e.message || 'updateInvoice failed';
+                    errors.push({ so: m.so, inv: m.inv, err: errMsg });
+                    if (notify) alertResyncResult({ ok: false, so: m.so, invoiceId: m.inv, layer: m.layer, fromDate: m.qbo, toDate: m.expected, error: errMsg });
                 }
             }
         }
 
-        const totalMismatch = shopeeFix.length + verifiedFix.length + legacyReport.length;
+        const totalMismatch = shopeeFix.length + verifiedFix.length + legacyFix.length + legacyReport.length;
         alertAuditReport({
-            scope: `${days}d (cron)`,
+            scope: `${days}d${allChannels ? ' all-channels' : ''} (cron)`,
             scanned: rows.length,
             mismatches: totalMismatch,
             fixed: fixed.length,
@@ -118,11 +135,14 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
             scanned: rows.length,
             shopeeMismatches: shopeeFix.length,
             verifiedMismatches: verifiedFix.length,
+            legacyFix: legacyFix.length,
             legacyFlagOnly: legacyReport.length,
             errors: errors.length,
             fixed: fixed.length,
             durationMs: Date.now() - t0,
-            details: doFix ? { fixed, errors: errors.slice(0, 20) } : { shopeeFix, verifiedFix, legacyReport: legacyReport.slice(0, 20), errors: errors.slice(0, 20) },
+            details: doFix
+                ? { fixed, errors: errors.slice(0, 20) }
+                : { shopeeFix, verifiedFix, legacyFix, legacyReport: legacyReport.slice(0, 20), errors: errors.slice(0, 20) },
         });
     } catch (e) {
         console.error('❌ audit-txndate failed:', e.message);
