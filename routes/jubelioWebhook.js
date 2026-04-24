@@ -115,6 +115,19 @@ const getTermDays = (so) => {
     const prefix = getSoPrefix(so);
     return prefix === 'CS' ? 7 : 14;
 };
+// Jubelio sends `transaction_date` etc. as ISO UTC strings. Naively taking
+// `substring(0, 10)` returns the UTC date — which is "yesterday" for any
+// timestamp between 17:00 WIB and 23:59 WIB (the UTC day rollover happens at
+// 07:00 WIB). Always project to Asia/Jakarta (UTC+7) before formatting.
+const JKT_OFFSET_MS = 7 * 60 * 60 * 1000;
+const isoDateJakarta = (raw) => {
+    if (raw === undefined || raw === null || raw === '') return undefined;
+    const s = String(raw).trim();
+    if (!s || s === '-') return undefined;
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return s.substring(0, 10);
+    return new Date(d.getTime() + JKT_OFFSET_MS).toISOString().substring(0, 10);
+};
 const addDays = (isoDate, days) => {
     const d = new Date(isoDate);
     if (Number.isNaN(d.getTime())) return undefined;
@@ -363,7 +376,7 @@ const getOrCreateItem = async (qbo, item, incomeAccountId) => {
 const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     const lines = [];
     const items = Array.isArray(so.items) ? so.items : [];
-    const serviceDate = so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined;
+    const serviceDate = isoDateJakarta(so.transaction_date);
 
     for (const it of items) {
         const qty = Number(it.qty_in_base ?? it.qty ?? 1) || 1;
@@ -646,7 +659,7 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
     const payload = {
         CustomerRef: { value: String(customerId) },
         TotalAmt: balance,
-        TxnDate: so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined,
+        TxnDate: isoDateJakarta(so.transaction_date),
         PrivateNote: `Auto-paid from Jubelio SO #${so.salesorder_no} status=${so.status}`,
         Line: [{
             Amount: balance,
@@ -674,7 +687,10 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
 
     const existing = await JubelioOrderMap.findOne({ salesorder_id: so.salesorder_id, qbo_realm_id: realmId });
 
-    const txnDate = so.transaction_date ? String(so.transaction_date).substring(0, 10) : undefined;
+    const txnDate = isoDateJakarta(so.transaction_date);
+    if (so.transaction_date) {
+        console.log(`📅 SO ${so.salesorder_no} transaction_date raw="${so.transaction_date}" → TxnDate=${txnDate}`);
+    }
     const termDays = getTermDays(so);
     const dueDate = txnDate ? addDays(txnDate, termDays) : undefined;
     const shipAddr = buildShipAddr(so);
@@ -698,7 +714,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         so.completed_date,
         so.received_date,
     ].map(v => (v ? String(v).trim() : '')).filter(v => v && v !== '-');
-    const validShipDate = dateCandidates[0] ? dateCandidates[0].substring(0, 10) : undefined;
+    const validShipDate = isoDateJakarta(dateCandidates[0]);
     // Shopify and some other channels send a full URL as tracking_no
     // (e.g. "https://lionparcel.com/track/stt?q=11LP1776…"). QBO TrackingNum
     // max is 31 chars, so extract the actual tracking code from the URL.
