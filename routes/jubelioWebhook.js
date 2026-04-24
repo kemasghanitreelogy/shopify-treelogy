@@ -4,6 +4,27 @@ const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
 const { alertWebhookError, alertAuthRejected, sendTestAlert, isConfigured: alertsConfigured } = require('../services/alertService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
+const JubelioPayloadLog = require('../models/JubelioPayloadLog');
+
+// Fire-and-forget: persist full webhook payload for later debugging. Logging
+// failures MUST NOT block the actual sync flow — we swallow errors here.
+const logJubelioPayload = (endpoint, body) => {
+    if (!body || typeof body !== 'object') return;
+    JubelioPayloadLog.create({
+        endpoint,
+        salesorder_id: body.salesorder_id,
+        salesorder_no: body.salesorder_no,
+        invoice_no: body.invoice_no,
+        action: body.action,
+        status: body.status,
+        is_canceled: !!body.is_canceled,
+        source_name: body.source_name || body.source,
+        transaction_date_raw: body.transaction_date ? String(body.transaction_date) : undefined,
+        created_date_raw: body.created_date ? String(body.created_date) : undefined,
+        invoice_created_date_raw: body.invoice_created_date ? String(body.invoice_created_date) : undefined,
+        payload: body,
+    }).catch(e => console.warn(`⚠️ JubelioPayloadLog insert failed: ${e.message}`));
+};
 
 // ─── Jubelio Webhook Verification ───
 // Confirmed via production log: Jubelio does NOT send a signature header on
@@ -879,6 +900,8 @@ router.post('/pesanan', async (req, res) => {
     const payload = req.body || {};
     const statusUpper = String(payload.status || '').toUpperCase();
     log(`📦 [3/8] PAYLOAD action=${payload.action || '-'} SO=${payload.salesorder_no || '-'} id=${payload.salesorder_id || '-'} status=${statusUpper || '-'} canceled=${!!payload.is_canceled} items=${Array.isArray(payload.items) ? payload.items.length : 0} grandTotal=${payload.grand_total ?? '-'}`);
+    try { log(`📋 PAYLOAD JSON: ${JSON.stringify(payload)}`); } catch { log('📋 PAYLOAD JSON: <stringify failed>'); }
+    logJubelioPayload('pesanan', payload);
 
     try {
         if (!payload.salesorder_id) {
@@ -983,6 +1006,8 @@ router.post('/faktur', async (req, res) => {
 
     const { action, invoice_no, ref_no } = req.body || {};
     console.log(`📄 Jubelio /faktur: action=${action} invoice=${invoice_no} ref=${ref_no}`);
+    try { console.log(`📋 /faktur PAYLOAD JSON: ${JSON.stringify(req.body || {})}`); } catch { console.log('📋 /faktur PAYLOAD JSON: <stringify failed>'); }
+    logJubelioPayload('faktur', req.body || {});
 
     const isDelete = typeof action === 'string' && /delete/i.test(action);
     if (!isDelete) {

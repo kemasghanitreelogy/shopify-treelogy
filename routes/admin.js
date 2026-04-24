@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const JubelioOrderMap = require('../models/JubelioOrderMap');
+const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const { getQboInstance } = require('../services/qboService');
 const { alertAuditReport, alertResyncResult } = require('../services/alertService');
 
@@ -146,6 +147,47 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
         });
     } catch (e) {
         console.error('❌ audit-txndate failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// GET /api/admin/order-raw?so=SHF-7378-128887 (or ?id=431)
+//   so     — salesorder_no (exact match)
+//   id     — salesorder_id (numeric)
+//   limit  — max payload logs to return (default 10, max 50)
+//
+// Returns the JubelioOrderMap entry + full captured webhook payloads (newest
+// first). Use to inspect raw `transaction_date`, `created_date`, channel info,
+// etc. for any synced SO. Payload capture retention = 30 days (TTL).
+router.get('/order-raw', requireAdmin, async (req, res) => {
+    const so = req.query.so ? String(req.query.so).trim() : null;
+    const id = req.query.id ? Number(req.query.id) : null;
+    const limit = Math.min(Number(req.query.limit || 10), 50);
+
+    if (!so && !id) {
+        return res.status(400).json({ error: 'Provide ?so=<salesorder_no> or ?id=<salesorder_id>' });
+    }
+
+    try {
+        const mapFilter = so ? { salesorder_no: so } : { salesorder_id: id };
+        const logFilter = {};
+        if (so) logFilter.salesorder_no = so;
+        if (id) logFilter.salesorder_id = id;
+
+        const [map, logs] = await Promise.all([
+            JubelioOrderMap.findOne(mapFilter).lean(),
+            JubelioPayloadLog.find(logFilter).sort({ received_at: -1 }).limit(limit).lean(),
+        ]);
+
+        res.json({
+            ok: true,
+            query: { so, id, limit },
+            map: map || null,
+            payloadCount: logs.length,
+            payloads: logs,
+        });
+    } catch (e) {
+        console.error('❌ order-raw failed:', e.message);
         res.status(500).json({ ok: false, error: e.message });
     }
 });
