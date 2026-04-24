@@ -1,23 +1,23 @@
 // Comprehensive TxnDate reconciliation: scan JubelioOrderMap entries, fetch
 // each QBO Invoice, and verify TxnDate matches what Jubelio actually meant.
 //
-// Three verification layers, in priority order:
+// Verification layers, in priority order:
 //   1. SHOPEE PATTERN — SO number `SP-YYMMDD...` encodes the order date.
-//      For these, ground-truth is in the SO number itself. Always safe to
-//      auto-fix mismatches.
+//      Ground-truth is in the SO number. Always safe to auto-fix.
 //   2. VERIFIED — entry has `last_transaction_date_raw` (post-deploy).
 //      Expected = isoDateJakarta(raw). Always safe to auto-fix.
-//   3. LEGACY HEURISTIC (NON-SHOPEE) — entry has no raw value AND SO number
-//      lacks date encoding (Tokopedia TP-, Shopify SHF-, manual DP, etc.).
-//      For these we only REPORT — gap=1 day is ambiguous (could be the bug
-//      OR a legit ship-next-day flow). Reviewing raw data after future
-//      webhooks will eventually let us auto-verify these too.
+//   3. LEGACY ALL-CHANNELS HEURISTIC — entry has no raw value and SO number
+//      doesn't encode date (Tokopedia, Shopify, manual). Bug pattern: TxnDate
+//      is exactly 1 day before jktDate(CreateTime). In our SHIPPED-triggered
+//      flow, transaction_date and sync time are typically same WIB day, so
+//      gap=1d is overwhelmingly the bug. Auto-fixed when --all-channels.
 //
 // Usage:
-//   node scripts/audit-txndate.js                       # report only
-//   node scripts/audit-txndate.js --days=30             # narrow window
-//   node scripts/audit-txndate.js --fix                 # auto-fix Shopee + verified, loop until clean
-//   node scripts/audit-txndate.js --silent              # no Telegram alert
+//   node scripts/audit-txndate.js                              # report only
+//   node scripts/audit-txndate.js --days=30                    # narrow window
+//   node scripts/audit-txndate.js --fix                        # fix Shopee + verified
+//   node scripts/audit-txndate.js --fix --all-channels         # also fix legacy gap=1d non-Shopee
+//   node scripts/audit-txndate.js --silent                     # no Telegram alert
 
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -34,6 +34,7 @@ const flag = (k) => args.includes(`--${k}`);
 
 const days = Number(arg('days', '0'));     // 0 = no limit
 const doFix = flag('fix');
+const allChannels = flag('all-channels'); // also auto-fix legacy non-Shopee gap=1d
 const silent = flag('silent');
 const maxLoops = Number(arg('max-loops', '5'));
 
@@ -82,7 +83,7 @@ async function runOnce(qbo, opts) {
 
     const shopeeFix = [];     // { so, inv, qbo, expected, syncToken }
     const verifiedFix = [];   // { so, inv, qbo, expected, syncToken, raw }
-    const legacyReport = [];  // { so, inv, qbo, jktCreate, gap } — non-Shopee, no raw
+    const legacyFix = [];     // { so, inv, qbo, expected, syncToken, gap } — non-Shopee, no raw, gap=1d
     const errors = [];
 
     let processed = 0;
@@ -123,17 +124,20 @@ async function runOnce(qbo, opts) {
             continue;
         }
 
-        // Layer 3: Legacy non-Shopee — report only.
+        // Layer 3: Legacy non-Shopee — fix gap=1d (timezone bug pattern).
         const jktCreate = isoDateJakarta(inv.MetaData?.CreateTime);
         if (!jktCreate || !inv.TxnDate) continue;
         const gap = dayDiff(jktCreate, inv.TxnDate);
         if (gap === 1) {
-            legacyReport.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, jktCreate, gap });
+            legacyFix.push({
+                so: r.salesorder_no, inv: r.qbo_invoice_id,
+                qbo: inv.TxnDate, expected: jktCreate, syncToken: inv.SyncToken, gap,
+            });
         }
     }
     process.stdout.write('\r');
 
-    return { rows, shopeeFix, verifiedFix, legacyReport, errors };
+    return { rows, shopeeFix, verifiedFix, legacyFix, errors };
 }
 
 async function applyFix(qbo, list, label) {
@@ -165,8 +169,8 @@ async function applyFix(qbo, list, label) {
     for (let loop = 1; loop <= maxLoops; loop++) {
         const result = await runOnce(qbo);
         lastResult = result;
-        const { rows, shopeeFix, verifiedFix, legacyReport, errors } = result;
-        console.log(`Loop ${loop}: scanned=${rows.length}  shopee-mismatch=${shopeeFix.length}  verified-mismatch=${verifiedFix.length}  legacy-flag-only=${legacyReport.length}  errors=${errors.length}`);
+        const { rows, shopeeFix, verifiedFix, legacyFix, errors } = result;
+        console.log(`Loop ${loop}: scanned=${rows.length}  shopee-mismatch=${shopeeFix.length}  verified-mismatch=${verifiedFix.length}  legacy-gap1d=${legacyFix.length}  errors=${errors.length}`);
 
         if (shopeeFix.length) {
             console.log('\nShopee mismatches (date encoded in SO# is authoritative):');
@@ -178,11 +182,11 @@ async function applyFix(qbo, list, label) {
             for (const m of verifiedFix.slice(0, 30)) console.log(`  ${m.so} inv=${m.inv}  QBO=${m.qbo} → expected=${m.expected}  raw="${m.raw}"`);
             if (verifiedFix.length > 30) console.log(`  ... and ${verifiedFix.length - 30} more`);
         }
-        if (legacyReport.length) {
-            console.log(`\nLegacy non-Shopee with gap=1d (could be bug OR legit ship-next-day — not auto-fixed):`);
-            console.log(`  These will be auto-verifiable once the next webhook for each SO populates raw data.`);
-            for (const m of legacyReport.slice(0, 15)) console.log(`  ${m.so} inv=${m.inv}  QBO=${m.qbo}  CreateTime(JKT)=${m.jktCreate}`);
-            if (legacyReport.length > 15) console.log(`  ... and ${legacyReport.length - 15} more`);
+        if (legacyFix.length) {
+            const verb = (doFix && allChannels) ? 'will be auto-fixed' : 'NOT auto-fixed (pass --all-channels to enable)';
+            console.log(`\nLegacy non-Shopee with gap=1d (${verb}):`);
+            for (const m of legacyFix.slice(0, 30)) console.log(`  ${m.so} inv=${m.inv}  QBO=${m.qbo} → CreateTime(JKT)=${m.expected}`);
+            if (legacyFix.length > 30) console.log(`  ... and ${legacyFix.length - 30} more`);
         }
         if (errors.length) {
             console.log('\nErrors:');
@@ -192,23 +196,27 @@ async function applyFix(qbo, list, label) {
         const toFix = [];
         if (doFix && shopeeFix.length) toFix.push({ list: shopeeFix, label: 'SHOPEE' });
         if (doFix && verifiedFix.length) toFix.push({ list: verifiedFix, label: 'VERIFIED' });
+        if (doFix && allChannels && legacyFix.length) toFix.push({ list: legacyFix, label: 'LEGACY' });
 
         if (!toFix.length) {
-            const fixableLeft = shopeeFix.length + verifiedFix.length;
+            const fixableLeft = shopeeFix.length + verifiedFix.length + (allChannels ? legacyFix.length : 0);
             if (fixableLeft) {
                 console.log('\n(Run with --fix to auto-patch.)');
             } else {
                 console.log('\n✅ All auto-verifiable TxnDates are correct.');
-                if (legacyReport.length) console.log(`   ${legacyReport.length} legacy non-Shopee entries pending verification (next webhook will populate raw data).`);
+                if (legacyFix.length && !allChannels) {
+                    console.log(`   ${legacyFix.length} legacy non-Shopee gap=1d entries pending — pass --all-channels to also auto-fix those.`);
+                }
             }
             if (!silent) alertAuditReport({
                 scope: `${scope} (loop ${loop})`,
                 scanned: rows.length,
-                mismatches: shopeeFix.length + verifiedFix.length + legacyReport.length,
+                mismatches: shopeeFix.length + verifiedFix.length + legacyFix.length,
                 fixed: totalFixed, errors: errors.length,
             });
             await mongoose.disconnect();
-            process.exit((shopeeFix.length + verifiedFix.length) ? 1 : 0);
+            const stillBroken = shopeeFix.length + verifiedFix.length + (allChannels ? legacyFix.length : 0);
+            process.exit(stillBroken ? 1 : 0);
         }
 
         console.log(`\nApplying fixes (loop ${loop})...`);
@@ -227,11 +235,11 @@ async function applyFix(qbo, list, label) {
     }
 
     console.log(`\n=== Done. Total fixed across loops: ${totalFixed} ===`);
-    const final = lastResult || { rows: [], shopeeFix: [], verifiedFix: [], legacyReport: [], errors: [] };
+    const final = lastResult || { rows: [], shopeeFix: [], verifiedFix: [], legacyFix: [], errors: [] };
     if (!silent) alertAuditReport({
         scope,
         scanned: final.rows.length,
-        mismatches: final.shopeeFix.length + final.verifiedFix.length + final.legacyReport.length,
+        mismatches: final.shopeeFix.length + final.verifiedFix.length + final.legacyFix.length,
         fixed: totalFixed, errors: final.errors.length,
     });
     await mongoose.disconnect();
