@@ -694,6 +694,28 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
 
 // ─── Upsert Invoice ───
 const upsertQboInvoice = async (qbo, so, realmId) => {
+    // Idempotency guard: Jubelio re-fires webhooks multiple times for the same
+    // final-state SO (status transitions, tracking updates, escrow changes).
+    // If status + grand_total + transaction_date are identical to last sync,
+    // QBO state is already correct — skip the update. Also sidesteps QBO AST
+    // validator rejecting redundant sparse updates with "sales tax rate" errors.
+    const existing = await JubelioOrderMap.findOne({ salesorder_id: so.salesorder_id, qbo_realm_id: realmId });
+    if (existing) {
+        const sameStatus = existing.last_status === so.status;
+        const sameTotal = Number(existing.last_grand_total) === Number(so.grand_total);
+        const incomingRaw = so.transaction_date ? String(so.transaction_date) : null;
+        const sameTxnDate = (existing.last_transaction_date_raw || null) === incomingRaw;
+        if (sameStatus && sameTotal && sameTxnDate) {
+            console.log(`ℹ️ SO ${so.salesorder_no} tidak berubah (status=${so.status} total=${so.grand_total}) — skip QBO update.`);
+            await JubelioOrderMap.updateOne({ _id: existing._id }, { last_synced_at: new Date() });
+            return {
+                action: 'skipped',
+                invoice: { Id: existing.qbo_invoice_id, DocNumber: existing.qbo_doc_number },
+                customerId: null,
+            };
+        }
+    }
+
     const [taxCodeId, incomeAccountId] = await Promise.all([
         getDefaultTaxCode(qbo),
         getIncomeAccountId(qbo),
@@ -705,8 +727,6 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     if (lines.length === 0) {
         throw new Error('Jubelio SO tidak punya items — tidak bisa buat Invoice.');
     }
-
-    const existing = await JubelioOrderMap.findOne({ salesorder_id: so.salesorder_id, qbo_realm_id: realmId });
 
     const txnDate = isoDateJakarta(so.transaction_date);
     if (so.transaction_date) {
@@ -953,8 +973,12 @@ router.post('/pesanan', async (req, res) => {
         log(`    ✅ Invoice ${upserted.action}: id=${upserted.invoice.Id} docNo=${upserted.invoice.DocNumber || '-'} total=${upserted.invoice.TotalAmt ?? '-'} balance=${upserted.invoice.Balance ?? '-'}`);
 
         // Auto-mark Paid when Jubelio status is PAID/COMPLETED.
+        // Skipped upserts mean SO is unchanged from last sync — payment side is
+        // already reconciled from the earlier webhook, no need to re-run.
         let payment = null;
-        if (PAID_STATUSES.has(statusUpper)) {
+        if (upserted.action === 'skipped') {
+            log(`💰 [7/8] Upsert skipped (idempotent) — skip payment too.`);
+        } else if (PAID_STATUSES.has(statusUpper)) {
             log(`💰 [7/8] Status ${statusUpper} — marking Invoice as PAID…`);
             payment = await markQboInvoicePaid(qbo, upserted.invoice, upserted.customerId, so);
             log(`    ✅ Payment created: id=${payment?.Id || '-'} amount=${payment?.TotalAmt ?? '-'}`);
