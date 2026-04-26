@@ -199,11 +199,162 @@ const alertResyncResult = ({ ok, so, invoiceId, layer, fromDate, toDate, error }
     fireAndForget(sendRaw(lines.join('\n')));
 };
 
+// Daily reconcile report — fired by the morning cron. Always sends a message
+// (even on a clean run) so operators know the cron itself is alive. When there
+// are mismatches, follow-up messages with per-SO debug context are sent.
+//
+// Telegram has a 4096-char limit per message; we split mismatches across
+// multiple messages, sequentially, so the operator sees ordered context.
+const alertDailyReconcile = (report) => {
+    if (!isConfigured()) return;
+    fireAndForget(_sendDailyReconcile(report));
+};
+
+const _sendDailyReconcile = async (report) => {
+    const { date, runMs, summary, perChannel, mismatches, fetchErrors } = report;
+
+    // ─── Message 1: Header + summary + per-channel ──────────────────────────
+    const hasIssues = summary.missing + summary.voided + summary.stale > 0;
+    const title = hasIssues
+        ? '⚠️ DAILY RECONCILE — drift detected'
+        : '✅ DAILY RECONCILE — all clean';
+
+    const head = [
+        `<b>${title}</b>`,
+        `📅 Date: <b>${escapeHtml(date)}</b> (WIB)`,
+        '',
+        `<b>📊 Summary</b>`,
+        `Jubelio orders:    ${summary.jubelioOrders}`,
+        `├─ expected sync:  ${summary.jubelioExpected}`,
+        `└─ skipped by rule: ${summary.jubelioNotExpected}`,
+        `Mongo map:         ${summary.mongoMap}`,
+        `QBO actual:        ${summary.qboActual}`,
+        '',
+        `✅ Matched:         ${summary.matched}`,
+        `❌ Missing in QBO:  ${summary.missing}`,
+        `⚠️ Voided in QBO:   ${summary.voided}`,
+        `🚫 Stale (canceled): ${summary.stale}`,
+        `ℹ️ Orphan QBO:      ${summary.orphan}`,
+    ];
+
+    if (perChannel.length > 0) {
+        head.push('', '<b>📡 Per Channel</b>');
+        for (const c of perChannel) {
+            const status = c.missing > 0 ? `❌ -${c.missing}`
+                : c.voided > 0 ? `⚠️ -${c.voided}`
+                : '✓';
+            const label = `${c.channel} (${c.prefix})`.padEnd(20);
+            head.push(`<code>${escapeHtml(label)} ${String(c.expected).padStart(3)} → ${String(c.matched).padStart(3)}</code> ${status}`);
+        }
+    }
+
+    if (fetchErrors && fetchErrors.length > 0) {
+        head.push('', '<b>⚠️ Fetch errors (partial data)</b>');
+        for (const e of fetchErrors.slice(0, 5)) {
+            head.push(`• ${escapeHtml(e.source)}: ${escapeHtml(String(e.error).slice(0, 200))}`);
+        }
+    }
+
+    head.push('', `🕐 ${fmtWib()} WIB · ${runMs}ms`);
+
+    await sendRaw(head.join('\n'));
+
+    // ─── Mismatch detail messages ──────────────────────────────────────────
+    const sections = [
+        { key: 'missingInQbo', list: mismatches.missingInQbo, title: '❌ MISSING IN QBO', formatter: _fmtMissing },
+        { key: 'voidedInQbo', list: mismatches.voidedInQbo, title: '⚠️ VOIDED IN QBO', formatter: _fmtMissing },
+        { key: 'stale', list: mismatches.stale, title: '🚫 STALE (canceled in Jubelio, active in QBO)', formatter: _fmtStale },
+        { key: 'mapMissingQbo', list: mismatches.mapMissingQbo, title: 'ℹ️ QBO HAS · MAP MISSING', formatter: _fmtMissing },
+        { key: 'orphan', list: mismatches.orphan, title: 'ℹ️ ORPHAN QBO INVOICES', formatter: _fmtOrphan },
+    ];
+
+    for (const sec of sections) {
+        if (!sec.list || sec.list.length === 0) continue;
+        const chunks = _chunkMismatchSection(sec.title, sec.list, sec.formatter);
+        for (const chunk of chunks) {
+            await sendRaw(chunk);
+        }
+    }
+};
+
+// Split a long mismatch list into <4000 char Telegram messages. Each message
+// has the section header so context isn't lost on continuation.
+const _chunkMismatchSection = (title, list, formatter) => {
+    const HARD_LIMIT = 3900; // safe under Telegram 4096
+    const out = [];
+    let buf = [`<b>${title} (${list.length})</b>`, ''];
+    let bufLen = buf.join('\n').length;
+
+    for (let i = 0; i < list.length; i++) {
+        const block = formatter(list[i], i);
+        const blockLen = block.length + 1;
+        if (bufLen + blockLen > HARD_LIMIT && buf.length > 2) {
+            buf.push('', `<i>… ${list.length - i} more (continued)</i>`);
+            out.push(buf.join('\n'));
+            buf = [`<b>${title} — cont. (${list.length})</b>`, ''];
+            bufLen = buf.join('\n').length;
+        }
+        buf.push(block);
+        bufLen += blockLen;
+    }
+    if (buf.length > 2) out.push(buf.join('\n'));
+    return out;
+};
+
+const _fmtIdr = (n) => {
+    if (n == null || isNaN(Number(n))) return '?';
+    return 'Rp ' + Math.round(Number(n)).toLocaleString('id-ID');
+};
+
+const _fmtMissing = (m) => {
+    const lines = [
+        `📦 <b>${escapeHtml(m.salesorder_no || '?')}</b>`,
+        `   id=${m.salesorder_id || '?'} · ${escapeHtml(m.channel || m.prefix || '?')} (${escapeHtml(m.source_name || '-')})`,
+    ];
+    if (m.customer_name) lines.push(`   👤 ${escapeHtml(m.customer_name)}`);
+    lines.push(`   📊 status=<b>${escapeHtml(String(m.status || '-'))}</b> · total=${escapeHtml(_fmtIdr(m.grand_total))}`);
+    if (m.transaction_date_raw) {
+        lines.push(`   📅 txn_raw=<code>${escapeHtml(m.transaction_date_raw)}</code> · jkt=${escapeHtml(m.transaction_date_jkt || '?')}`);
+    }
+    if (m.tracking_no) lines.push(`   🚚 ${escapeHtml(String(m.tracking_no).slice(0, 40))}`);
+    if (m.invoice_no) lines.push(`   🧾 jubelio_inv=${escapeHtml(m.invoice_no)}`);
+    if (m.map_qbo_invoice_id) {
+        lines.push(`   🔗 map.qbo_id=${escapeHtml(String(m.map_qbo_invoice_id))} · last_status=${escapeHtml(String(m.map_last_status || '-'))}`);
+    }
+    if (m.qbo_invoice_id) {
+        lines.push(`   🟢 qbo_id=${escapeHtml(String(m.qbo_invoice_id))} · qbo_total=${escapeHtml(_fmtIdr(m.qbo_total))} · balance=${escapeHtml(_fmtIdr(m.qbo_balance))}`);
+    }
+    lines.push(`   💡 <i>${escapeHtml(m.why || m.sync_rule_reason || '')}</i>`);
+    return lines.join('\n') + '\n';
+};
+
+const _fmtStale = (m) => {
+    const lines = [
+        `📦 <b>${escapeHtml(m.salesorder_no || '?')}</b>`,
+        `   id=${m.salesorder_id || '?'} · ${escapeHtml(m.channel || m.prefix || '?')}`,
+    ];
+    if (m.customer_name) lines.push(`   👤 ${escapeHtml(m.customer_name)}`);
+    if (m.cancel_reason) lines.push(`   🚫 reason: ${escapeHtml(String(m.cancel_reason).slice(0, 200))}`);
+    lines.push(`   🟢 qbo_id=${escapeHtml(String(m.qbo_invoice_id))} · total=${escapeHtml(_fmtIdr(m.qbo_total))} · balance=${escapeHtml(_fmtIdr(m.qbo_balance))}`);
+    lines.push(`   💡 <i>${escapeHtml(m.why)}</i>`);
+    return lines.join('\n') + '\n';
+};
+
+const _fmtOrphan = (m) => {
+    const lines = [
+        `🟢 qbo_id=<b>${escapeHtml(String(m.qbo_invoice_id))}</b> · doc=${escapeHtml(String(m.doc_number || '-'))}`,
+        `   total=${escapeHtml(_fmtIdr(m.qbo_total))} · balance=${escapeHtml(_fmtIdr(m.qbo_balance))} · cust_id=${escapeHtml(String(m.customer_ref || '-'))}`,
+        `   💡 <i>${escapeHtml(m.why)}</i>`,
+    ];
+    return lines.join('\n') + '\n';
+};
+
 module.exports = {
     isConfigured,
     alertWebhookError,
     alertAuthRejected,
     alertAuditReport,
     alertResyncResult,
+    alertDailyReconcile,
     sendTestAlert,
 };

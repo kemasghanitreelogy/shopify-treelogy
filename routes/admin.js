@@ -6,7 +6,8 @@ const router = express.Router();
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const { getQboInstance } = require('../services/qboService');
-const { alertAuditReport, alertResyncResult } = require('../services/alertService');
+const { alertAuditReport, alertResyncResult, alertDailyReconcile } = require('../services/alertService');
+const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -189,6 +190,48 @@ router.get('/order-raw', requireAdmin, async (req, res) => {
     } catch (e) {
         console.error('❌ order-raw failed:', e.message);
         res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// GET/POST /api/admin/daily-reconcile?date=YYYY-MM-DD&notify=1&debug=0
+//   date   — target date in WIB (YYYY-MM-DD). Defaults to yesterday WIB.
+//   notify — 1 (default) sends Telegram report; 0 returns JSON only
+//   debug  — 1 includes full mismatch detail in JSON response (default 1)
+//
+// Daily run reconciles Jubelio orders for the target date against QBO invoices,
+// applying our sync algorithm to determine which SOs *should* have made it
+// into QBO. Mismatches are returned with full per-SO debug context (status,
+// raw transaction_date, tracking, customer, etc.) so the operator can debug
+// without digging into MongoDB or Jubelio UI manually.
+router.all('/daily-reconcile', requireAdmin, async (req, res) => {
+    const targetDate = (req.query.date && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date))
+        ? req.query.date
+        : yesterdayWib();
+    const notify = String(req.query.notify ?? '1') === '1';
+    const debug = String(req.query.debug ?? '1') === '1';
+
+    try {
+        const qbo = await getQboInstance();
+        const report = await runDailyReconcile({ qbo, date: targetDate });
+
+        if (notify) alertDailyReconcile(report);
+
+        const response = {
+            ok: true,
+            date: report.date,
+            runMs: report.runMs,
+            summary: report.summary,
+            perChannel: report.perChannel,
+            fetchErrors: report.fetchErrors,
+        };
+        if (debug) {
+            response.mismatches = report.mismatches;
+            response.notExpectedSample = report.notExpectedSample;
+        }
+        res.json(response);
+    } catch (e) {
+        console.error('❌ daily-reconcile failed:', e.message);
+        res.status(500).json({ ok: false, date: targetDate, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });
 

@@ -18,11 +18,13 @@ const JubelioPayloadLogSchema = new mongoose.Schema({
     transaction_date_raw: String,                   // quick field for date-bug triage
     created_date_raw: String,
     invoice_created_date_raw: String,
-    received_at: { type: Date, default: Date.now, index: true },
+    received_at: { type: Date, default: Date.now },
     payload: mongoose.Schema.Types.Mixed,           // full raw body
 });
 
 // TTL: auto-expire after 30 days so this collection doesn't grow unbounded.
+// Single source of truth for the received_at index — `index: true` on the
+// field would create a duplicate plain index that Mongoose warns about.
 JubelioPayloadLogSchema.index(
     { received_at: 1 },
     { expireAfterSeconds: 30 * 86400 }

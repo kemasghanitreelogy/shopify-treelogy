@@ -16,6 +16,10 @@
     {
       "path": "/api/admin/audit-txndate?days=14&fix=1&all=1&notify=1",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/admin/daily-reconcile",
+      "schedule": "0 1 * * *"
     }
   ]
 }
