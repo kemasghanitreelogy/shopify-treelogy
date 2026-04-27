@@ -720,7 +720,13 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         const itemId = await getOrCreateItem(qbo, it, incomeAccountId);
         const detail = { Qty: qty, UnitPrice: effectiveUnitPrice };
         if (itemId) detail.ItemRef = { value: itemId };
-        if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
+        // TaxCodeRef intentionally omitted — we set GlobalTaxCalculation:
+        // NotApplicable on the invoice header, and pinning a specific tax-code
+        // id at line level breaks updates whenever QBO admins reorganize tax
+        // codes / rates (real incident: a cached tax code id became invalid
+        // after the underlying tax rate was deleted, causing every update to
+        // fail with "Invalid Tax Rate"). The unused taxCodeId param is kept
+        // in the signature for backward compat.
         if (serviceDate) detail.ServiceDate = serviceDate;
 
         let description = it.description || it.item_name || it.item_code || '';
@@ -744,7 +750,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     const shipping = Number(so.shipping_cost || 0);
     if (shipping > 0) {
         const detail = { Qty: 1, UnitPrice: shipping };
-        if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
+        // Same rationale as item line — no TaxCodeRef.
         if (serviceDate) detail.ServiceDate = serviceDate;
         lines.push({
             Description: `Shipping (${so.courier || so.shipper || 'N/A'})`,
