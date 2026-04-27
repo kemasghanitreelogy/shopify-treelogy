@@ -261,7 +261,21 @@ const fetchUnredactedSo = async (salesorderId) => {
 // Strip channel prefix from customer DisplayName so dedup catches both
 // "TP - Adha Yuwanto" and "Adha Yuwanto" as the same person.
 const stripCustomerChannelPrefix = (name) =>
-    String(name || '').replace(/^\s*(SP|TP|SHF|LB|CS|DP|DW|WX|D)\s*-\s*/i, '').trim();
+    String(name || '').replace(/^\s*(SP|TP|TT|SHF|LB|CS|DP|DW|WX|WA|D)\s*-\s*/i, '').trim();
+
+// Channel prefix codes derived from salesorder_no. Used to auto-prefix new
+// customer DisplayNames so the QBO customer list always shows the channel
+// origin (matches the existing Treelogy convention "TP - Adha Yuwanto").
+//   SP=Shopee · TP/TT=Tokopedia · SHF=Shopify · LB=La Brisa · CS=Consignment
+//   DP=WhatsApp/direct · DW=Walk-in
+const KNOWN_CHANNEL_PREFIXES = new Set(['SP', 'TP', 'TT', 'SHF', 'LB', 'CS', 'DP', 'DW']);
+const PREFIX_CANONICAL = { TT: 'TP' }; // TT is a Tokopedia variant — canonical TP
+const HAS_CHANNEL_PREFIX_RE = /^\s*[A-Z]{2,5}\s*-/;
+const channelPrefixOf = (so) => {
+    const raw = String(so?.salesorder_no || '').match(/^([A-Z]{2,5})-/)?.[1] || null;
+    if (!raw || !KNOWN_CHANNEL_PREFIXES.has(raw)) return null;
+    return PREFIX_CANONICAL[raw] || raw;
+};
 
 const buildShipAddr = (so) => {
     if (!so.shipping_address && !so.shipping_city) return undefined;
@@ -336,6 +350,12 @@ const getOrCreateCustomer = async (qbo, so) => {
         }
     }
 
+    // Auto-prefix new customer with channel code from salesorder_no (TP-/SP-
+    // /SHF-/LB-/CS-/DP-/DW-). Skip if already has a prefix or unknown
+    // channel. The lookup chain still tries unprefixed variants below to
+    // catch any pre-existing customers stored without prefix.
+    const channelPrefix = channelPrefixOf(so);
+
     // Tokopedia & some channels redact customer info in webhook payloads.
     // When detected, fetch the unredacted form from Jubelio API directly.
     // Cached + graceful fallback so the webhook never fails on this path.
@@ -355,6 +375,14 @@ const getOrCreateCustomer = async (qbo, so) => {
         // If still redacted after fetch, we proceed with the redacted name —
         // worst case is consistent grouping under the placeholder, which is
         // strictly better than failing the webhook outright.
+    }
+
+    // Apply channel prefix to displayName when missing. This is what the
+    // CREATE path will use; the LOOKUP variants (below) still try the
+    // unprefixed form so we match any pre-existing customer stored without
+    // prefix, and the upsert below will record either form's id in the map.
+    if (channelPrefix && !HAS_CHANNEL_PREFIX_RE.test(displayName)) {
+        displayName = `${channelPrefix} - ${displayName}`.substring(0, 100);
     }
 
     // Resolve customerId via email → name → create.

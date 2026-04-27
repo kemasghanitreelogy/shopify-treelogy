@@ -12,13 +12,32 @@
 // backfilled, so the prefix matches the actual channel that buyer used.
 
 const JubelioCustomerMap = require('../models/JubelioCustomerMap');
+const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 
+// Direct source-name mapping. Several Tokopedia variants exist; treat all as TP.
 const SOURCE_TO_PREFIX = {
     'TOKOPEDIA': 'TP',
     'SHOP | TOKOPEDIA': 'TP',
     'SHOPEE': 'SP',
     'SHOPIFY': 'SHF',
 };
+
+// Channel codes carried in the salesorder_no (highest authority — INTERNAL
+// source covers multiple channels distinguishable only by SO# prefix).
+//   SP — Shopee · TP, TT — Tokopedia · SHF — Shopify
+//   LB — La Brisa · CS — Consignment
+//   DP — WhatsApp / Direct sales · DW — Walk-in
+const KNOWN_SO_PREFIXES = new Set(['SP', 'TP', 'TT', 'SHF', 'LB', 'CS', 'DP', 'DW']);
+
+// Treat alternates (TT) as TP per business spec — TT is just a Tokopedia
+// shop-store flavor in Jubelio's source_name vocabulary.
+const PREFIX_CANONICAL = { TT: 'TP' };
+
+const getSoPrefix = (soNo) => {
+    const m = String(soNo || '').match(/^([A-Z]{2,5})-/);
+    return m ? m[1] : null;
+};
+const canonicalPrefix = (p) => PREFIX_CANONICAL[p] || p;
 
 // Already-prefixed if name starts with 1-5 uppercase letters then "-" or " - ".
 const HAS_PREFIX_RE = /^\s*[A-Z]{2,5}\s*-/;
@@ -57,48 +76,103 @@ const runCustomerPrefixMigration = async ({ qbo, apply = false }) => {
     const realmId = String(qbo.realmId);
     console.log(`\n🏷️  Customer channel prefix migration (${mode})\n`);
 
-    // 1) Group map entries by qbo_customer_id → set of sources
+    // 1) Group map entries by qbo_customer_id, collecting both source_name(s)
+    //    and SO# prefix(es) so INTERNAL source customers can still be assigned
+    //    a channel prefix from the salesorder_no.
     const maps = await JubelioCustomerMap.find({ qbo_realm_id: realmId }).lean();
-    const sourcesByCustomer = new Map();
-    const lastSeenByCustomer = new Map();
+    const customerData = new Map(); // qbo_customer_id → { sources: Set, soPrefixes: Set, sampleSos: [] }
     for (const m of maps) {
         const id = String(m.qbo_customer_id);
-        if (!sourcesByCustomer.has(id)) sourcesByCustomer.set(id, new Set());
-        sourcesByCustomer.get(id).add(m.source);
-        const prev = lastSeenByCustomer.get(id);
-        if (!prev || (m.last_seen_at && m.last_seen_at > prev)) {
-            lastSeenByCustomer.set(id, m.last_seen_at);
+        if (!customerData.has(id)) {
+            customerData.set(id, { sources: new Set(), soPrefixes: new Set(), sampleSos: [] });
+        }
+        const d = customerData.get(id);
+        d.sources.add(m.source);
+        const p = canonicalPrefix(getSoPrefix(m.last_so_no));
+        if (p && KNOWN_SO_PREFIXES.has(p)) d.soPrefixes.add(p);
+        if (m.last_so_no && d.sampleSos.length < 3) d.sampleSos.push(m.last_so_no);
+    }
+    console.log(`Distinct customers with buyer_id mapping: ${customerData.size}`);
+
+    // 2) Augment with SO# scan from JubelioPayloadLog for customers whose
+    //    JubelioCustomerMap source isn't in SOURCE_TO_PREFIX (e.g. INTERNAL).
+    //    We pull every salesorder_no associated with that buyer to detect
+    //    multi-channel within INTERNAL (LB+DP+DW etc.) which we'll treat as
+    //    ambiguous and skip.
+    const buyersToScan = [];
+    for (const [id, d] of customerData) {
+        for (const src of d.sources) {
+            if (!SOURCE_TO_PREFIX[src] && d.soPrefixes.size === 0) {
+                // Fetch all SO#s for this buyer from payload log
+                buyersToScan.push({ customerId: id, source: src });
+            }
         }
     }
-    console.log(`Distinct customers with buyer_id mapping: ${sourcesByCustomer.size}`);
+    if (buyersToScan.length > 0) {
+        // Get buyer_ids for these customer ids
+        const buyersByCustomer = new Map();
+        for (const m of maps) {
+            const id = String(m.qbo_customer_id);
+            if (!buyersByCustomer.has(id)) buyersByCustomer.set(id, []);
+            buyersByCustomer.get(id).push({ source: m.source, buyer_id: m.buyer_id });
+        }
+        for (const { customerId } of buyersToScan) {
+            const buyers = buyersByCustomer.get(customerId) || [];
+            const orQ = buyers.map(b => ({ source_name: b.source, 'payload.buyer_id': b.buyer_id }));
+            if (orQ.length === 0) continue;
+            const logs = await JubelioPayloadLog.find({ $or: orQ }).select('salesorder_no').lean();
+            const d = customerData.get(customerId);
+            for (const l of logs) {
+                const p = canonicalPrefix(getSoPrefix(l.salesorder_no));
+                if (p && KNOWN_SO_PREFIXES.has(p)) d.soPrefixes.add(p);
+                if (d.sampleSos.length < 3) d.sampleSos.push(l.salesorder_no);
+            }
+        }
+    }
 
     const report = {
         apply, mode, runMs: 0,
-        totalMappedCustomers: sourcesByCustomer.size,
+        totalMappedCustomers: customerData.size,
         renamed: [],
         skippedAlreadyPrefixed: 0,
-        skippedMultiSource: [],
-        skippedUnknownSource: [],
+        skippedAmbiguous: [],   // multi-channel within one customer
+        skippedNoPrefix: [],    // could not determine a known prefix
         skippedDuplicate: [],
         skippedCustomerMissing: 0,
         errors: [],
     };
 
     let processed = 0;
-    for (const [customerId, sources] of sourcesByCustomer) {
+    for (const [customerId, d] of customerData) {
         processed++;
 
-        // Multi-source customer → ambiguous prefix; skip.
-        if (sources.size > 1) {
-            report.skippedMultiSource.push({ customerId, sources: [...sources] });
+        // Resolve the channel prefix:
+        //  1) source_name → SOURCE_TO_PREFIX (TOKOPEDIA/SHOPEE/SHOPIFY)
+        //  2) SO# prefix from last_so_no (covers INTERNAL → LB/CS/DP/DW)
+        const sourcePrefixes = new Set();
+        for (const src of d.sources) {
+            if (SOURCE_TO_PREFIX[src]) sourcePrefixes.add(SOURCE_TO_PREFIX[src]);
+        }
+        const allPrefixes = new Set([...sourcePrefixes, ...d.soPrefixes]);
+
+        if (allPrefixes.size > 1) {
+            report.skippedAmbiguous.push({
+                customerId,
+                sources: [...d.sources],
+                prefixes: [...allPrefixes],
+                sampleSos: d.sampleSos,
+            });
             continue;
         }
-        const source = [...sources][0];
-        const prefix = SOURCE_TO_PREFIX[source];
-        if (!prefix) {
-            report.skippedUnknownSource.push({ customerId, source });
+        if (allPrefixes.size === 0) {
+            report.skippedNoPrefix.push({
+                customerId,
+                sources: [...d.sources],
+                sampleSos: d.sampleSos,
+            });
             continue;
         }
+        const prefix = [...allPrefixes][0];
 
         // Fetch current DisplayName + SyncToken
         let customer;
@@ -135,7 +209,8 @@ const runCustomerPrefixMigration = async ({ qbo, apply = false }) => {
             currentName,
             newName,
             prefix,
-            source,
+            sources: [...d.sources],
+            sampleSos: d.sampleSos,
         };
 
         if (apply) {
@@ -168,11 +243,11 @@ const runCustomerPrefixMigration = async ({ qbo, apply = false }) => {
             console.log(`  📝 Would rename ${customerId}: "${currentName}" → "${newName}"`);
         }
 
-        if (processed % 50 === 0) console.log(`  ... ${processed}/${sourcesByCustomer.size} processed`);
+        if (processed % 50 === 0) console.log(`  ... ${processed}/${customerData.size} processed`);
     }
 
     report.runMs = Date.now() - t0;
-    console.log(`\n✅ ${mode} done in ${report.runMs}ms · renamed=${report.renamed.length} alreadyPrefixed=${report.skippedAlreadyPrefixed} duplicate=${report.skippedDuplicate.length} multiSource=${report.skippedMultiSource.length} errors=${report.errors.length}`);
+    console.log(`\n✅ ${mode} done in ${report.runMs}ms · renamed=${report.renamed.length} alreadyPrefixed=${report.skippedAlreadyPrefixed} duplicate=${report.skippedDuplicate.length} ambiguous=${report.skippedAmbiguous.length} noPrefix=${report.skippedNoPrefix.length} errors=${report.errors.length}`);
     return report;
 };
 
