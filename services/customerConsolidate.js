@@ -64,43 +64,24 @@ const fetchAllCustomers = async (qbo) => {
     return out;
 };
 
-// Bulk fetch all invoices grouped by customer id.
-const buildInvoiceIndex = async (qbo) => {
-    const byCustomer = new Map(); // customerId → [{ Id, SyncToken, CustomerRef }]
-    const PAGE = 200;
-    for (let startPosition = 1; startPosition < 20000; startPosition += PAGE) {
-        const q = `SELECT Id, DocNumber, SyncToken, CustomerRef FROM Invoice STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
-        const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
-        const invs = body?.QueryResponse?.Invoice || [];
-        if (invs.length === 0) break;
-        for (const inv of invs) {
-            const cid = inv.CustomerRef?.value;
-            if (!cid) continue;
-            if (!byCustomer.has(cid)) byCustomer.set(cid, []);
-            byCustomer.get(cid).push(inv);
-        }
-        if (invs.length < PAGE) break;
-    }
-    return byCustomer;
-};
-
-// Bulk fetch all payments grouped by customer id (for cross-customer rewires
-// after we move the linked invoice).
-const buildPaymentIndex = async (qbo) => {
+// Targeted query: only fetch invoices/payments for the customer ids we'll
+// actually consolidate. QBO supports IN clauses in v3 query — batched 50/req
+// to stay safely under the URL length cap.
+const buildIndexForCustomers = async (qbo, entity, customerIds) => {
     const byCustomer = new Map();
-    const PAGE = 200;
-    for (let startPosition = 1; startPosition < 20000; startPosition += PAGE) {
-        const q = `SELECT * FROM Payment STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
+    if (customerIds.length === 0) return byCustomer;
+    const BATCH = 50;
+    for (let i = 0; i < customerIds.length; i += BATCH) {
+        const batch = customerIds.slice(i, i + BATCH).map(id => `'${String(id)}'`).join(',');
+        const q = `SELECT * FROM ${entity} WHERE CustomerRef IN (${batch}) MAXRESULTS 1000`;
         const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
-        const pays = body?.QueryResponse?.Payment || [];
-        if (pays.length === 0) break;
-        for (const p of pays) {
-            const cid = p.CustomerRef?.value;
+        const rows = body?.QueryResponse?.[entity] || [];
+        for (const r of rows) {
+            const cid = r.CustomerRef?.value;
             if (!cid) continue;
             if (!byCustomer.has(cid)) byCustomer.set(cid, []);
-            byCustomer.get(cid).push(p);
+            byCustomer.get(cid).push(r);
         }
-        if (pays.length < PAGE) break;
     }
     return byCustomer;
 };
@@ -180,17 +161,14 @@ const runCustomerConsolidate = async ({ qbo, apply = false, limit = null, deadli
         byExactName.set(c.DisplayName, c);
     }
 
-    // Build invoice + payment indexes once (so we don't re-query per customer).
-    const invIndex = await buildInvoiceIndex(qbo);
-    const payIndex = await buildPaymentIndex(qbo);
-    console.log(`Indexed invoices for ${invIndex.size} customers, payments for ${payIndex.size} customers`);
-
-    // Find candidates: unprefixed active customers that have a prefixed twin.
-    const plan = []; // { source, target, sources: ['SP'], invoices, payments }
+    // Find candidates first (no QBO calls), THEN fetch invoices/payments for
+    // ONLY those candidates. Avoids the prohibitively expensive full-table
+    // scan that pushed apply runtime past Vercel's 300s ceiling.
+    const planRaw = []; // { source, target, prefix }
     const ambiguous = [];
     for (const c of customers) {
         if (c.Active === false) continue;
-        if (HAS_PREFIX_RE.test(c.DisplayName)) continue; // already prefixed
+        if (HAS_PREFIX_RE.test(c.DisplayName)) continue;
 
         const variants = [];
         for (const p of KNOWN_PREFIXES) {
@@ -198,7 +176,7 @@ const runCustomerConsolidate = async ({ qbo, apply = false, limit = null, deadli
             const v = byExactName.get(variantName);
             if (v && v.Id !== c.Id) variants.push({ prefix: p, customer: v });
         }
-        if (variants.length === 0) continue; // no twin — handled by prefix migration
+        if (variants.length === 0) continue;
         if (variants.length > 1) {
             ambiguous.push({
                 sourceId: c.Id,
@@ -207,16 +185,20 @@ const runCustomerConsolidate = async ({ qbo, apply = false, limit = null, deadli
             });
             continue;
         }
-        plan.push({
-            source: c,
-            target: variants[0].customer,
-            prefix: variants[0].prefix,
-            invoices: invIndex.get(String(c.Id)) || [],
-            payments: payIndex.get(String(c.Id)) || [],
-        });
+        planRaw.push({ source: c, target: variants[0].customer, prefix: variants[0].prefix });
     }
 
-    console.log(`Plan: ${plan.length} consolidations, ${ambiguous.length} ambiguous (skipped)`);
+    const candidateIds = planRaw.map(p => String(p.source.Id));
+    console.log(`Identified ${planRaw.length} consolidation candidates, ${ambiguous.length} ambiguous`);
+    const invIndex = await buildIndexForCustomers(qbo, 'Invoice', candidateIds);
+    const payIndex = await buildIndexForCustomers(qbo, 'Payment', candidateIds);
+    console.log(`Fetched invoices for ${invIndex.size} candidates, payments for ${payIndex.size} candidates`);
+
+    const plan = planRaw.map(p => ({
+        ...p,
+        invoices: invIndex.get(String(p.source.Id)) || [],
+        payments: payIndex.get(String(p.source.Id)) || [],
+    }));
 
     const report = {
         apply, mode, runMs: 0,
