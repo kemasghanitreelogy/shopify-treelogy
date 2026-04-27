@@ -164,11 +164,11 @@ const inactivateCustomer = (qbo, c) =>
         }),
     });
 
-const runCustomerConsolidate = async ({ qbo, apply = false }) => {
+const runCustomerConsolidate = async ({ qbo, apply = false, limit = null, deadlineMs = 240_000 }) => {
     const t0 = Date.now();
     const mode = apply ? 'APPLY' : 'DRY-RUN';
     const realmId = String(qbo.realmId);
-    console.log(`\n🔗 Customer consolidation (${mode})\n`);
+    console.log(`\n🔗 Customer consolidation (${mode}, limit=${limit || '∞'}, deadline=${deadlineMs}ms)\n`);
 
     const customers = await fetchAllCustomers(qbo);
     console.log(`Fetched ${customers.length} QBO customers`);
@@ -230,7 +230,11 @@ const runCustomerConsolidate = async ({ qbo, apply = false }) => {
     };
 
     let processed = 0;
+    let hitDeadline = false;
+    let hitLimit = false;
     for (const p of plan) {
+        if (apply && Date.now() - t0 > deadlineMs) { hitDeadline = true; break; }
+        if (apply && limit && report.consolidated.length >= limit) { hitLimit = true; break; }
         processed++;
         const action = {
             sourceId: p.source.Id,
@@ -305,7 +309,11 @@ const runCustomerConsolidate = async ({ qbo, apply = false }) => {
     }
 
     report.runMs = Date.now() - t0;
-    console.log(`\n✅ ${mode} done in ${report.runMs}ms · consolidated=${report.consolidated.length} ambiguous=${ambiguous.length} errors=${report.errors.length}`);
+    report.hitDeadline = hitDeadline;
+    report.hitLimit = hitLimit;
+    report.processed = processed;
+    report.remaining = Math.max(0, plan.length - processed);
+    console.log(`\n✅ ${mode} done in ${report.runMs}ms · consolidated=${report.consolidated.length} ambiguous=${ambiguous.length} errors=${report.errors.length} remaining=${report.remaining}${hitDeadline ? ' (HIT DEADLINE)' : ''}${hitLimit ? ' (HIT LIMIT)' : ''}`);
     return report;
 };
 

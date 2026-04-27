@@ -403,9 +403,10 @@ router.all('/backfill-payment-date', requireAdmin, async (req, res) => {
 // (manual triage required).
 router.all('/consolidate-customers', requireAdmin, async (req, res) => {
     const apply = String(req.query.apply || '0') === '1';
+    const limit = req.query.limit ? Number(req.query.limit) : null;
     try {
         const qbo = await getQboInstance();
-        const report = await runCustomerConsolidate({ qbo, apply });
+        const report = await runCustomerConsolidate({ qbo, apply, limit });
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ consolidate-customers failed:', e.message);
