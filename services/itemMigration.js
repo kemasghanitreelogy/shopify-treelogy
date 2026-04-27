@@ -687,10 +687,12 @@ const runStripTreelogyMigration = async ({ qbo, apply = false }) => {
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 
 const fetchAllQboItems = async (qbo) => {
+    // QBO V3 query with explicit field list inconsistently omits Sku from
+    // results even when populated. SELECT * returns the full entity reliably.
     const out = [];
     const PAGE = 200;
     for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
-        const q = `SELECT Id, Name, Type, Sku, Active, SyncToken FROM Item STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
+        const q = `SELECT * FROM Item STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
         const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
         const items = body?.QueryResponse?.Item || [];
         if (items.length === 0) break;
