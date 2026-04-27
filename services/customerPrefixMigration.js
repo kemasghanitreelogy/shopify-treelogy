@@ -133,6 +133,22 @@ const runCustomerPrefixMigration = async ({ qbo, apply = false }) => {
         errors: [],
     };
 
+    // 2) Bulk-fetch all QBO Customers ONCE to avoid 1 GET per customer.
+    //    Skip if collection is empty (nothing to do anyway).
+    const customerCache = new Map(); // id → { Id, DisplayName, SyncToken, Active }
+    if (customerData.size > 0) {
+        const PAGE2 = 200;
+        for (let startPosition = 1; startPosition < 10000; startPosition += PAGE2) {
+            const q = `SELECT Id, DisplayName, SyncToken, Active FROM Customer STARTPOSITION ${startPosition} MAXRESULTS ${PAGE2}`;
+            const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+            const customers = body?.QueryResponse?.Customer || [];
+            if (customers.length === 0) break;
+            for (const c of customers) customerCache.set(String(c.Id), c);
+            if (customers.length < PAGE2) break;
+        }
+        console.log(`Bulk-fetched ${customerCache.size} QBO customers into cache`);
+    }
+
     let processed = 0;
     for (const [customerId, d] of customerData) {
         processed++;
@@ -165,28 +181,13 @@ const runCustomerPrefixMigration = async ({ qbo, apply = false }) => {
         }
         const prefix = [...allPrefixes][0];
 
-        // Fetch current DisplayName + SyncToken
-        let customer;
-        try {
-            const body = await qboFetch(qbo, `/customer/${customerId}`);
-            customer = body?.Customer;
-        } catch (e) {
-            // 404 → customer was deleted/merged
-            if (e.status === 404 || /Object Not Found/i.test(e.message)) {
-                report.skippedCustomerMissing++;
-                continue;
-            }
-            report.errors.push({ customerId, error: e.message?.slice(0, 200) });
-            continue;
-        }
+        // Use bulk-fetched cache (avoids 200+ individual GET calls).
+        const customer = customerCache.get(String(customerId));
         if (!customer) {
             report.skippedCustomerMissing++;
             continue;
         }
-        if (customer.Active === false) {
-            // Inactive customer — leave alone
-            continue;
-        }
+        if (customer.Active === false) continue; // inactive — leave alone
 
         const currentName = String(customer.DisplayName || '').trim();
         if (HAS_PREFIX_RE.test(currentName)) {
