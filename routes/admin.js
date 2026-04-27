@@ -94,17 +94,20 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
                 if (!/Object Not Found|6240|404/i.test(err)) errors.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, err });
                 continue;
             }
-            const shopeeDate = parseShopeeDate(r.salesorder_no);
-            if (shopeeDate) {
-                if (inv.TxnDate !== shopeeDate) shopeeFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken, layer: 'SHOPEE' });
-                continue;
-            }
-            // Prefer payment_date as TxnDate source (matches webhook write logic).
-            // Fall back to transaction_date when payment_date is absent (unpaid/COD).
+            // Prefer payment_date (canonical accrual event, now policy) over the
+            // Shopee SO# encoding which only reflects when the order was placed.
+            // For Shopee orders paid on a different day, payment_date wins.
             const dateSource = r.last_payment_date_raw || r.last_transaction_date_raw;
             if (dateSource) {
                 const expected = isoDateJakarta(dateSource);
                 if (expected && inv.TxnDate !== expected) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected, syncToken: inv.SyncToken, layer: 'VERIFIED', dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date' });
+                continue;
+            }
+            // Fallback only when no raw date stored (legacy entries pre-deploy):
+            // Shopee SO# encodes the order date — use it as last-resort guess.
+            const shopeeDate = parseShopeeDate(r.salesorder_no);
+            if (shopeeDate) {
+                if (inv.TxnDate !== shopeeDate) shopeeFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken, layer: 'SHOPEE' });
                 continue;
             }
             const jktCreate = isoDateJakarta(inv.MetaData?.CreateTime);

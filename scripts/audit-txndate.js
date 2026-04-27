@@ -100,21 +100,9 @@ async function runOnce(qbo, opts) {
             continue;
         }
 
-        // Layer 1: Shopee SO number is ground truth.
-        const shopeeDate = parseShopeeDate(r.salesorder_no);
-        if (shopeeDate) {
-            if (inv.TxnDate !== shopeeDate) {
-                shopeeFix.push({
-                    so: r.salesorder_no, inv: r.qbo_invoice_id,
-                    qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken,
-                });
-            }
-            continue;
-        }
-
-        // Layer 2: Verified (post-deploy) — raw value from Jubelio. Prefers
-        // payment_date (canonical TxnDate source) and falls back to
-        // transaction_date for unpaid/COD orders.
+        // Layer 1: Verified — raw payment_date / transaction_date from Jubelio.
+        // payment_date is canonical (matches webhook write logic and policy).
+        // The Shopee SO# encoding is now a fallback only when raw is missing.
         const dateSource = r.last_payment_date_raw || r.last_transaction_date_raw;
         if (dateSource) {
             const expected = isoDateJakarta(dateSource);
@@ -124,6 +112,18 @@ async function runOnce(qbo, opts) {
                     qbo: inv.TxnDate, expected, syncToken: inv.SyncToken,
                     raw: dateSource,
                     dateField: r.last_payment_date_raw ? 'payment_date' : 'transaction_date',
+                });
+            }
+            continue;
+        }
+
+        // Layer 2 (fallback): Shopee SO# encoding when no raw date stored.
+        const shopeeDate = parseShopeeDate(r.salesorder_no);
+        if (shopeeDate) {
+            if (inv.TxnDate !== shopeeDate) {
+                shopeeFix.push({
+                    so: r.salesorder_no, inv: r.qbo_invoice_id,
+                    qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken,
                 });
             }
             continue;
