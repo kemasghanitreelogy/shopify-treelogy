@@ -75,11 +75,15 @@ const extractSoNoFromPrivateNote = (note) => {
 
 // 3) Update a Payment: rewire CustomerRef + LinkedTxn.
 //
-// QBO quirk: when a single sparse update changes BOTH CustomerRef and Line[]
-// in one call, the new Line[] silently drops while CustomerRef persists —
-// leaving the payment with empty Line[] and UnappliedAmt = TotalAmt.
-// Splitting into two sequential sparse updates (customer first, then line)
-// makes both persist reliably.
+// Two QBO quirks shape this implementation:
+//   1. Sparse Payment update REQUIRES CustomerRef even when not changing it
+//      (returns 2020 "Required parameter CustomerRef is missing" otherwise).
+//   2. When a single sparse update changes BOTH CustomerRef and Line[] in
+//      one call, the new Line[] is silently dropped while CustomerRef
+//      persists — leaving the payment with empty Line[] and UnappliedAmt
+//      = TotalAmt. Splitting CustomerRef change into a separate first call
+//      avoids this; the final Line[] update then includes the (now-current)
+//      CustomerRef satisfying quirk #1.
 const rewirePayment = async (qbo, payment, newCustomerId, invoiceId) => {
     let syncToken = payment.SyncToken;
     const customerChanges = String(payment.CustomerRef?.value) !== String(newCustomerId);
@@ -107,6 +111,7 @@ const rewirePayment = async (qbo, payment, newCustomerId, invoiceId) => {
             Id: payment.Id,
             SyncToken: syncToken,
             sparse: true,
+            CustomerRef: { value: String(newCustomerId) },
             Line: newLines,
         }),
     });
