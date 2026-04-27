@@ -316,75 +316,114 @@ const getGenericItem = async (qbo, incomeAccountId) => {
 // instead of a product or service." — must be skipped on lookup.
 const SAFE_ITEM_TYPES = new Set(['Service', 'Inventory', 'NonInventory']);
 
-const qboFindItemsByName = (qbo, name) => new Promise((resolve) => {
-    qbo.findItems([{ field: 'Name', value: name, operator: '=' }], (err, body) => {
+const qboFindItemsByField = (qbo, field, value) => new Promise((resolve) => {
+    qbo.findItems([{ field, value, operator: '=' }], (err, body) => {
         if (err) return resolve([]);
         resolve(body?.QueryResponse?.Item || []);
     });
 });
+const qboFindItemsByName = (qbo, name) => qboFindItemsByField(qbo, 'Name', name);
+const qboFindItemsBySku = (qbo, sku) => qboFindItemsByField(qbo, 'Sku', sku);
 
 const qboGetItemType = (qbo, id) => new Promise((resolve) => {
     qbo.getItem(id, (err, body) => resolve(err ? null : (body?.Type || null)));
 });
 
+// Item resolution strategy (priority order):
+//   1. SKU match — Jubelio item_code matches QBO Item.Sku → use existing
+//      (most reliable: SKU is the canonical cross-system product identifier)
+//   2. Name match — sanitized full item_name matches QBO Item.Name → use existing
+//      (lets pre-existing Inventory items in QBO get reused without retyping)
+//   3. Create new Service with Name=full_name, Sku=item_code, Description=full_name
+//   4. On Category/duplicate collision: try variant "<name> (<code>)" then "(Service)"
+//   5. Generic fallback "Jubelio Sync Item" only if every name attempt fails
 const getOrCreateItem = async (qbo, item, incomeAccountId) => {
-    const baseName = sanitizeItemName(item.item_name || item.item_code || item.description) || 'Jubelio Item';
-    // Try base name first, then suffixed variants if we hit a Category collision.
+    const itemCode = String(item.item_code || '').trim();
+    const fullName = sanitizeItemName(item.item_name || item.description || '') || itemCode || 'Jubelio Item';
+    const description = String(item.item_name || item.description || '').trim().substring(0, 4000);
+
+    // 1) SKU lookup — match existing QBO Inventory/Service by Sku field.
+    if (itemCode) {
+        const bySku = await qboFindItemsBySku(qbo, itemCode);
+        const usable = bySku.find(i => SAFE_ITEM_TYPES.has(i.Type));
+        if (usable) {
+            console.log(`✅ Item match by SKU="${itemCode}" → existing id=${usable.Id} name="${usable.Name}" type=${usable.Type}`);
+            return usable.Id;
+        }
+    }
+
+    // 2) Name lookup — match existing QBO item by full sanitized name.
+    if (fullName) {
+        const byName = await qboFindItemsByName(qbo, fullName);
+        const usable = byName.find(i => SAFE_ITEM_TYPES.has(i.Type));
+        if (usable) {
+            console.log(`✅ Item match by Name="${fullName}" → existing id=${usable.Id} type=${usable.Type}`);
+            return usable.Id;
+        }
+    }
+
+    // 3) Create new. Use full name as primary, fall back to suffixed variants
+    // if we hit Category collision or duplicate-name errors.
+    if (!incomeAccountId) {
+        console.log(`⚠️ Item "${fullName}" tidak ada & tidak bisa auto-create (no income account)`);
+        return null;
+    }
+
     const candidates = [
-        baseName,
-        sanitizeItemName(`${baseName} (Item)`),
-        sanitizeItemName(`${baseName} (Service)`),
-    ];
+        fullName,
+        itemCode && fullName !== itemCode ? sanitizeItemName(`${fullName} (${itemCode})`) : null,
+        sanitizeItemName(`${fullName} (Service)`),
+    ].filter(Boolean);
 
     for (const lookupName of candidates) {
+        // Re-check by name in case a parallel webhook created it between our
+        // initial lookup and this attempt.
         const found = await qboFindItemsByName(qbo, lookupName);
         const usable = found.find(i => SAFE_ITEM_TYPES.has(i.Type));
-        if (usable) return usable.Id;
-
+        if (usable) {
+            console.log(`✅ Item raced & found existing "${lookupName}" id=${usable.Id}`);
+            return usable.Id;
+        }
         if (found.some(i => i.Type === 'Category')) {
-            console.log(`⚠️ Item name '${lookupName}' bentrok dengan Category di QBO — coba nama alternatif`);
+            console.log(`⚠️ Item name "${lookupName}" bentrok dengan Category — coba variant berikutnya`);
             continue;
         }
 
-        if (!incomeAccountId) {
-            console.log(`⚠️ Item '${lookupName}' tidak ada & tidak bisa auto-create (no income account)`);
-            return null;
-        }
+        const payload = {
+            Name: lookupName,
+            Type: 'Service',
+            IncomeAccountRef: { value: incomeAccountId },
+            UnitPrice: Number(item.sell_price || item.price) || 0,
+        };
+        if (itemCode) payload.Sku = itemCode;
+        if (description) payload.Description = description;
 
         const { errC, bodyC } = await new Promise((resolve) => {
-            qbo.createItem({
-                Name: lookupName,
-                Type: 'Service',
-                IncomeAccountRef: { value: incomeAccountId },
-                UnitPrice: Number(item.sell_price || item.price) || 0,
-            }, (e, b) => resolve({ errC: e, bodyC: b }));
+            qbo.createItem(payload, (e, b) => resolve({ errC: e, bodyC: b }));
         });
         if (!errC) {
-            console.log(`✅ Item created: ${lookupName} (ID: ${bodyC.Id})`);
+            console.log(`✅ Item created: "${lookupName}" sku="${itemCode}" id=${bodyC.Id}`);
             return bodyC.Id;
         }
 
         const detail = extractQboError(errC, bodyC);
-        // QBO "Duplicate Name Exists" returns the existing Id in the error
-        // detail ("... : Id=53"). Verify the existing record is a usable type
-        // before reusing — if it's a Category, try an alternative name.
         const dupMatch = /Id=(\d+)/i.exec(detail);
         if (dupMatch) {
             const existingId = dupMatch[1];
             const existingType = await qboGetItemType(qbo, existingId);
             if (existingType && SAFE_ITEM_TYPES.has(existingType)) {
-                console.log(`ℹ️ Item '${lookupName}' sudah ada (ID ${existingId}, Type ${existingType}) — pakai existing.`);
+                console.log(`ℹ️ Item "${lookupName}" sudah ada (id=${existingId} type=${existingType}) — pakai existing.`);
                 return existingId;
             }
-            console.log(`⚠️ Item '${lookupName}' bentrok dengan ${existingType || 'unknown'} (ID ${existingId}) — coba nama alternatif`);
+            console.log(`⚠️ Item "${lookupName}" bentrok dengan ${existingType || 'unknown'} (id=${existingId}) — coba variant berikutnya`);
             continue;
         }
 
-        console.log(`⚠️ createItem gagal '${lookupName}': ${detail}`);
+        console.log(`⚠️ createItem gagal "${lookupName}": ${detail}`);
         break;
     }
 
-    console.log(`⚠️ Semua nama kandidat gagal untuk item '${baseName}' — fallback ke generic item`);
+    console.log(`⚠️ Semua nama kandidat gagal untuk item "${fullName}" sku="${itemCode}" — fallback ke generic item`);
     return await getGenericItem(qbo, incomeAccountId);
 };
 

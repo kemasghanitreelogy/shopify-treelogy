@@ -8,6 +8,7 @@ const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const { getQboInstance } = require('../services/qboService');
 const { alertAuditReport, alertResyncResult, alertDailyReconcile } = require('../services/alertService');
 const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile');
+const { runItemMigration } = require('../services/itemMigration');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -236,6 +237,26 @@ router.all('/daily-reconcile', requireAdmin, async (req, res) => {
     } catch (e) {
         console.error('❌ daily-reconcile failed:', e.message);
         res.status(500).json({ ok: false, date: targetDate, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/migrate-items?apply=0
+//   apply  — 0 (default) dry-run only · 1 actually rename in QBO
+//
+// Finds existing "Jubelio Sync Item*" entries and reports what they should be
+// renamed to (based on invoice line descriptions). With apply=1 actually
+// updates the QBO Item.Name. Ambiguous items (multiple distinct products
+// referencing the same generic item) are reported but NOT auto-renamed —
+// those need manual triage.
+router.all('/migrate-items', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    try {
+        const qbo = await getQboInstance();
+        const report = await runItemMigration({ qbo, apply });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ migrate-items failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });
 
