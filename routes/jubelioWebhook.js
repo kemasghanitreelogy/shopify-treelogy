@@ -177,29 +177,67 @@ const extractQboError = (err, body) => {
 };
 
 // ─── QBO Metadata Cache ───
-let _cachedTaxCodeId = null;
+// Tax codes are returned as a RANKED candidate list (zero-rate first, then any
+// other usable code) instead of a single id. We retry with the next candidate
+// when QBO rejects with "Invalid Tax Rate" (the chosen code's underlying tax
+// rate was deleted/disabled by an admin). Cache TTL is 1 hour so the list
+// refreshes automatically after admins reorganize the tax catalog.
+let _cachedTaxCodes = null;
+let _cachedTaxAt = 0;
+const TAX_CACHE_TTL_MS = 60 * 60 * 1000;
 let _cachedIncomeAccountId = null;
 
-const getDefaultTaxCode = (qbo) => {
-    if (process.env.QBO_TAX_CODE) return Promise.resolve(process.env.QBO_TAX_CODE);
-    if (_cachedTaxCodeId) return Promise.resolve(_cachedTaxCodeId);
-    return new Promise((resolve) => {
-        qbo.findTaxCodes([], (err, body) => {
-            const codes = body?.QueryResponse?.TaxCode;
-            if (codes && codes.length > 0) {
-                const zeroRate = codes.find(c =>
-                    c.Active !== false && (
-                        /free|exempt|zero|nil|none|nol|bebas/i.test(c.Name) ||
-                        c.Name === 'FRE' || c.Name === 'Z' || c.Name === 'NON'
-                    )
-                );
-                _cachedTaxCodeId = zeroRate ? String(zeroRate.Id) : String(codes[0].Id);
-            } else {
-                _cachedTaxCodeId = null;
-            }
-            resolve(_cachedTaxCodeId);
-        });
+// A tax code is USABLE if Active and has at least one populated TaxRateDetail
+// entry. Inactive codes or codes whose TaxRateRef list is empty (e.g. "12.0%
+// S Import" without a configured rate) cause AST validator to throw with
+// "Invalid tax rate id - <n>" when used on a line.
+const isUsableTaxCode = (c) => c.Active !== false
+    && Array.isArray(c.SalesTaxRateList?.TaxRateDetail)
+    && c.SalesTaxRateList.TaxRateDetail.length > 0
+    && c.SalesTaxRateList.TaxRateDetail.some(d => d.TaxRateRef?.value);
+
+// Score: 0 = best (zero-rate names), 1 = neutral, 2 = taxable.
+const rankTaxCode = (c) => {
+    const name = String(c.Name || '');
+    if (/no.?vat|exempt|zero|nil|none|nol|bebas|0\.?0%|^z\b|^non$|^fre$/i.test(name)) return 0;
+    if (/^\d+(\.\d+)?\s*%/i.test(name)) return 2; // looks like a percent code
+    return 1;
+};
+
+const getUsableTaxCodes = (qbo) => new Promise((resolve, reject) => {
+    if (process.env.QBO_TAX_CODE) {
+        return resolve([String(process.env.QBO_TAX_CODE)]);
+    }
+    if (_cachedTaxCodes && Date.now() - _cachedTaxAt < TAX_CACHE_TTL_MS) {
+        return resolve(_cachedTaxCodes);
+    }
+    qbo.findTaxCodes([], (err, body) => {
+        if (err) return reject(new Error('findTaxCodes: ' + extractQboError(err, body)));
+        const codes = body?.QueryResponse?.TaxCode || [];
+        const usable = codes.filter(isUsableTaxCode);
+        const ranked = usable.sort((a, b) => rankTaxCode(a) - rankTaxCode(b));
+        _cachedTaxCodes = ranked.map(c => String(c.Id));
+        _cachedTaxAt = Date.now();
+        // Fall-back to ANY active code id if filter eliminated everything (very
+        // misconfigured tenant) — better than no candidate at all.
+        if (_cachedTaxCodes.length === 0) {
+            _cachedTaxCodes = codes.filter(c => c.Active !== false).map(c => String(c.Id));
+        }
+        resolve(_cachedTaxCodes);
     });
+});
+
+const getDefaultTaxCode = async (qbo) => {
+    const list = await getUsableTaxCodes(qbo);
+    return list[0] || null;
+};
+
+const invalidateTaxCache = () => { _cachedTaxCodes = null; _cachedTaxAt = 0; };
+
+// Detect QBO tax-validator errors so we can retry with a different code.
+const isTaxRateError = (err) => {
+    const msg = String(err?.message || err || '');
+    return /Invalid Tax Rate|Invalid tax|sales tax rate/i.test(msg);
 };
 
 const getIncomeAccountId = (qbo) => {
@@ -720,13 +758,11 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         const itemId = await getOrCreateItem(qbo, it, incomeAccountId);
         const detail = { Qty: qty, UnitPrice: effectiveUnitPrice };
         if (itemId) detail.ItemRef = { value: itemId };
-        // TaxCodeRef intentionally omitted — we set GlobalTaxCalculation:
-        // NotApplicable on the invoice header, and pinning a specific tax-code
-        // id at line level breaks updates whenever QBO admins reorganize tax
-        // codes / rates (real incident: a cached tax code id became invalid
-        // after the underlying tax rate was deleted, causing every update to
-        // fail with "Invalid Tax Rate"). The unused taxCodeId param is kept
-        // in the signature for backward compat.
+        // QBO Indonesia AST requires a TaxCodeRef even when the invoice
+        // header carries GlobalTaxCalculation: NotApplicable. The id is
+        // resolved upstream (getDefaultTaxCode → ranked usable codes) and
+        // we retry with the next candidate on tax errors.
+        if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
         if (serviceDate) detail.ServiceDate = serviceDate;
 
         let description = it.description || it.item_name || it.item_code || '';
@@ -750,7 +786,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     const shipping = Number(so.shipping_cost || 0);
     if (shipping > 0) {
         const detail = { Qty: 1, UnitPrice: shipping };
-        // Same rationale as item line — no TaxCodeRef.
+        if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
         if (serviceDate) detail.ServiceDate = serviceDate;
         lines.push({
             Description: `Shipping (${so.courier || so.shipper || 'N/A'})`,
@@ -1143,17 +1179,52 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const stripShipMethod = (p) => { const clone = { ...p }; delete clone.ShipMethodRef; return clone; };
     const isShipMethodErr = (msg) => /ShipMethod|ShipMethodRef|Ship Via|Invalid Reference/i.test(msg);
 
+    // Replace TaxCodeRef on every SalesItemLineDetail so we can re-attempt
+    // the update/create with a different tax code candidate when QBO rejects
+    // the first one.
+    const swapTaxCode = (p, newCodeId) => ({
+        ...p,
+        Line: (p.Line || []).map(l => {
+            if (!l.SalesItemLineDetail) return l;
+            return {
+                ...l,
+                SalesItemLineDetail: {
+                    ...l.SalesItemLineDetail,
+                    TaxCodeRef: { value: String(newCodeId) },
+                },
+            };
+        }),
+    });
+
+    // Attempts a write with the current tax code, then retries with the next
+    // candidate from the ranked list whenever QBO returns a tax-validator
+    // error. Bounded by either candidate-list length or maxAttempts.
+    const writeWithTaxFallback = async (writeFn) => {
+        const candidates = await getUsableTaxCodes(qbo);
+        let lastErr;
+        for (let i = 0; i < Math.min(candidates.length || 1, 4); i++) {
+            const codeId = candidates[i] || taxCodeId;
+            const payload = i === 0 ? basePayload : swapTaxCode(basePayload, codeId);
+            try {
+                return await writeFn(payload);
+            } catch (err) {
+                lastErr = err;
+                if (basePayload.ShipMethodRef && isShipMethodErr(err.message)) {
+                    return writeFn(stripShipMethod(payload));
+                }
+                if (!isTaxRateError(err)) throw err;
+                console.warn(`⚠️ tax error with code=${codeId} (attempt ${i + 1}/${candidates.length}); retrying with next candidate. msg=${err.message?.slice(0, 160)}`);
+                invalidateTaxCache();
+            }
+        }
+        throw lastErr || new Error('writeInvoice failed: exhausted tax code candidates');
+    };
+
     if (existing) {
         console.log(`♻️ Update QBO Invoice ${existing.qbo_invoice_id} untuk SO ${so.salesorder_no}`);
-        let updated;
-        try {
-            updated = await qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => basePayload);
-        } catch (err) {
-            if (basePayload.ShipMethodRef && isShipMethodErr(err.message)) {
-                console.warn(`⚠️ updateInvoice gagal karena ShipMethodRef — retry tanpa Ship via: ${err.message}`);
-                updated = await qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => stripShipMethod(basePayload));
-            } else { throw err; }
-        }
+        const updated = await writeWithTaxFallback((p) =>
+            qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => p)
+        );
         await JubelioOrderMap.updateOne(
             { salesorder_id: so.salesorder_id, qbo_realm_id: realmId },
             {
@@ -1170,15 +1241,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     }
 
     console.log(`🆕 Create QBO Invoice untuk SO ${so.salesorder_no}`);
-    let created;
-    try {
-        created = await qboCreateInvoice(qbo, basePayload);
-    } catch (err) {
-        if (basePayload.ShipMethodRef && isShipMethodErr(err.message)) {
-            console.warn(`⚠️ createInvoice gagal karena ShipMethodRef — retry tanpa Ship via: ${err.message}`);
-            created = await qboCreateInvoice(qbo, stripShipMethod(basePayload));
-        } else { throw err; }
-    }
+    const created = await writeWithTaxFallback((p) => qboCreateInvoice(qbo, p));
     await JubelioOrderMap.create({
         salesorder_id: so.salesorder_id,
         salesorder_no: so.salesorder_no,
