@@ -8,7 +8,7 @@ const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const { getQboInstance } = require('../services/qboService');
 const { alertAuditReport, alertResyncResult, alertDailyReconcile } = require('../services/alertService');
 const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile');
-const { runItemMigration } = require('../services/itemMigration');
+const { runItemMigration, runStripTreelogyMigration } = require('../services/itemMigration');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -256,6 +256,26 @@ router.all('/migrate-items', requireAdmin, async (req, res) => {
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ migrate-items failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/migrate-strip-treelogy?apply=0|1
+//   apply  — 0 (default) dry-run · 1 actually rename / redirect / inactivate
+//
+// Strips the "TREELOGY" prefix from existing QBO Item.Name. For each item:
+//   - If stripped name is unique → simple rename
+//   - If stripped name already exists as another usable Item → redirect any
+//     invoice line refs to that existing Item, then inactivate the old one
+//   - Errors are isolated per-item; one failure doesn't abort the job.
+router.all('/migrate-strip-treelogy', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    try {
+        const qbo = await getQboInstance();
+        const report = await runStripTreelogyMigration({ qbo, apply });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ migrate-strip-treelogy failed:', e.message);
         res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });

@@ -417,4 +417,225 @@ const runItemMigration = async ({ qbo, apply = false }) => {
     return report;
 };
 
-module.exports = { runItemMigration };
+// ─── TREELOGY brand prefix migration ──────────────────────────────────────
+// Find Items with Name starting with "TREELOGY" (case-insensitive) and rename
+// to the stripped form. If the stripped name already exists as another usable
+// Item, redirect invoice line refs to that existing Item and inactivate the
+// old TREELOGY-prefixed one (same redirect-then-inactivate pattern as
+// runItemMigration).
+
+const stripBrandPrefix = (s) => String(s || '').replace(/^\s*TREELOGY\b[\s|,\-]*/i, '').trim();
+
+const findTreelogyPrefixedItems = async (qbo) => {
+    const out = [];
+    const PAGE = 200;
+    for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
+        // QBO LIKE is case-sensitive on some editions — use OR for safety.
+        const q = `SELECT Id, Name, Type, Sku, Description, Active, SyncToken FROM Item WHERE Name LIKE 'TREELOGY%' OR Name LIKE 'Treelogy%' STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
+        const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+        const items = body?.QueryResponse?.Item || [];
+        if (items.length === 0) break;
+        out.push(...items);
+        if (items.length < PAGE) break;
+    }
+    return out;
+};
+
+const findItemByExactName = async (qbo, name) => {
+    const escaped = name.replace(/'/g, "\\'");
+    const q = `SELECT Id, Name, Type FROM Item WHERE Name = '${escaped}'`;
+    const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+    return body?.QueryResponse?.Item || [];
+};
+
+const renameItem = async (qbo, item, newName) => {
+    return qboFetch(qbo, '/item', {
+        method: 'POST',
+        body: JSON.stringify({
+            Id: item.Id,
+            SyncToken: item.SyncToken,
+            sparse: true,
+            Name: newName,
+        }),
+    });
+};
+
+const runStripTreelogyMigration = async ({ qbo, apply = false }) => {
+    const t0 = Date.now();
+    const mode = apply ? 'APPLY' : 'DRY-RUN';
+    console.log(`\n🏷️  Strip TREELOGY migration (${mode})\n`);
+
+    const items = await findTreelogyPrefixedItems(qbo);
+    console.log(`Found ${items.length} items with TREELOGY prefix`);
+
+    const report = {
+        apply, mode, runMs: 0,
+        totalPrefixed: items.length,
+        perItem: [],
+        summary: {
+            renamed: 0,
+            redirectedLines: 0,
+            inactivated: 0,
+            errors: 0,
+            skipped: 0,
+        },
+    };
+
+    if (items.length === 0) {
+        report.runMs = Date.now() - t0;
+        return report;
+    }
+
+    // Pre-scan invoices once for all candidate ids — only needed for redirect path.
+    const allIds = items.map(i => String(i.Id));
+    const refIndex = await buildItemRefIndex(qbo, allIds);
+
+    for (const item of items) {
+        const itemReport = {
+            itemId: item.Id,
+            currentName: item.Name,
+            type: item.Type,
+            newName: null,
+            existingTargetId: null,
+            invoicesScanned: 0,
+            linesRedirected: [],
+            errors: [],
+            renamed: false,
+            inactivated: false,
+        };
+
+        try {
+            const newName = stripBrandPrefix(item.Name).substring(0, 100);
+            itemReport.newName = newName;
+
+            if (!newName || newName === item.Name) {
+                itemReport.action = 'no-op (nothing to strip)';
+                report.summary.skipped++;
+                report.perItem.push(itemReport);
+                continue;
+            }
+
+            // Check if target name is already taken by another Item
+            const existing = await findItemByExactName(qbo, newName);
+            const usableExisting = existing.find(e => SAFE_ITEM_TYPES.has(e.Type) && String(e.Id) !== String(item.Id));
+
+            if (!usableExisting) {
+                // Simple rename path
+                itemReport.action = 'rename';
+                if (apply) {
+                    try {
+                        const updated = await renameItem(qbo, item, newName);
+                        itemReport.renamed = true;
+                        itemReport.appliedNewName = updated?.Item?.Name;
+                        report.summary.renamed++;
+                        console.log(`  ✅ Renamed ${item.Id}: "${item.Name}" → "${updated?.Item?.Name}"`);
+                    } catch (e) {
+                        // Rare race: another item with same name appeared between check and rename
+                        const detail = JSON.stringify(e.body || {}).slice(0, 300);
+                        if (/Duplicate Name Exists/i.test(detail)) {
+                            console.log(`  ⚠️  ${item.Id} race: target appeared, falling to redirect`);
+                            // fall through to redirect path
+                        } else {
+                            itemReport.errors.push({ stage: 'rename', error: e.message.slice(0, 300) });
+                            report.summary.errors++;
+                            report.perItem.push(itemReport);
+                            continue;
+                        }
+                    }
+                } else {
+                    console.log(`  📝 Would rename ${item.Id}: "${item.Name}" → "${newName}"`);
+                }
+                if (itemReport.renamed || !apply) {
+                    report.perItem.push(itemReport);
+                    continue;
+                }
+            }
+
+            // Redirect path: target already exists, redirect invoice lines + inactivate this one
+            const targetId = String(usableExisting?.Id || (await findItemByExactName(qbo, newName)).find(e => SAFE_ITEM_TYPES.has(e.Type))?.Id);
+            if (!targetId) {
+                itemReport.errors.push({ stage: 'redirect', error: 'no target id resolved' });
+                report.summary.errors++;
+                report.perItem.push(itemReport);
+                continue;
+            }
+            itemReport.existingTargetId = targetId;
+            itemReport.action = 'redirect-and-inactivate';
+
+            const invoices = refIndex.get(String(item.Id)) || [];
+            itemReport.invoicesScanned = invoices.length;
+
+            for (const inv of invoices) {
+                for (const line of inv.lines) {
+                    const action = {
+                        invoice: inv.docNumber,
+                        invoiceId: inv.invoiceId,
+                        lineId: line.Id,
+                        fromItemId: String(item.Id),
+                        toItemId: targetId,
+                        toName: newName,
+                    };
+                    if (apply) {
+                        try {
+                            const updated = await redirectLineItemRef(qbo, inv, line.Id, targetId);
+                            inv.syncToken = updated?.Invoice?.SyncToken || inv.syncToken;
+                            inv.rawInvoice = updated?.Invoice || inv.rawInvoice;
+                            action.applied = true;
+                            itemReport.linesRedirected.push(action);
+                            report.summary.redirectedLines++;
+                            console.log(`  ✅ ${inv.docNumber} line=${line.Id}: ${item.Id} → ${targetId}`);
+                        } catch (e) {
+                            const isAst = /sales tax rate|Business Validation/i.test(e.message);
+                            action.applied = false;
+                            action.error = e.message.slice(0, 300);
+                            action.isAst = isAst;
+                            itemReport.errors.push({ stage: 'redirect', invoice: inv.docNumber, lineId: line.Id, isAst, error: e.message.slice(0, 300) });
+                            report.summary.errors++;
+                        }
+                    } else {
+                        console.log(`  📝 ${inv.docNumber} line=${line.Id}: would redirect ${item.Id} → ${targetId} ("${newName}")`);
+                        itemReport.linesRedirected.push({ ...action, applied: false });
+                    }
+                }
+            }
+
+            const allLinesOk = apply && itemReport.errors.length === 0 && itemReport.linesRedirected.length === invoices.reduce((n, inv) => n + inv.lines.length, 0);
+            if (apply && allLinesOk) {
+                try {
+                    const fresh = await qboFetch(qbo, `/item/${item.Id}`);
+                    await markItemInactive(qbo, fresh.Item);
+                    itemReport.inactivated = true;
+                    report.summary.inactivated++;
+                    console.log(`  🗑️  Inactivated ${item.Id} "${item.Name}"`);
+                } catch (e) {
+                    itemReport.errors.push({ stage: 'mark-inactive', error: e.message.slice(0, 300) });
+                    report.summary.errors++;
+                }
+            } else if (apply && invoices.length === 0) {
+                // No references — just inactivate the prefixed one (rare: orphan TREELOGY item)
+                try {
+                    const fresh = await qboFetch(qbo, `/item/${item.Id}`);
+                    await markItemInactive(qbo, fresh.Item);
+                    itemReport.inactivated = true;
+                    report.summary.inactivated++;
+                } catch (e) {
+                    itemReport.errors.push({ stage: 'mark-inactive', error: e.message.slice(0, 300) });
+                    report.summary.errors++;
+                }
+            } else if (apply) {
+                report.summary.skipped++;
+            }
+        } catch (e) {
+            itemReport.errors.push({ stage: 'top', error: e.message });
+            report.summary.errors++;
+        }
+
+        report.perItem.push(itemReport);
+    }
+
+    report.runMs = Date.now() - t0;
+    console.log(`\n✅ ${mode} done in ${report.runMs}ms · renamed=${report.summary.renamed} redirected=${report.summary.redirectedLines} inactivated=${report.summary.inactivated} errors=${report.summary.errors}`);
+    return report;
+};
+
+module.exports = { runItemMigration, runStripTreelogyMigration };

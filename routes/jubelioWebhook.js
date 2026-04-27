@@ -272,8 +272,14 @@ const getOrCreateCustomer = async (qbo, so) => {
 // QBO Item Name rules: max 100 chars, cannot contain `:`, must be unique.
 // Jubelio item names can have `/`, parens, Indonesian words — usually fine
 // after stripping colons and collapsing whitespace.
+// Strip leading brand prefix from item names. Jubelio products carry the brand
+// in item_name (e.g. "TREELOGY Premium Organic..."), but in QBO we want just
+// the product portion since the brand is implicit (single-tenant). Handles
+// "Treelogy" lowercase too and absorbs trailing separators like ` | ` ` - `.
+const stripBrandPrefix = (s) => String(s || '').replace(/^\s*TREELOGY\b[\s|,\-]*/i, '').trim();
+
 const sanitizeItemName = (raw) => {
-    const cleaned = String(raw || '')
+    const cleaned = stripBrandPrefix(String(raw || ''))
         .replace(/:/g, '-')        // colons are hard-forbidden in QBO item names
         .replace(/[\u0000-\u001F]/g, '')  // control chars
         .replace(/\s+/g, ' ')
