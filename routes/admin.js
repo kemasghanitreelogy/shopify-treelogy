@@ -10,6 +10,7 @@ const { alertAuditReport, alertResyncResult, alertDailyReconcile } = require('..
 const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile');
 const { runItemMigration, runStripTreelogyMigration, runSkuBackfillMigration } = require('../services/itemMigration');
 const { runOrphanPaymentRecovery } = require('../services/paymentRecovery');
+const { runCustomerMapBackfill } = require('../services/customerMapBackfill');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -317,6 +318,26 @@ router.all('/recover-orphan-payments', requireAdmin, async (req, res) => {
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ recover-orphan-payments failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/backfill-customer-map?apply=0|1
+//   apply  — 0 (default) dry-run · 1 actually upsert mapping documents
+//
+// Mines JubelioPayloadLog for (source, buyer_id) pairs and persists each to
+// JubelioCustomerMap pointing at the qbo_customer_id we'd resolve via the
+// existing invoice for that buyer. After this, the webhook's buyer_id
+// lookup hits the cache for every historical buyer instead of re-running
+// the full lookup chain.
+router.all('/backfill-customer-map', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    try {
+        const qbo = await getQboInstance();
+        const report = await runCustomerMapBackfill({ qbo, apply });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ backfill-customer-map failed:', e.message);
         res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });

@@ -5,6 +5,7 @@ const { getQboInstance } = require('../services/qboService');
 const { alertWebhookError, alertAuthRejected, sendTestAlert, isConfigured: alertsConfigured } = require('../services/alertService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
+const JubelioCustomerMap = require('../models/JubelioCustomerMap');
 
 // Fire-and-forget: persist full webhook payload for later debugging. Logging
 // failures MUST NOT block the actual sync flow — we swallow errors here.
@@ -274,12 +275,66 @@ const buildShipAddr = (so) => {
     };
 };
 
+// Quick existence check before trusting a cached qbo_customer_id from the
+// JubelioCustomerMap. Returns true if the QBO Customer is still present
+// (and Active). Network failure is treated as "exists" — better to attempt
+// the sync with the cached id than spuriously create a duplicate.
+const qboCustomerExists = (qbo, customerId) => withQboRetry('getCustomer', () => new Promise((resolve) => {
+    qbo.getCustomer(String(customerId), (err, body) => {
+        if (err) {
+            // 404/410/object-not-found means we should fall through and re-resolve.
+            const msg = String(err.message || err);
+            if (/Object Not Found|6240|404|invalid/i.test(msg)) return resolve(false);
+            // Other errors → assume exists, don't trigger duplicate creation.
+            return resolve(true);
+        }
+        if (!body) return resolve(false);
+        if (body.Active === false) return resolve(false);
+        resolve(true);
+    });
+}));
+
 const getOrCreateCustomer = async (qbo, so) => {
     let email = so.customer_email;
     let phone = so.customer_phone;
     let displayName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 100);
     let shipFullName = so.shipping_full_name;
     let shipAddr = buildShipAddr(so);
+
+    // ─── Stable identity lookup by (source, buyer_id) ───────────────────
+    // Tokopedia/Shopee always send a marketplace user id (`buyer_id`) per
+    // order. We persist (source, buyer_id) → qbo_customer_id in the
+    // JubelioCustomerMap collection so finance can rename / merge customers
+    // in QBO without breaking the integration's dedup. This is the most
+    // robust lookup path — it survives name changes that name-based
+    // matching cannot.
+    const source = String(so.source_name || so.source || '').toUpperCase().trim();
+    const buyerId = so.buyer_id ? String(so.buyer_id).trim() : null;
+    const realmId = String(qbo.realmId);
+
+    if (source && buyerId) {
+        const mapped = await JubelioCustomerMap.findOne({
+            source, buyer_id: buyerId, qbo_realm_id: realmId,
+        }).lean();
+        if (mapped?.qbo_customer_id) {
+            // Verify the cached customer still exists (finance might have deleted it)
+            const exists = await qboCustomerExists(qbo, mapped.qbo_customer_id);
+            if (exists) {
+                // Touch audit fields async (don't block sync on this).
+                JubelioCustomerMap.updateOne(
+                    { _id: mapped._id },
+                    {
+                        last_seen_at: new Date(),
+                        last_so_no: so.salesorder_no,
+                        last_customer_name_jubelio: displayName,
+                    }
+                ).catch(e => console.warn(`⚠️ JubelioCustomerMap touch failed: ${e.message}`));
+                console.log(`✅ Customer match by buyer_id source=${source} buyer_id=${buyerId} → qbo_id=${mapped.qbo_customer_id}`);
+                return mapped.qbo_customer_id;
+            }
+            console.warn(`⚠️ JubelioCustomerMap stale: qbo_customer_id=${mapped.qbo_customer_id} no longer exists, re-resolving (will rebuild map)`);
+        }
+    }
 
     // Tokopedia & some channels redact customer info in webhook payloads.
     // When detected, fetch the unredacted form from Jubelio API directly.
@@ -302,71 +357,104 @@ const getOrCreateCustomer = async (qbo, so) => {
         // strictly better than failing the webhook outright.
     }
 
+    // Resolve customerId via email → name → create.
+    let resolvedCustomerId = null;
+    let resolvedQboName = null;
+
     // 1. Match by email (most specific identifier).
     if (email) {
         const byEmail = await findCustomersByField(qbo, 'PrimaryEmailAddr', email);
-        if (byEmail.length > 0) return byEmail[0].Id;
+        if (byEmail.length > 0) {
+            resolvedCustomerId = byEmail[0].Id;
+            resolvedQboName = byEmail[0].DisplayName;
+        }
     }
 
     // 2. Multi-variant DisplayName lookup. Reduces duplicate creation when
     // QBO already has the customer under a different naming convention
     // (with/without channel prefix). Try most specific first.
-    const variants = [];
-    const seen = new Set();
-    const addVariant = (v) => {
-        const trimmed = String(v || '').trim().substring(0, 100);
-        if (trimmed && !seen.has(trimmed.toLowerCase())) {
-            seen.add(trimmed.toLowerCase());
-            variants.push(trimmed);
-        }
-    };
-    addVariant(displayName);
-    const stripped = stripCustomerChannelPrefix(displayName);
-    if (stripped !== displayName) addVariant(stripped);
-    const prefix = getSoPrefix(so);
-    if (prefix && !displayName.toUpperCase().startsWith(`${prefix} -`)) {
-        addVariant(`${prefix} - ${displayName}`);
-        if (stripped !== displayName) addVariant(`${prefix} - ${stripped}`);
-    }
-
-    for (const v of variants) {
-        const byName = await findCustomersByField(qbo, 'DisplayName', v);
-        if (byName.length > 0) {
-            if (v !== displayName) {
-                console.log(`✅ Customer match by variant "${v}" (asked "${displayName}") → id=${byName[0].Id}`);
+    if (!resolvedCustomerId) {
+        const variants = [];
+        const seen = new Set();
+        const addVariant = (v) => {
+            const trimmed = String(v || '').trim().substring(0, 100);
+            if (trimmed && !seen.has(trimmed.toLowerCase())) {
+                seen.add(trimmed.toLowerCase());
+                variants.push(trimmed);
             }
-            return byName[0].Id;
+        };
+        addVariant(displayName);
+        const stripped = stripCustomerChannelPrefix(displayName);
+        if (stripped !== displayName) addVariant(stripped);
+        const prefix = getSoPrefix(so);
+        if (prefix && !displayName.toUpperCase().startsWith(`${prefix} -`)) {
+            addVariant(`${prefix} - ${displayName}`);
+            if (stripped !== displayName) addVariant(`${prefix} - ${stripped}`);
+        }
+
+        for (const v of variants) {
+            const byName = await findCustomersByField(qbo, 'DisplayName', v);
+            if (byName.length > 0) {
+                if (v !== displayName) {
+                    console.log(`✅ Customer match by variant "${v}" (asked "${displayName}") → id=${byName[0].Id}`);
+                }
+                resolvedCustomerId = byName[0].Id;
+                resolvedQboName = byName[0].DisplayName;
+                break;
+            }
         }
     }
 
     // 3. Create new customer; recover existing Id on race-induced duplicate.
-    return withQboRetry('createCustomer', () => new Promise((resolve, reject) => {
-        const payload = {
-            DisplayName: displayName,
-            GivenName: displayName.split(' ')[0] || 'Jubelio',
-            FamilyName: displayName.split(' ').slice(1).join(' ') || 'Customer',
-        };
-        if (email) payload.PrimaryEmailAddr = { Address: email };
-        if (phone) payload.PrimaryPhone = { FreeFormNumber: String(phone) };
-        if (shipAddr) {
-            payload.ShipAddr = shipAddr;
-            payload.BillAddr = shipAddr; // Jubelio only exposes shipping address — use as billing too.
-        }
-        qbo.createCustomer(payload, (errC, bodyC) => {
-            if (errC) {
-                const detail = extractQboError(errC, bodyC);
-                // Race recovery: another concurrent webhook just created this name.
-                const dupMatch = /Id=(\d+)/i.exec(detail);
-                if (dupMatch) {
-                    console.log(`ℹ️ Customer "${displayName}" sudah ada (id=${dupMatch[1]}) — race-recovered.`);
-                    return resolve(dupMatch[1]);
-                }
-                return reject(new Error('createCustomer: ' + detail));
+    if (!resolvedCustomerId) {
+        const created = await withQboRetry('createCustomer', () => new Promise((resolve, reject) => {
+            const payload = {
+                DisplayName: displayName,
+                GivenName: displayName.split(' ')[0] || 'Jubelio',
+                FamilyName: displayName.split(' ').slice(1).join(' ') || 'Customer',
+            };
+            if (email) payload.PrimaryEmailAddr = { Address: email };
+            if (phone) payload.PrimaryPhone = { FreeFormNumber: String(phone) };
+            if (shipAddr) {
+                payload.ShipAddr = shipAddr;
+                payload.BillAddr = shipAddr; // Jubelio only exposes shipping address — use as billing too.
             }
-            console.log(`✅ Customer baru: ${bodyC.Id} (${displayName})`);
-            resolve(bodyC.Id);
-        });
-    }));
+            qbo.createCustomer(payload, (errC, bodyC) => {
+                if (errC) {
+                    const detail = extractQboError(errC, bodyC);
+                    const dupMatch = /Id=(\d+)/i.exec(detail);
+                    if (dupMatch) {
+                        console.log(`ℹ️ Customer "${displayName}" sudah ada (id=${dupMatch[1]}) — race-recovered.`);
+                        return resolve({ Id: dupMatch[1], DisplayName: displayName });
+                    }
+                    return reject(new Error('createCustomer: ' + detail));
+                }
+                console.log(`✅ Customer baru: ${bodyC.Id} (${displayName})`);
+                resolve(bodyC);
+            });
+        }));
+        resolvedCustomerId = created.Id;
+        resolvedQboName = created.DisplayName || displayName;
+    }
+
+    // Upsert JubelioCustomerMap so future webhooks for this buyer skip the
+    // entire lookup chain and survive any QBO-side renames. Async — never
+    // block the webhook on this audit write.
+    if (source && buyerId && resolvedCustomerId) {
+        JubelioCustomerMap.findOneAndUpdate(
+            { source, buyer_id: buyerId, qbo_realm_id: realmId },
+            {
+                qbo_customer_id: String(resolvedCustomerId),
+                last_seen_at: new Date(),
+                last_so_no: so.salesorder_no,
+                last_customer_name_jubelio: displayName,
+                last_customer_name_qbo: resolvedQboName,
+            },
+            { upsert: true, new: true }
+        ).catch(e => console.warn(`⚠️ JubelioCustomerMap upsert failed: ${e.message}`));
+    }
+
+    return resolvedCustomerId;
 };
 
 // QBO Item Name rules: max 100 chars, cannot contain `:`, must be unique.
