@@ -12,6 +12,7 @@ const { runItemMigration, runStripTreelogyMigration, runSkuBackfillMigration } =
 const { runOrphanPaymentRecovery } = require('../services/paymentRecovery');
 const { runCustomerMapBackfill } = require('../services/customerMapBackfill');
 const { runCustomerPrefixMigration } = require('../services/customerPrefixMigration');
+const { runPaymentDateBackfill } = require('../services/paymentDateBackfill');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -82,7 +83,7 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
         const qbo = await getQboInstance();
         const filter = days > 0 ? { last_synced_at: { $gte: new Date(Date.now() - days * 86400000) } } : {};
         const rows = await JubelioOrderMap.find(filter)
-            .select('salesorder_no qbo_invoice_id last_transaction_date_raw')
+            .select('salesorder_no qbo_invoice_id last_transaction_date_raw last_payment_date_raw')
             .lean();
 
         const shopeeFix = [], verifiedFix = [], legacyFix = [], legacyReport = [], errors = [];
@@ -97,9 +98,12 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
                 if (inv.TxnDate !== shopeeDate) shopeeFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken, layer: 'SHOPEE' });
                 continue;
             }
-            if (r.last_transaction_date_raw) {
-                const expected = isoDateJakarta(r.last_transaction_date_raw);
-                if (expected && inv.TxnDate !== expected) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected, syncToken: inv.SyncToken, layer: 'VERIFIED' });
+            // Prefer payment_date as TxnDate source (matches webhook write logic).
+            // Fall back to transaction_date when payment_date is absent (unpaid/COD).
+            const dateSource = r.last_payment_date_raw || r.last_transaction_date_raw;
+            if (dateSource) {
+                const expected = isoDateJakarta(dateSource);
+                if (expected && inv.TxnDate !== expected) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected, syncToken: inv.SyncToken, layer: 'VERIFIED', dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date' });
                 continue;
             }
             const jktCreate = isoDateJakarta(inv.MetaData?.CreateTime);
@@ -361,6 +365,29 @@ router.all('/migrate-customer-prefix', requireAdmin, async (req, res) => {
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ migrate-customer-prefix failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/backfill-payment-date?apply=0|1&days=N&fetchMissing=0|1
+//   apply         — 0 (default) dry-run · 1 actually update QBO + map
+//   days          — limit scope to last N days (default ALL)
+//   fetchMissing  — 1 (default) hit Jubelio API for SOs without payment_date in
+//                   payload log; 0 to skip API fetches and rely only on Mongo.
+//
+// Re-dates every QBO Invoice we manage to use Jubelio's payment_date as the
+// canonical TxnDate (matches new webhook write logic). Falls back to
+// transaction_date when payment_date is unavailable (unpaid / COD orders).
+router.all('/backfill-payment-date', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    const days = req.query.days ? Number(req.query.days) : null;
+    const fetchMissing = String(req.query.fetchMissing ?? '1') === '1';
+    try {
+        const qbo = await getQboInstance();
+        const report = await runPaymentDateBackfill({ qbo, apply, days, fetchMissing });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ backfill-payment-date failed:', e.message);
         res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });

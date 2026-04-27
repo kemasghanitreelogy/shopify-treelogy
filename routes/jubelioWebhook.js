@@ -984,7 +984,7 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
     const payload = {
         CustomerRef: { value: String(customerId) },
         TotalAmt: balance,
-        TxnDate: isoDateJakarta(so.transaction_date),
+        TxnDate: isoDateJakarta(so.payment_date || so.transaction_date),
         DocNumber: paymentDocNumber,
         PrivateNote: `Auto-paid from Jubelio SO #${so.salesorder_no} status=${so.status}`,
         Line: [{
@@ -1008,9 +1008,11 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     if (existing) {
         const sameStatus = existing.last_status === so.status;
         const sameTotal = Number(existing.last_grand_total) === Number(so.grand_total);
-        const incomingRaw = so.transaction_date ? String(so.transaction_date) : null;
-        const sameTxnDate = (existing.last_transaction_date_raw || null) === incomingRaw;
-        if (sameStatus && sameTotal && sameTxnDate) {
+        const incomingTxnRaw = so.transaction_date ? String(so.transaction_date) : null;
+        const incomingPayRaw = so.payment_date ? String(so.payment_date) : null;
+        const sameTxnDate = (existing.last_transaction_date_raw || null) === incomingTxnRaw;
+        const samePayDate = (existing.last_payment_date_raw || null) === incomingPayRaw;
+        if (sameStatus && sameTotal && sameTxnDate && samePayDate) {
             console.log(`ℹ️ SO ${so.salesorder_no} tidak berubah (status=${so.status} total=${so.grand_total}) — skip QBO update.`);
             await JubelioOrderMap.updateOne({ _id: existing._id }, { last_synced_at: new Date() });
             return {
@@ -1033,9 +1035,17 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         throw new Error('Jubelio SO tidak punya items — tidak bisa buat Invoice.');
     }
 
-    const txnDate = isoDateJakarta(so.transaction_date);
-    if (so.transaction_date) {
-        console.log(`📅 SO ${so.salesorder_no} transaction_date raw="${so.transaction_date}" → TxnDate=${txnDate}`);
+    // QBO Invoice TxnDate uses Jubelio's payment_date as the canonical source —
+    // it represents when the customer's funds were captured (the actual accrual
+    // event). transaction_date / created_date are kept as fallbacks for edge
+    // cases (unpaid orders, COD with no payment_date, missing field).
+    const dateRaw = so.payment_date || so.transaction_date || so.created_date || null;
+    const dateField = so.payment_date ? 'payment_date'
+        : so.transaction_date ? 'transaction_date'
+        : so.created_date ? 'created_date' : 'none';
+    const txnDate = isoDateJakarta(dateRaw);
+    if (dateRaw) {
+        console.log(`📅 SO ${so.salesorder_no} ${dateField}="${dateRaw}" → TxnDate=${txnDate}`);
     }
     const termDays = getTermDays(so);
     const dueDate = txnDate ? addDays(txnDate, termDays) : undefined;
@@ -1146,6 +1156,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
                 last_grand_total: so.grand_total,
                 last_synced_at: new Date(),
                 last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
+                last_payment_date_raw: so.payment_date ? String(so.payment_date) : null,
                 last_txn_date: txnDate || null,
             }
         );
@@ -1172,6 +1183,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         last_grand_total: so.grand_total,
         last_synced_at: new Date(),
         last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
+        last_payment_date_raw: so.payment_date ? String(so.payment_date) : null,
         last_txn_date: txnDate || null,
     });
     return { action: 'created', invoice: created, customerId };

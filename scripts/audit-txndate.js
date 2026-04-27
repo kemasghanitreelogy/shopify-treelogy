@@ -79,7 +79,7 @@ const updateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
 async function runOnce(qbo, opts) {
     const filter = days > 0 ? { last_synced_at: { $gte: new Date(Date.now() - days * 86400000) } } : {};
     const rows = await JubelioOrderMap.find(filter)
-        .select('salesorder_no qbo_invoice_id last_transaction_date_raw last_synced_at')
+        .select('salesorder_no qbo_invoice_id last_transaction_date_raw last_payment_date_raw last_synced_at')
         .lean();
 
     const shopeeFix = [];     // { so, inv, qbo, expected, syncToken }
@@ -112,14 +112,18 @@ async function runOnce(qbo, opts) {
             continue;
         }
 
-        // Layer 2: Verified (post-deploy) — raw value from Jubelio.
-        if (r.last_transaction_date_raw) {
-            const expected = isoDateJakarta(r.last_transaction_date_raw);
+        // Layer 2: Verified (post-deploy) — raw value from Jubelio. Prefers
+        // payment_date (canonical TxnDate source) and falls back to
+        // transaction_date for unpaid/COD orders.
+        const dateSource = r.last_payment_date_raw || r.last_transaction_date_raw;
+        if (dateSource) {
+            const expected = isoDateJakarta(dateSource);
             if (expected && inv.TxnDate !== expected) {
                 verifiedFix.push({
                     so: r.salesorder_no, inv: r.qbo_invoice_id,
                     qbo: inv.TxnDate, expected, syncToken: inv.SyncToken,
-                    raw: r.last_transaction_date_raw,
+                    raw: dateSource,
+                    dateField: r.last_payment_date_raw ? 'payment_date' : 'transaction_date',
                 });
             }
             continue;
