@@ -93,24 +93,33 @@ const findGenericItems = async (qbo) => {
     return out;
 };
 
-// 2) Find invoices that reference a given itemId. Returns { invoiceId, docNumber, lines[], rawInvoice }.
-//    We fetch and keep the raw invoice so the per-line update can construct a
-//    proper sparse payload without re-fetching.
-const scanInvoicesByItemRef = async (qbo, itemId) => {
-    const out = [];
+// Scan ALL invoices once, building a map: itemId → [{invoice}]. Far cheaper
+// than re-scanning per generic when there are several to migrate.
+const buildItemRefIndex = async (qbo, targetItemIds) => {
+    const targetSet = new Set(targetItemIds.map(String));
+    const index = new Map(); // itemId(string) → array of { invoiceId, docNumber, ..., lines, rawInvoice }
+    for (const id of targetSet) index.set(id, []);
+
     const PAGE = 200;
+    let scanned = 0;
     for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
         const q = `SELECT * FROM Invoice STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
         const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
         const invoices = body?.QueryResponse?.Invoice || [];
         if (invoices.length === 0) break;
+        scanned += invoices.length;
         for (const inv of invoices) {
-            const matchedLines = (inv.Line || []).filter(l =>
-                l.DetailType === 'SalesItemLineDetail' &&
-                String(l.SalesItemLineDetail?.ItemRef?.value) === String(itemId)
-            );
-            if (matchedLines.length > 0) {
-                out.push({
+            // Group lines by ItemRef so each invoice contributes once per item.
+            const linesByItem = new Map();
+            for (const l of inv.Line || []) {
+                if (l.DetailType !== 'SalesItemLineDetail') continue;
+                const refId = String(l.SalesItemLineDetail?.ItemRef?.value || '');
+                if (!targetSet.has(refId)) continue;
+                if (!linesByItem.has(refId)) linesByItem.set(refId, []);
+                linesByItem.get(refId).push(l);
+            }
+            for (const [refId, matchedLines] of linesByItem) {
+                index.get(refId).push({
                     invoiceId: inv.Id,
                     docNumber: inv.DocNumber,
                     txnDate: inv.TxnDate,
@@ -122,7 +131,8 @@ const scanInvoicesByItemRef = async (qbo, itemId) => {
         }
         if (invoices.length < PAGE) break;
     }
-    return out;
+    console.log(`  📊 Scanned ${scanned} invoices, indexed ${[...index.entries()].map(([k, v]) => `${k}=${v.length}`).join(' ')}`);
+    return index;
 };
 
 // Strip integration-added suffixes from line description.
@@ -254,6 +264,9 @@ const runItemMigration = async ({ qbo, apply = false }) => {
     const incomeAccountId = await getIncomeAccountId(qbo);
     const itemCache = new Map(); // name → resolved item
 
+    // Single QBO invoice scan that indexes all generic-item references at once.
+    const refIndex = await buildItemRefIndex(qbo, generics.map(g => g.Id));
+
     const report = {
         apply,
         mode,
@@ -280,7 +293,7 @@ const runItemMigration = async ({ qbo, apply = false }) => {
         };
 
         try {
-            const invoices = await scanInvoicesByItemRef(qbo, item.Id);
+            const invoices = refIndex.get(String(item.Id)) || [];
             itemReport.invoicesScanned = invoices.length;
 
             if (invoices.length === 0) {
