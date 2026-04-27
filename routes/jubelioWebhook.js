@@ -223,6 +223,45 @@ const findCustomersByField = (qbo, field, value) => withQboRetry('findCustomers'
     });
 }));
 
+// Tokopedia (and some other channels) redact customer/shipping names in
+// webhook payloads for privacy — values look like "A*** y***nto". Detect
+// these so we can fetch the unredacted form via Jubelio API directly.
+const isRedactedName = (name) => /\*{2,}/.test(String(name || ''));
+
+// In-memory cache for /sales/orders/{id} responses. Webhooks for the same SO
+// re-fire often (status transitions, idempotency rejects, retries) — caching
+// for 60s eliminates repeated outbound API hits without risking stale data.
+const _soFetchCache = new Map(); // salesorder_id → { data, expiresAt }
+const SO_FETCH_TTL_MS = 60_000;
+let _jubelioApiModule = null;
+const fetchUnredactedSo = async (salesorderId) => {
+    if (!salesorderId) return null;
+    const now = Date.now();
+    const cached = _soFetchCache.get(salesorderId);
+    if (cached && cached.expiresAt > now) return cached.data;
+    if (!_jubelioApiModule) _jubelioApiModule = require('../services/jubelioApiService');
+    if (!_jubelioApiModule.isConfigured()) return null;
+    try {
+        const res = await _jubelioApiModule.getOrderDetail(salesorderId);
+        // Endpoint returns { data: {...} } in some cases, full object in others
+        const data = res?.data || res;
+        _soFetchCache.set(salesorderId, { data, expiresAt: now + SO_FETCH_TTL_MS });
+        // Cap cache size — drop expired entries when over 200 keys
+        if (_soFetchCache.size > 200) {
+            for (const [k, v] of _soFetchCache) if (v.expiresAt < now) _soFetchCache.delete(k);
+        }
+        return data;
+    } catch (e) {
+        console.warn(`⚠️ fetchUnredactedSo(${salesorderId}) failed: ${e.message?.slice(0, 200)}`);
+        return null;
+    }
+};
+
+// Strip channel prefix from customer DisplayName so dedup catches both
+// "TP - Adha Yuwanto" and "Adha Yuwanto" as the same person.
+const stripCustomerChannelPrefix = (name) =>
+    String(name || '').replace(/^\s*(SP|TP|SHF|LB|CS|DP|DW|WX|D)\s*-\s*/i, '').trim();
+
 const buildShipAddr = (so) => {
     if (!so.shipping_address && !so.shipping_city) return undefined;
     return {
@@ -236,33 +275,94 @@ const buildShipAddr = (so) => {
 };
 
 const getOrCreateCustomer = async (qbo, so) => {
-    const email = so.customer_email;
-    const displayName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 100);
+    let email = so.customer_email;
+    let phone = so.customer_phone;
+    let displayName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 100);
+    let shipFullName = so.shipping_full_name;
+    let shipAddr = buildShipAddr(so);
 
-    // 1. Match by email (most specific).
+    // Tokopedia & some channels redact customer info in webhook payloads.
+    // When detected, fetch the unredacted form from Jubelio API directly.
+    // Cached + graceful fallback so the webhook never fails on this path.
+    if (isRedactedName(displayName) && so.salesorder_id) {
+        const fullSo = await fetchUnredactedSo(so.salesorder_id);
+        if (fullSo) {
+            const realName = String(fullSo.customer_name || fullSo.shipping_full_name || '').trim();
+            if (realName && !isRedactedName(realName)) {
+                console.log(`🔓 Unredacted customer: "${displayName}" → "${realName}" (SO ${so.salesorder_id})`);
+                displayName = realName.substring(0, 100);
+                email = email || fullSo.customer_email || null;
+                phone = phone || fullSo.customer_phone || null;
+                shipFullName = shipFullName || fullSo.shipping_full_name;
+                if (!shipAddr) shipAddr = buildShipAddr(fullSo);
+            }
+        }
+        // If still redacted after fetch, we proceed with the redacted name —
+        // worst case is consistent grouping under the placeholder, which is
+        // strictly better than failing the webhook outright.
+    }
+
+    // 1. Match by email (most specific identifier).
     if (email) {
         const byEmail = await findCustomersByField(qbo, 'PrimaryEmailAddr', email);
         if (byEmail.length > 0) return byEmail[0].Id;
     }
-    // 2. Match by DisplayName.
-    const byName = await findCustomersByField(qbo, 'DisplayName', displayName);
-    if (byName.length > 0) return byName[0].Id;
 
+    // 2. Multi-variant DisplayName lookup. Reduces duplicate creation when
+    // QBO already has the customer under a different naming convention
+    // (with/without channel prefix). Try most specific first.
+    const variants = [];
+    const seen = new Set();
+    const addVariant = (v) => {
+        const trimmed = String(v || '').trim().substring(0, 100);
+        if (trimmed && !seen.has(trimmed.toLowerCase())) {
+            seen.add(trimmed.toLowerCase());
+            variants.push(trimmed);
+        }
+    };
+    addVariant(displayName);
+    const stripped = stripCustomerChannelPrefix(displayName);
+    if (stripped !== displayName) addVariant(stripped);
+    const prefix = getSoPrefix(so);
+    if (prefix && !displayName.toUpperCase().startsWith(`${prefix} -`)) {
+        addVariant(`${prefix} - ${displayName}`);
+        if (stripped !== displayName) addVariant(`${prefix} - ${stripped}`);
+    }
+
+    for (const v of variants) {
+        const byName = await findCustomersByField(qbo, 'DisplayName', v);
+        if (byName.length > 0) {
+            if (v !== displayName) {
+                console.log(`✅ Customer match by variant "${v}" (asked "${displayName}") → id=${byName[0].Id}`);
+            }
+            return byName[0].Id;
+        }
+    }
+
+    // 3. Create new customer; recover existing Id on race-induced duplicate.
     return withQboRetry('createCustomer', () => new Promise((resolve, reject) => {
-        const shipAddr = buildShipAddr(so);
         const payload = {
             DisplayName: displayName,
             GivenName: displayName.split(' ')[0] || 'Jubelio',
             FamilyName: displayName.split(' ').slice(1).join(' ') || 'Customer',
         };
         if (email) payload.PrimaryEmailAddr = { Address: email };
-        if (so.customer_phone) payload.PrimaryPhone = { FreeFormNumber: String(so.customer_phone) };
+        if (phone) payload.PrimaryPhone = { FreeFormNumber: String(phone) };
         if (shipAddr) {
             payload.ShipAddr = shipAddr;
             payload.BillAddr = shipAddr; // Jubelio only exposes shipping address — use as billing too.
         }
         qbo.createCustomer(payload, (errC, bodyC) => {
-            if (errC) return reject(new Error('createCustomer: ' + extractQboError(errC, bodyC)));
+            if (errC) {
+                const detail = extractQboError(errC, bodyC);
+                // Race recovery: another concurrent webhook just created this name.
+                const dupMatch = /Id=(\d+)/i.exec(detail);
+                if (dupMatch) {
+                    console.log(`ℹ️ Customer "${displayName}" sudah ada (id=${dupMatch[1]}) — race-recovered.`);
+                    return resolve(dupMatch[1]);
+                }
+                return reject(new Error('createCustomer: ' + detail));
+            }
             console.log(`✅ Customer baru: ${bodyC.Id} (${displayName})`);
             resolve(bodyC.Id);
         });
@@ -754,10 +854,16 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
         return null;
     }
 
+    // Reuse the invoice DocNumber on the Payment so the QBO Sales transactions
+    // list shows a meaningful "NO." instead of an empty cell. QBO Payment
+    // DocNumber is freeform string, doesn't need to be unique across types.
+    const paymentDocNumber = (invoice.DocNumber || String(so.salesorder_no || '').substring(0, 21)) || undefined;
+
     const payload = {
         CustomerRef: { value: String(customerId) },
         TotalAmt: balance,
         TxnDate: isoDateJakarta(so.transaction_date),
+        DocNumber: paymentDocNumber,
         PrivateNote: `Auto-paid from Jubelio SO #${so.salesorder_no} status=${so.status}`,
         Line: [{
             Amount: balance,

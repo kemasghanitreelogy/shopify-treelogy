@@ -9,6 +9,7 @@ const { getQboInstance } = require('../services/qboService');
 const { alertAuditReport, alertResyncResult, alertDailyReconcile } = require('../services/alertService');
 const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile');
 const { runItemMigration, runStripTreelogyMigration, runSkuBackfillMigration } = require('../services/itemMigration');
+const { runOrphanPaymentRecovery } = require('../services/paymentRecovery');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -297,6 +298,25 @@ router.all('/backfill-skus', requireAdmin, async (req, res) => {
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ backfill-skus failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/recover-orphan-payments?apply=0|1
+//   apply  — 0 (default) dry-run · 1 actually update Payment in QBO
+//
+// Finds Payments with empty LinkedTxn or UnappliedAmt > 0, looks up the
+// referenced Jubelio SO via PrivateNote, and rewires CustomerRef +
+// LinkedTxn to match the invoice. Skips when invoice already paid,
+// amounts don't match, or no map entry exists.
+router.all('/recover-orphan-payments', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    try {
+        const qbo = await getQboInstance();
+        const report = await runOrphanPaymentRecovery({ qbo, apply });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ recover-orphan-payments failed:', e.message);
         res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });
