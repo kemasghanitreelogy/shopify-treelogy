@@ -1155,6 +1155,13 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         DueDate: dueDate,
         // Tax=NO VAT. GlobalTaxCalculation=NotApplicable supaya QBO tidak kenakan tax apapun.
         GlobalTaxCalculation: 'NotApplicable',
+        // Wipe any stale TxnTaxDetail so QBO recomputes from the new Line[]'s
+        // TaxCodeRef. On UPDATE this prevents "Invalid tax rate id - <n>"
+        // errors caused by the existing TxnTaxDetail still referencing a
+        // tax rate that the QBO admin has since deleted/disabled. Verified
+        // working: posting `TxnTaxDetail: {}` lets QBO auto-generate fresh
+        // TaxLine entries from the current line-level codes.
+        TxnTaxDetail: {},
         CustomerMemo: { value: INVOICE_MEMO },
         PrivateNote: privateParts.join(' · '),
     };
