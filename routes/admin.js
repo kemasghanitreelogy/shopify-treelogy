@@ -8,7 +8,7 @@ const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const { getQboInstance } = require('../services/qboService');
 const { alertAuditReport, alertResyncResult, alertDailyReconcile } = require('../services/alertService');
 const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile');
-const { runItemMigration, runStripTreelogyMigration } = require('../services/itemMigration');
+const { runItemMigration, runStripTreelogyMigration, runSkuBackfillMigration } = require('../services/itemMigration');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -276,6 +276,27 @@ router.all('/migrate-strip-treelogy', requireAdmin, async (req, res) => {
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ migrate-strip-treelogy failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/backfill-skus?apply=0|1&days=30
+//   apply  — 0 (default) dry-run · 1 actually set Sku in QBO
+//   days   — payload log lookback window (default 30, matches TTL)
+//
+// Mines JubelioPayloadLog to extract (item_code, item_name) pairs we've seen,
+// then for each QBO Item with no Sku populated AND an unambiguous matching
+// stripped item_name in the log, sets Sku = item_code so future webhook
+// SKU lookups can resolve directly without depending on an exact name match.
+router.all('/backfill-skus', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    const days = Math.min(Number(req.query.days || 30), 90);
+    try {
+        const qbo = await getQboInstance();
+        const report = await runSkuBackfillMigration({ qbo, apply, days });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ backfill-skus failed:', e.message);
         res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });

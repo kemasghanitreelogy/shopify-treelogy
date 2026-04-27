@@ -675,4 +675,131 @@ const runStripTreelogyMigration = async ({ qbo, apply = false }) => {
     return report;
 };
 
-module.exports = { runItemMigration, runStripTreelogyMigration };
+// ─── SKU Backfill ──────────────────────────────────────────────────────────
+// Walk JubelioPayloadLog (30-day rolling window of webhook payloads) to
+// extract every (item_code, item_name) pair we've seen. For each QBO Item
+// that matches a Jubelio product by name (after brand-prefix strip) AND has
+// no Sku populated, set Sku = item_code so future webhook lookups can
+// resolve via SKU directly — robust against item_name tweaks in Jubelio.
+//
+// Idempotent: only writes when Sku is empty AND the (name → item_code)
+// mapping is unambiguous (no two products share a stripped name).
+const JubelioPayloadLog = require('../models/JubelioPayloadLog');
+
+const fetchAllQboItems = async (qbo) => {
+    const out = [];
+    const PAGE = 200;
+    for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
+        const q = `SELECT Id, Name, Type, Sku, Active, SyncToken FROM Item STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
+        const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+        const items = body?.QueryResponse?.Item || [];
+        if (items.length === 0) break;
+        out.push(...items);
+        if (items.length < PAGE) break;
+    }
+    return out;
+};
+
+const updateItemSku = async (qbo, item, sku) => {
+    return qboFetch(qbo, '/item', {
+        method: 'POST',
+        body: JSON.stringify({
+            Id: String(item.Id),
+            SyncToken: String(item.SyncToken),
+            sparse: true,
+            Sku: sku,
+        }),
+    });
+};
+
+const runSkuBackfillMigration = async ({ qbo, apply = false, days = 30 }) => {
+    const t0 = Date.now();
+    const mode = apply ? 'APPLY' : 'DRY-RUN';
+    console.log(`\n🏷️  SKU backfill (${mode}, lookback ${days}d)\n`);
+
+    // 1) Mine payload log: build map strippedName → Set<item_code>
+    const since = new Date(Date.now() - days * 86400000);
+    const logs = await JubelioPayloadLog.find({
+        endpoint: 'pesanan',
+        received_at: { $gte: since },
+    }).select('payload.items').lean();
+
+    const skuByName = new Map(); // strippedName → Set<item_code>
+    let pairsExtracted = 0;
+    for (const log of logs) {
+        const items = log.payload?.items || [];
+        for (const it of items) {
+            const code = String(it.item_code || '').trim();
+            const stripped = stripBrandPrefix(String(it.item_name || it.description || '')).trim();
+            if (!code || !stripped) continue;
+            if (!skuByName.has(stripped)) skuByName.set(stripped, new Set());
+            skuByName.get(stripped).add(code);
+            pairsExtracted++;
+        }
+    }
+    console.log(`Mined ${pairsExtracted} item pairs from ${logs.length} payload logs · ${skuByName.size} unique stripped names`);
+
+    // 2) Fetch all QBO Items
+    const allItems = await fetchAllQboItems(qbo);
+    console.log(`Fetched ${allItems.length} QBO Items`);
+
+    const report = {
+        apply, mode, runMs: 0, days,
+        payloadLogsScanned: logs.length,
+        pairsExtracted,
+        uniqueStrippedNames: skuByName.size,
+        qboItemsTotal: allItems.length,
+        backfilled: [],     // { itemId, name, type, sku }
+        skippedAlreadySet: 0,
+        skippedNoMatch: 0,
+        skippedAmbiguous: [],  // { itemId, name, candidates: [...] }
+        errors: [],
+    };
+
+    for (const item of allItems) {
+        if (item.Sku && String(item.Sku).trim()) {
+            report.skippedAlreadySet++;
+            continue;
+        }
+        const candidates = skuByName.get(item.Name);
+        if (!candidates || candidates.size === 0) {
+            report.skippedNoMatch++;
+            continue;
+        }
+        if (candidates.size > 1) {
+            report.skippedAmbiguous.push({
+                itemId: item.Id,
+                name: item.Name,
+                type: item.Type,
+                candidates: [...candidates],
+            });
+            continue;
+        }
+        const sku = [...candidates][0];
+        const entry = { itemId: item.Id, name: item.Name, type: item.Type, sku };
+
+        if (apply) {
+            try {
+                const updated = await updateItemSku(qbo, item, sku);
+                entry.applied = true;
+                entry.appliedSku = updated?.Item?.Sku;
+                console.log(`  ✅ Item ${item.Id} "${item.Name.slice(0, 50)}" → Sku=${sku}`);
+            } catch (e) {
+                entry.applied = false;
+                entry.error = e.message?.slice(0, 300);
+                report.errors.push({ itemId: item.Id, name: item.Name, error: entry.error });
+                console.log(`  ❌ Item ${item.Id}: ${entry.error}`);
+                continue;
+            }
+        } else {
+            console.log(`  📝 Would set Sku="${sku}" on Item ${item.Id} "${item.Name.slice(0, 50)}"`);
+        }
+        report.backfilled.push(entry);
+    }
+
+    report.runMs = Date.now() - t0;
+    console.log(`\n✅ ${mode} done in ${report.runMs}ms · backfilled=${report.backfilled.length} alreadySet=${report.skippedAlreadySet} noMatch=${report.skippedNoMatch} ambiguous=${report.skippedAmbiguous.length} errors=${report.errors.length}`);
+    return report;
+};
+
+module.exports = { runItemMigration, runStripTreelogyMigration, runSkuBackfillMigration };

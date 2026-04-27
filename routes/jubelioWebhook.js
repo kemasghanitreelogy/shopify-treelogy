@@ -363,6 +363,33 @@ const getOrCreateItem = async (qbo, item, incomeAccountId) => {
         const byName = await qboFindItemsByName(qbo, fullName);
         const usable = byName.find(i => SAFE_ITEM_TYPES.has(i.Type));
         if (usable) {
+            // Lazy Sku backfill: when an existing QBO item matches by Name but
+            // has no Sku populated (created manually or by pre-SKU integration
+            // version), persist the Jubelio item_code as Sku so the NEXT
+            // webhook for this product can resolve via the SKU lookup above —
+            // robust even if Jubelio later tweaks the marketing name.
+            if (itemCode && !usable.Sku) {
+                try {
+                    await new Promise((resolve) => {
+                        qbo.updateItem({
+                            Id: String(usable.Id),
+                            SyncToken: String(usable.SyncToken),
+                            sparse: true,
+                            Sku: itemCode,
+                        }, (err) => {
+                            if (err) {
+                                console.log(`⚠️ Sku backfill failed Item ${usable.Id}: ${extractQboError(err)?.slice(0, 200)}`);
+                            } else {
+                                console.log(`🏷️  Backfilled Sku="${itemCode}" on Item ${usable.Id}`);
+                            }
+                            resolve();
+                        });
+                    });
+                } catch (e) {
+                    // Never block sync on backfill error
+                    console.log(`⚠️ Sku backfill exception Item ${usable.Id}: ${e.message?.slice(0, 200)}`);
+                }
+            }
             console.log(`✅ Item match by Name="${fullName}" → existing id=${usable.Id} type=${usable.Type}`);
             return usable.Id;
         }
