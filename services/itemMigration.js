@@ -568,13 +568,34 @@ const runStripTreelogyMigration = async ({ qbo, apply = false }) => {
             }
 
             // Redirect path: target already exists, redirect invoice lines + inactivate this one
-            const targetId = String(usableExisting?.Id || (await findItemByExactName(qbo, newName)).find(e => SAFE_ITEM_TYPES.has(e.Type))?.Id);
-            if (!targetId) {
+            const targetCandidates = usableExisting
+                ? [usableExisting]
+                : (await findItemByExactName(qbo, newName)).filter(e => SAFE_ITEM_TYPES.has(e.Type));
+            const target = targetCandidates.find(t => String(t.Id) !== String(item.Id));
+            if (!target) {
                 itemReport.errors.push({ stage: 'redirect', error: 'no target id resolved' });
                 report.summary.errors++;
                 report.perItem.push(itemReport);
                 continue;
             }
+
+            // SAFETY: cross-type redirect (Service ⇄ Inventory) would distort
+            // QBO stock accounting because Inventory items decrement stock from
+            // historical invoices when re-referenced. Skip such cases — leave
+            // the item alone so the operator can resolve manually.
+            if (target.Type !== item.Type) {
+                itemReport.action = 'skip-cross-type-collision';
+                itemReport.errors.push({
+                    stage: 'safety',
+                    error: `target id=${target.Id} is ${target.Type}, source is ${item.Type} — cross-type redirect could distort stock; leaving as-is for manual triage`,
+                });
+                console.log(`  ⏭  ${item.Id} "${item.Name}" → target ${target.Id} is ${target.Type} ≠ ${item.Type}, skip (manual triage)`);
+                report.summary.skipped++;
+                report.perItem.push(itemReport);
+                continue;
+            }
+
+            const targetId = String(target.Id);
             itemReport.existingTargetId = targetId;
             itemReport.action = 'redirect-and-inactivate';
 
