@@ -23,7 +23,8 @@ const BYPASS_STATUS_PREFIXES = new Set(
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
 
-const JKT_OFFSET_MS = 7 * 60 * 60 * 1000;
+// Match webhook timezone (UTC+8 = Jubelio operational timezone).
+const JKT_OFFSET_MS = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
 
 const yesterdayWib = () => {
     const nowJkt = new Date(Date.now() + JKT_OFFSET_MS);

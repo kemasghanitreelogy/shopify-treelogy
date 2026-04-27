@@ -5,7 +5,7 @@
 require('dotenv').config();
 const jubelio = require('../services/jubelioApiService');
 
-const JKT_OFFSET_MS = 7 * 60 * 60 * 1000;
+const JKT_OFFSET_MS = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
 const toJkt = (raw) => {
     if (!raw) return null;
     const d = new Date(raw);

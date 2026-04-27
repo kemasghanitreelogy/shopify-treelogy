@@ -141,7 +141,13 @@ const getTermDays = (so) => {
 // `substring(0, 10)` returns the UTC date — which is "yesterday" for any
 // timestamp between 17:00 WIB and 23:59 WIB (the UTC day rollover happens at
 // 07:00 WIB). Always project to Asia/Jakarta (UTC+7) before formatting.
-const JKT_OFFSET_MS = 7 * 60 * 60 * 1000;
+// Jubelio's UI and internal date semantics are UTC+8 (Singapore-time / WITA),
+// not WIB. An order at e.g. "2026-04-24T16:43:13.000Z" is shown by Jubelio as
+// "25 Apr 2026, 00:43:20" — adding 7h would give 23:43 on Apr 24 and produce
+// the wrong calendar date for any timestamp in the 16:00-16:59 UTC window.
+// Override via env JUBELIO_TZ_OFFSET_HOURS if business policy changes.
+const TZ_OFFSET_HOURS = Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8;
+const JKT_OFFSET_MS = TZ_OFFSET_HOURS * 60 * 60 * 1000;
 const isoDateJakarta = (raw) => {
     if (raw === undefined || raw === null || raw === '') return undefined;
     const s = String(raw).trim();

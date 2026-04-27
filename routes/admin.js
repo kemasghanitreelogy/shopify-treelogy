@@ -28,7 +28,9 @@ const requireAdmin = (req, res, next) => {
     return res.status(401).json({ error: 'Unauthorized' });
 };
 
-const JKT_OFFSET_MS = 7 * 60 * 60 * 1000;
+// Jubelio uses UTC+8 timezone semantics in its UI and date fields. Keep this
+// in sync with routes/jubelioWebhook.js — both must use the same offset.
+const JKT_OFFSET_MS = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
 const isoDateJakarta = (raw) => {
     if (!raw) return null;
     const s = String(raw).trim();

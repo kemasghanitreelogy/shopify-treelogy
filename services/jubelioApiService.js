@@ -142,7 +142,7 @@ const apiGetPaged = async (path, params = {}, { pageSize = 100, maxPages = 50, u
 // short-circuit. The endpoint itself returns all orders sorted by date desc;
 // we stop fetching once we encounter an item older than `dateFrom`.
 
-const JKT_OFFSET_MS_LOCAL = 7 * 60 * 60 * 1000;
+const JKT_OFFSET_MS_LOCAL = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
 const itemDateJkt = (item, key) => {
     const raw = item?.[key];
     if (!raw) return null;
