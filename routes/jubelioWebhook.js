@@ -368,6 +368,11 @@ const getOrCreateItem = async (qbo, item, incomeAccountId) => {
             // version), persist the Jubelio item_code as Sku so the NEXT
             // webhook for this product can resolve via the SKU lookup above —
             // robust even if Jubelio later tweaks the marketing name.
+            //
+            // VARIANT GUARD: only backfill when Sku is empty. If the Item
+            // already has a different Sku, this is likely a multi-variant
+            // product (one Jubelio name shared by multiple sizes) and we must
+            // not overwrite — leave the variant collision for manual triage.
             if (itemCode && !usable.Sku) {
                 try {
                     await new Promise((resolve) => {

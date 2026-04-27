@@ -757,6 +757,10 @@ const runSkuBackfillMigration = async ({ qbo, apply = false, days = 30 }) => {
     };
 
     for (const item of allItems) {
+        // Category items are organizational only and don't carry a SKU; skip.
+        if (!SAFE_ITEM_TYPES.has(item.Type)) {
+            continue;
+        }
         if (item.Sku && String(item.Sku).trim()) {
             report.skippedAlreadySet++;
             continue;
