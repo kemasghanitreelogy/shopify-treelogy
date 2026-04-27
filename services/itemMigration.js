@@ -427,16 +427,32 @@ const runItemMigration = async ({ qbo, apply = false }) => {
 const stripBrandPrefix = (s) => String(s || '').replace(/^\s*TREELOGY\b[\s|,\-]*/i, '').trim();
 
 const findTreelogyPrefixedItems = async (qbo) => {
+    // QBO query parser does not accept OR in WHERE — issue 2 separate queries
+    // and dedupe by Id. (Also some QBO editions are case-sensitive on LIKE.)
+    const fetchByPrefix = async (prefix) => {
+        const acc = [];
+        const PAGE = 200;
+        for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
+            const q = `SELECT Id, Name, Type, Sku, Description, Active, SyncToken FROM Item WHERE Name LIKE '${prefix}%' STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
+            const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+            const items = body?.QueryResponse?.Item || [];
+            if (items.length === 0) break;
+            acc.push(...items);
+            if (items.length < PAGE) break;
+        }
+        return acc;
+    };
+    const [upper, lower] = await Promise.all([
+        fetchByPrefix('TREELOGY'),
+        fetchByPrefix('Treelogy'),
+    ]);
+    const seen = new Set();
     const out = [];
-    const PAGE = 200;
-    for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
-        // QBO LIKE is case-sensitive on some editions — use OR for safety.
-        const q = `SELECT Id, Name, Type, Sku, Description, Active, SyncToken FROM Item WHERE Name LIKE 'TREELOGY%' OR Name LIKE 'Treelogy%' STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
-        const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
-        const items = body?.QueryResponse?.Item || [];
-        if (items.length === 0) break;
-        out.push(...items);
-        if (items.length < PAGE) break;
+    for (const it of [...upper, ...lower]) {
+        const id = String(it.Id);
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push(it);
     }
     return out;
 };
