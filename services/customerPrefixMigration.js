@@ -76,59 +76,50 @@ const runCustomerPrefixMigration = async ({ qbo, apply = false }) => {
     const realmId = String(qbo.realmId);
     console.log(`\n🏷️  Customer channel prefix migration (${mode})\n`);
 
-    // 1) Group map entries by qbo_customer_id, collecting both source_name(s)
-    //    and SO# prefix(es) so INTERNAL source customers can still be assigned
-    //    a channel prefix from the salesorder_no.
-    const maps = await JubelioCustomerMap.find({ qbo_realm_id: realmId }).lean();
-    const customerData = new Map(); // qbo_customer_id → { sources: Set, soPrefixes: Set, sampleSos: [] }
-    for (const m of maps) {
-        const id = String(m.qbo_customer_id);
+    // 1) Build comprehensive customer → SO# prefix index from BOTH sources:
+    //    - JubelioCustomerMap (buyer_id channels: TP, SP, TT)
+    //    - QBO Invoice scan (covers ALL channels via DocNumber prefix —
+    //      essential for SHF/LB/CS/DP/DW where buyer_id is null)
+    const customerData = new Map(); // qbo_customer_id → { sources, soPrefixes, sampleSos }
+    const ensure = (id) => {
         if (!customerData.has(id)) {
             customerData.set(id, { sources: new Set(), soPrefixes: new Set(), sampleSos: [] });
         }
-        const d = customerData.get(id);
+        return customerData.get(id);
+    };
+
+    const maps = await JubelioCustomerMap.find({ qbo_realm_id: realmId }).lean();
+    for (const m of maps) {
+        const d = ensure(String(m.qbo_customer_id));
         d.sources.add(m.source);
         const p = canonicalPrefix(getSoPrefix(m.last_so_no));
         if (p && KNOWN_SO_PREFIXES.has(p)) d.soPrefixes.add(p);
         if (m.last_so_no && d.sampleSos.length < 3) d.sampleSos.push(m.last_so_no);
     }
-    console.log(`Distinct customers with buyer_id mapping: ${customerData.size}`);
+    console.log(`From JubelioCustomerMap: ${customerData.size} customers`);
 
-    // 2) Augment with SO# scan from JubelioPayloadLog for customers whose
-    //    JubelioCustomerMap source isn't in SOURCE_TO_PREFIX (e.g. INTERNAL).
-    //    We pull every salesorder_no associated with that buyer to detect
-    //    multi-channel within INTERNAL (LB+DP+DW etc.) which we'll treat as
-    //    ambiguous and skip.
-    const buyersToScan = [];
-    for (const [id, d] of customerData) {
-        for (const src of d.sources) {
-            if (!SOURCE_TO_PREFIX[src] && d.soPrefixes.size === 0) {
-                // Fetch all SO#s for this buyer from payload log
-                buyersToScan.push({ customerId: id, source: src });
-            }
+    // Scan ALL QBO Invoices once → DocNumber prefix per customer.
+    let invoiceScanned = 0;
+    const PAGE = 200;
+    for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
+        const q = `SELECT Id, DocNumber, CustomerRef FROM Invoice STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
+        const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+        const invoices = body?.QueryResponse?.Invoice || [];
+        if (invoices.length === 0) break;
+        invoiceScanned += invoices.length;
+        for (const inv of invoices) {
+            const custId = inv.CustomerRef?.value;
+            if (!custId) continue;
+            const p = canonicalPrefix(getSoPrefix(inv.DocNumber));
+            if (!p || !KNOWN_SO_PREFIXES.has(p)) continue;
+            const d = ensure(String(custId));
+            d.soPrefixes.add(p);
+            if (d.sampleSos.length < 3) d.sampleSos.push(inv.DocNumber);
         }
+        if (invoices.length < PAGE) break;
     }
-    if (buyersToScan.length > 0) {
-        // Get buyer_ids for these customer ids
-        const buyersByCustomer = new Map();
-        for (const m of maps) {
-            const id = String(m.qbo_customer_id);
-            if (!buyersByCustomer.has(id)) buyersByCustomer.set(id, []);
-            buyersByCustomer.get(id).push({ source: m.source, buyer_id: m.buyer_id });
-        }
-        for (const { customerId } of buyersToScan) {
-            const buyers = buyersByCustomer.get(customerId) || [];
-            const orQ = buyers.map(b => ({ source_name: b.source, 'payload.buyer_id': b.buyer_id }));
-            if (orQ.length === 0) continue;
-            const logs = await JubelioPayloadLog.find({ $or: orQ }).select('salesorder_no').lean();
-            const d = customerData.get(customerId);
-            for (const l of logs) {
-                const p = canonicalPrefix(getSoPrefix(l.salesorder_no));
-                if (p && KNOWN_SO_PREFIXES.has(p)) d.soPrefixes.add(p);
-                if (d.sampleSos.length < 3) d.sampleSos.push(l.salesorder_no);
-            }
-        }
-    }
+    console.log(`Scanned ${invoiceScanned} invoices · ${customerData.size} customers total in index`);
+
 
     const report = {
         apply, mode, runMs: 0,
