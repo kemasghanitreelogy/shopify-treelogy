@@ -13,6 +13,7 @@ const { runOrphanPaymentRecovery } = require('../services/paymentRecovery');
 const { runCustomerMapBackfill } = require('../services/customerMapBackfill');
 const { runCustomerPrefixMigration } = require('../services/customerPrefixMigration');
 const { runPaymentDateBackfill } = require('../services/paymentDateBackfill');
+const { runCustomerConsolidate } = require('../services/customerConsolidate');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -388,6 +389,26 @@ router.all('/backfill-payment-date', requireAdmin, async (req, res) => {
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ backfill-payment-date failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/consolidate-customers?apply=0|1
+//   apply  — 0 (default) dry-run · 1 actually rewire+inactivate
+//
+// Finds unprefixed Customer records that have a single prefixed canonical
+// twin (e.g. "Yoke P" + "SP - Yoke P"), moves all referencing Invoices and
+// Payments off the un-prefixed id, updates Jubelio*Map docs, and marks the
+// duplicate inactive. Skips ambiguous cases with multiple prefixed variants
+// (manual triage required).
+router.all('/consolidate-customers', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    try {
+        const qbo = await getQboInstance();
+        const report = await runCustomerConsolidate({ qbo, apply });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ consolidate-customers failed:', e.message);
         res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });
