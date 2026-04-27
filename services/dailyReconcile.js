@@ -282,21 +282,44 @@ const runDailyReconcile = async ({ qbo, date }) => {
         });
     }
 
-    // 7) Per-channel summary.
+    // 7) Per-channel summary — covers ALL channels with at least 1 order
+    // (whether expected or skipped by rule), so operators see the full picture
+    // including skipped/canceled SOs that wouldn't otherwise be visible.
     const perChannel = {};
-    for (const e of expected) {
-        const k = e.prefix;
-        perChannel[k] ??= { prefix: k, channel: channelLabel(k, e.so.source_name), expected: 0, matched: 0, missing: 0, voided: 0 };
-        perChannel[k].expected++;
+    const ensure = (prefix, sample) => {
+        perChannel[prefix] ??= {
+            prefix,
+            channel: channelLabel(prefix, sample?.source_name || sample?.source),
+            total: 0,
+            expected: 0,
+            matched: 0,
+            missing: 0,
+            voided: 0,
+            skipped: 0,
+            skipReasons: {},
+        };
+        return perChannel[prefix];
+    };
+
+    for (const e of expected) ensure(e.prefix, e.so).expected++;
+    for (const e of notExpected) {
+        const ch = ensure(e.prefix, e.so);
+        ch.skipped++;
+        // Bucket the skip reason — simplify so similar reasons collapse.
+        const bucket = e.so.is_canceled ? 'canceled'
+            : /CANCELED/i.test(e.reason) ? 'status=CANCELED'
+            : /status=PENDING/i.test(e.reason) ? 'status=PENDING'
+            : /status=PAID/i.test(e.reason) ? 'status=PAID'
+            : /status=PROCESSING/i.test(e.reason) ? 'status=PROCESSING'
+            : /status=EMPTY/i.test(e.reason) ? 'status=EMPTY'
+            : e.reason.split('∉')[0].trim().substring(0, 50);
+        ch.skipReasons[bucket] = (ch.skipReasons[bucket] || 0) + 1;
     }
-    for (const m of matched) {
-        perChannel[m.prefix].matched++;
-    }
-    for (const m of missingInQbo) {
-        perChannel[m.prefix].missing++;
-    }
-    for (const m of voidedInQbo) {
-        perChannel[m.prefix].voided++;
+    for (const m of matched) ensure(m.prefix).matched++;
+    for (const m of missingInQbo) ensure(m.prefix).missing++;
+    for (const m of voidedInQbo) ensure(m.prefix).voided++;
+    for (const ch of Object.values(perChannel)) {
+        ch.total = ch.expected + ch.skipped;
     }
 
     const report = {
@@ -314,7 +337,7 @@ const runDailyReconcile = async ({ qbo, date }) => {
             stale: stale.length,
             orphan: orphan.length,
         },
-        perChannel: Object.values(perChannel).sort((a, b) => b.expected - a.expected),
+        perChannel: Object.values(perChannel).sort((a, b) => b.total - a.total),
         mismatches: {
             missingInQbo,
             voidedInQbo,

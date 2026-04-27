@@ -240,11 +240,20 @@ const _sendDailyReconcile = async (report) => {
     if (perChannel.length > 0) {
         head.push('', '<b>📡 Per Channel</b>');
         for (const c of perChannel) {
-            const status = c.missing > 0 ? `❌ -${c.missing}`
-                : c.voided > 0 ? `⚠️ -${c.voided}`
-                : '✓';
-            const label = `${c.channel} (${c.prefix})`.padEnd(20);
-            head.push(`<code>${escapeHtml(label)} ${String(c.expected).padStart(3)} → ${String(c.matched).padStart(3)}</code> ${status}`);
+            const status = c.missing > 0 ? `❌ -${c.missing} missing`
+                : c.voided > 0 ? `⚠️ -${c.voided} voided`
+                : c.expected > 0 ? '✓'
+                : 'no sync';
+            const label = `${c.channel} (${c.prefix})`;
+            head.push(`<b>${escapeHtml(label)}</b> · total=${c.total}`);
+            head.push(`  → expected=${c.expected} · matched=${c.matched}/${c.expected} ${status}`);
+            if (c.skipped > 0) {
+                const reasons = Object.entries(c.skipReasons)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([k, v]) => `${k}×${v}`)
+                    .join(', ');
+                head.push(`  → skipped=${c.skipped} <i>(${escapeHtml(reasons)})</i>`);
+            }
         }
     }
 
