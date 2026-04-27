@@ -73,8 +73,30 @@ const extractSoNoFromPrivateNote = (note) => {
     return m ? m[1] : null;
 };
 
-// 3) Update a Payment: rewire CustomerRef + LinkedTxn (sparse update).
-const rewirePayment = async (qbo, payment, newCustomerId, invoiceId, invoiceTotal) => {
+// 3) Update a Payment: rewire CustomerRef + LinkedTxn.
+//
+// QBO quirk: when a single sparse update changes BOTH CustomerRef and Line[]
+// in one call, the new Line[] silently drops while CustomerRef persists —
+// leaving the payment with empty Line[] and UnappliedAmt = TotalAmt.
+// Splitting into two sequential sparse updates (customer first, then line)
+// makes both persist reliably.
+const rewirePayment = async (qbo, payment, newCustomerId, invoiceId) => {
+    let syncToken = payment.SyncToken;
+    const customerChanges = String(payment.CustomerRef?.value) !== String(newCustomerId);
+
+    if (customerChanges) {
+        const r1 = await qboFetch(qbo, '/payment', {
+            method: 'POST',
+            body: JSON.stringify({
+                Id: payment.Id,
+                SyncToken: syncToken,
+                sparse: true,
+                CustomerRef: { value: String(newCustomerId) },
+            }),
+        });
+        syncToken = r1?.Payment?.SyncToken ?? syncToken;
+    }
+
     const newLines = [{
         Amount: Number(payment.TotalAmt),
         LinkedTxn: [{ TxnId: String(invoiceId), TxnType: 'Invoice' }],
@@ -83,9 +105,8 @@ const rewirePayment = async (qbo, payment, newCustomerId, invoiceId, invoiceTota
         method: 'POST',
         body: JSON.stringify({
             Id: payment.Id,
-            SyncToken: payment.SyncToken,
+            SyncToken: syncToken,
             sparse: true,
-            CustomerRef: { value: String(newCustomerId) },
             Line: newLines,
         }),
     });

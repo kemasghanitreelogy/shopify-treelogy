@@ -11,6 +11,7 @@ const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile'
 const { runItemMigration, runStripTreelogyMigration, runSkuBackfillMigration } = require('../services/itemMigration');
 const { runOrphanPaymentRecovery } = require('../services/paymentRecovery');
 const { runCustomerMapBackfill } = require('../services/customerMapBackfill');
+const { runCustomerPrefixMigration } = require('../services/customerPrefixMigration');
 
 // Accepts EITHER the manual ADMIN_TOKEN (for ops-driven calls) OR the Vercel-
 // managed CRON_SECRET (auto-attached by Vercel Cron as Bearer token). At
@@ -338,6 +339,26 @@ router.all('/backfill-customer-map', requireAdmin, async (req, res) => {
         res.json({ ok: true, ...report });
     } catch (e) {
         console.error('❌ backfill-customer-map failed:', e.message);
+        res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
+    }
+});
+
+// GET/POST /api/admin/migrate-customer-prefix?apply=0|1
+//   apply  — 0 (default) dry-run · 1 actually rename DisplayName
+//
+// For each QBO Customer that has a JubelioCustomerMap entry from exactly
+// ONE channel (TOKOPEDIA → TP, SHOPEE → SP, SHOPIFY → SHF) AND whose
+// current DisplayName has no channel prefix, prepend "{prefix} - ". Skips
+// already-prefixed names, multi-channel customers, and Duplicate Name
+// collisions (the canonical prefixed record already exists separately).
+router.all('/migrate-customer-prefix', requireAdmin, async (req, res) => {
+    const apply = String(req.query.apply || '0') === '1';
+    try {
+        const qbo = await getQboInstance();
+        const report = await runCustomerPrefixMigration({ qbo, apply });
+        res.json({ ok: true, ...report });
+    } catch (e) {
+        console.error('❌ migrate-customer-prefix failed:', e.message);
         res.status(500).json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 6).join('\n') });
     }
 });
