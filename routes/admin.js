@@ -214,7 +214,10 @@ router.all('/daily-reconcile', requireAdmin, async (req, res) => {
         const qbo = await getQboInstance();
         const report = await runDailyReconcile({ qbo, date: targetDate });
 
-        if (notify) alertDailyReconcile(report);
+        // Await Telegram delivery so the response confirms message reached the
+        // bot. fire-and-forget would race against Vercel function termination.
+        let telegram = { skipped: true };
+        if (notify) telegram = await alertDailyReconcile(report);
 
         const response = {
             ok: true,
@@ -223,6 +226,7 @@ router.all('/daily-reconcile', requireAdmin, async (req, res) => {
             summary: report.summary,
             perChannel: report.perChannel,
             fetchErrors: report.fetchErrors,
+            telegram,
         };
         if (debug) {
             response.mismatches = report.mismatches;

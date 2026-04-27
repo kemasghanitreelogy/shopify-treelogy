@@ -205,9 +205,20 @@ const alertResyncResult = ({ ok, so, invoiceId, layer, fromDate, toDate, error }
 //
 // Telegram has a 4096-char limit per message; we split mismatches across
 // multiple messages, sequentially, so the operator sees ordered context.
-const alertDailyReconcile = (report) => {
-    if (!isConfigured()) return;
-    fireAndForget(_sendDailyReconcile(report));
+//
+// Returns a promise resolving to { ok, sent, error? }. Caller decides to
+// await (admin endpoint, for explicit feedback) or fire-and-forget (cron).
+// Vercel serverless can terminate fire-and-forget before Telegram HTTPS
+// completes — admin endpoint awaits to guarantee delivery.
+const alertDailyReconcile = async (report) => {
+    if (!isConfigured()) return { ok: false, reason: 'not-configured', sent: 0 };
+    try {
+        const sent = await _sendDailyReconcile(report);
+        return { ok: true, sent };
+    } catch (e) {
+        console.error(`[alert] daily-reconcile send failed: ${e.message}`);
+        return { ok: false, error: e.message, sent: 0 };
+    }
 };
 
 const _sendDailyReconcile = async (report) => {
@@ -266,7 +277,9 @@ const _sendDailyReconcile = async (report) => {
 
     head.push('', `🕐 ${fmtWib()} WIB · ${runMs}ms`);
 
+    let sentCount = 0;
     await sendRaw(head.join('\n'));
+    sentCount++;
 
     // ─── Mismatch detail messages ──────────────────────────────────────────
     const sections = [
@@ -282,8 +295,10 @@ const _sendDailyReconcile = async (report) => {
         const chunks = _chunkMismatchSection(sec.title, sec.list, sec.formatter);
         for (const chunk of chunks) {
             await sendRaw(chunk);
+            sentCount++;
         }
     }
+    return sentCount;
 };
 
 // Split a long mismatch list into <4000 char Telegram messages. Each message
