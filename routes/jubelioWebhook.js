@@ -914,6 +914,46 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         });
     }
 
+    // ── Marketplace fee adjustment ──
+    // Jubelio's grand_total = customer_paid − marketplace deductions (service_fee,
+    // order_processing_fee, insurance_cost, add_fee/add_disc, discount_marketplace,
+    // shipping_cost_discount). When MARKETPLACE_FEE_AWARE=true, we collapse those
+    // deductions into a single DiscountLineDetail so the QBO invoice total exactly
+    // matches Jubelio's displayed Total (net payout to seller). This makes
+    // bank-deposit reconciliation 1:1 — at the cost of moving fees from a
+    // separate Expense account into a Sales-discount line. Finance team chose
+    // this trade-off (memory: project_canonical_sync_migration.md).
+    if (String(process.env.MARKETPLACE_FEE_AWARE || '').toLowerCase() === 'true') {
+        const grandTotal = Number(so.grand_total ?? NaN);
+        if (Number.isFinite(grandTotal)) {
+            const linesTotal = lines.reduce((s, l) =>
+                s + (l.DetailType === 'DiscountLineDetail' ? -Number(l.Amount || 0) : Number(l.Amount || 0)), 0);
+            const adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
+            if (adjustment > 0.01) {
+                const parts = [];
+                const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
+                if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
+                if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
+                if (Number(so.insurance_cost) > 0) parts.push(`insurance ${fmt(so.insurance_cost)}`);
+                if (Number(so.add_fee) > 0) parts.push(`add_fee ${fmt(so.add_fee)}`);
+                if (Number(so.add_disc) > 0) parts.push(`add_disc ${fmt(so.add_disc)}`);
+                if (Number(so.discount_marketplace) > 0) parts.push(`discount_marketplace ${fmt(so.discount_marketplace)}`);
+                if (Number(so.shipping_cost_discount) > 0) parts.push(`shipping_disc ${fmt(so.shipping_cost_discount)}`);
+                lines.push({
+                    Description: `Marketplace fees & adjustments${parts.length ? ` (${parts.join(' + ')})` : ''}`.substring(0, 4000),
+                    Amount: adjustment,
+                    DetailType: 'DiscountLineDetail',
+                    DiscountLineDetail: { PercentBased: false },
+                });
+                console.log(`💸 Marketplace fee discount: Rp ${adjustment.toLocaleString('id-ID')} (linesTotal=${linesTotal} → grandTotal=${grandTotal})`);
+            } else if (adjustment < -0.01) {
+                // Customer paid more than line+shipping (e.g., insurance added on top).
+                // Negative discount not supported; log and let invoice be off-by-this.
+                console.warn(`⚠️ ${so.salesorder_no}: grand_total ${grandTotal} > linesTotal ${linesTotal} (diff ${-adjustment}); no discount line emitted`);
+            }
+        }
+    }
+
     return lines;
 };
 

@@ -43,6 +43,20 @@ const FAKE_ORDERS = [
         label: 'Non-bundle: just OMC-180-001',
         items: [{ item_code: 'OMC-180-001', item_name: 'Capsule 180', qty: 1, sell_price: 690000, amount: 690000 }],
     },
+    {
+        label: 'Marketplace fees: SP-260425PHT0VE69-like (Movement & Relief 1.250 + service_fee 152.500 + order_processing_fee 1.250)',
+        items: [{ item_code: 'The-Movement-&-Relief', item_name: 'Movement Relief', qty: 1, sell_price: 1400000, amount: 1250000 }],
+        grand_total: 1096250,
+        service_fee: 152500,
+        order_processing_fee: 1250,
+    },
+    {
+        label: 'Marketplace fees on non-bundle: OMC-180 390k + service_fee 52.650 + processing_fee 1.250 (= 336.100 net)',
+        items: [{ item_code: 'OMC-180-001', item_name: 'Capsule 180', qty: 1, sell_price: 390000, amount: 390000 }],
+        grand_total: 336100,
+        service_fee: 52650,
+        order_processing_fee: 1250,
+    },
 ];
 
 const simulate = async (qbo, so) => {
@@ -95,13 +109,38 @@ const simulate = async (qbo, so) => {
         }
         // Non-bundle (simulated regular path — just SKU lookup)
         const found = await qboFindItemsBySku(qbo, itemCode);
-        const usable = found.find(i => SAFE_ITEM_TYPES.has(i.Type) && i.Active !== false);
+        const TYPE_RANK = { Inventory: 0, NonInventory: 1, Service: 2 };
+        const candidates = found.filter(i => SAFE_ITEM_TYPES.has(i.Type) && i.Active !== false);
+        candidates.sort((a, b) => (TYPE_RANK[a.Type] ?? 9) - (TYPE_RANK[b.Type] ?? 9));
+        const usable = candidates[0];
         lines.push({
             Description: `${it.item_name || itemCode}`.substring(0, 4000),
             Amount: jubelioAmount,
             DetailType: 'SalesItemLineDetail',
             SalesItemLineDetail: { Qty: qty, UnitPrice: jubelioAmount / qty, ItemRef: { value: usable?.Id || '?' }, TaxCodeRef: { value: taxCodeId } },
         });
+    }
+
+    // Marketplace fee adjustment (mirrors webhook logic in routes/jubelioWebhook.js)
+    if (String(process.env.MARKETPLACE_FEE_AWARE || '').toLowerCase() === 'true') {
+        const grandTotal = Number(so.grand_total ?? NaN);
+        if (Number.isFinite(grandTotal)) {
+            const linesTotal = lines.reduce((s, l) =>
+                s + (l.DetailType === 'DiscountLineDetail' ? -Number(l.Amount || 0) : Number(l.Amount || 0)), 0);
+            const adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
+            if (adjustment > 0.01) {
+                const parts = [];
+                const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
+                if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
+                if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
+                lines.push({
+                    Description: `Marketplace fees & adjustments${parts.length ? ` (${parts.join(' + ')})` : ''}`,
+                    Amount: adjustment,
+                    DetailType: 'DiscountLineDetail',
+                    DiscountLineDetail: { PercentBased: false },
+                });
+            }
+        }
     }
     return lines;
 };

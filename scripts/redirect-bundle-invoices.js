@@ -44,6 +44,29 @@ const ALL_TARGETS = [
             { sku: 'OMO-60-001', itemId: ID['OMO-60-001'], qty: 1, unitPrice: 790000, desc: 'TREELOGY Premium Organic Moringa Seed Oil 60ml' },
         ],
         expectedTotal: 1250000,
+        completed: true,  // applied 2026-04-28 ~14:50 WIB, syncToken=1
+    },
+    {
+        salesorder_no: 'SHF-7390-128887',
+        qboInvoiceId: '69566',
+        bundleSku: 'The-Movement-&-Relief',
+        bundleItemId: '63',
+        components: [
+            { sku: 'OMC-180-001', itemId: ID['OMC-180-001'], qty: 1, unitPrice: 690000, desc: 'TREELOGY Premium Organic Moringa Capsules 180' },
+            { sku: 'OMO-60-001', itemId: ID['OMO-60-001'], qty: 1, unitPrice: 790000, desc: 'TREELOGY Premium Organic Moringa Seed Oil 60ml' },
+        ],
+        expectedTotal: 1180000,  // Shopify channel price (Jubelio so order id=481 confirms)
+    },
+    {
+        salesorder_no: 'SHF-7410-128887',
+        qboInvoiceId: '69791',
+        bundleSku: 'The-Movement-&-Relief',
+        bundleItemId: '63',
+        components: [
+            { sku: 'OMC-180-001', itemId: ID['OMC-180-001'], qty: 1, unitPrice: 690000, desc: 'TREELOGY Premium Organic Moringa Capsules 180' },
+            { sku: 'OMO-60-001', itemId: ID['OMO-60-001'], qty: 1, unitPrice: 790000, desc: 'TREELOGY Premium Organic Moringa Seed Oil 60ml' },
+        ],
+        expectedTotal: 1180000,  // Shopify channel price (Jubelio so order id=601 confirms)
     },
 ];
 
