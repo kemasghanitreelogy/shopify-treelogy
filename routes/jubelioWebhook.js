@@ -781,6 +781,7 @@ const getOrCreateItem = async (qbo, item, incomeAccountId) => {
 // We embed discount info in Description so audit trail is visible in QBO.
 const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     const lines = [];
+    const bundleNotes = []; // accumulated bundle discounts → merged into single DiscountLineDetail at end
     const items = Array.isArray(so.items) ? so.items : [];
     const serviceDate = isoDateJakarta(so.transaction_date);
 
@@ -847,21 +848,19 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
                 }
                 const discount = Math.round((componentSum - jubelioAmount) * 100) / 100;
                 if (discount > 0) {
-                    lines.push({
-                        Description: `${itemCode} bundle discount`,
-                        Amount: discount,
-                        DetailType: 'DiscountLineDetail',
-                        DiscountLineDetail: { PercentBased: false },
-                    });
+                    // Accumulate bundle discount; emit ONE merged DiscountLineDetail
+                    // at the end of buildLines (combined with marketplace fees).
+                    // QBO Indonesia drops a 2nd DiscountLineDetail silently (quirk #14).
+                    bundleNotes.push({ sku: itemCode, discount });
                 } else if (discount < 0) {
                     // Customer paid MORE than canonical components — extremely
                     // rare (would mean bundle sold above retail). Log and
                     // continue without discount; component lines already cover
                     // the canonical sum, leaving a small unpaid balance which
                     // surfaces in reconciliation.
-                    console.warn(`⚠️ Bundle ${itemCode}: paid Rp${jubelioAmount} > componentSum Rp${componentSum}; no discount line emitted`);
+                    console.warn(`⚠️ Bundle ${itemCode}: paid Rp${jubelioAmount} > componentSum Rp${componentSum}; no discount accumulated`);
                 }
-                console.log(`📦 Bundle expanded: ${itemCode} qty=${qty} → ${composition.components.length} components, sum=Rp${componentSum}, paid=Rp${jubelioAmount}, discount=Rp${Math.max(0, discount)}`);
+                console.log(`📦 Bundle expanded: ${itemCode} qty=${qty} → ${composition.components.length} components, sum=Rp${componentSum}, paid=Rp${jubelioAmount}, accumulatedDisc=Rp${Math.max(0, discount)}`);
                 continue;  // skip regular item flow
             }
         }
@@ -924,22 +923,45 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         });
     }
 
-    // ── Marketplace fee adjustment ──
+    // ── Combined discount line (bundle discount + marketplace fee adjustment) ──
+    // QBO Indonesia accepts only ONE DiscountLineDetail per invoice — multi-disc
+    // payloads silently drop one of them (quirk #14, discovered 2026-04-28). We
+    // merge bundle discounts and marketplace fee deductions into a single line.
+    //
     // Jubelio's grand_total = customer_paid − marketplace deductions (service_fee,
     // order_processing_fee, insurance_cost, add_fee/add_disc, discount_marketplace,
-    // shipping_cost_discount). Collapse those deductions into a single
-    // DiscountLineDetail so the QBO invoice total exactly matches Jubelio's
-    // displayed Total (net payout to seller). Finance team chose this trade-off
-    // for 1:1 bank-deposit reconciliation — fees absorbed into Sales discount
-    // instead of a separate Expense account.
+    // shipping_cost_discount). With bundle discount NOT yet emitted, lineTotal
+    // here equals (sum of component lines + shipping); the diff to grand_total
+    // therefore naturally absorbs both bundle promo and marketplace fees.
+    //
+    // Finance chose this trade-off for 1:1 bank-deposit reconciliation — fees
+    // absorbed into Sales discount instead of a separate Expense account.
     const grandTotal = Number(so.grand_total ?? NaN);
+    const bundleDiscSum = bundleNotes.reduce((s, b) => s + b.discount, 0);
+    let adjustment = 0;
+    let hasGrandTotal = false;
+
     if (Number.isFinite(grandTotal)) {
+        hasGrandTotal = true;
         const linesTotal = lines.reduce((s, l) =>
             s + (l.DetailType === 'DiscountLineDetail' ? -Number(l.Amount || 0) : Number(l.Amount || 0)), 0);
-        const adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
-        if (adjustment > 0.01) {
-            const parts = [];
-            const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
+        adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
+        if (adjustment < -0.01) {
+            // Customer paid more than line+shipping (e.g., insurance added on top).
+            // Negative discount not supported; log and let invoice be off-by-this.
+            console.warn(`⚠️ ${so.salesorder_no}: grand_total ${grandTotal} > linesTotal ${linesTotal} (diff ${-adjustment}); no discount line emitted`);
+            adjustment = 0;
+        }
+    } else if (bundleDiscSum > 0) {
+        // Defensive fallback when grand_total is missing — preserve bundle promo.
+        adjustment = bundleDiscSum;
+    }
+
+    if (adjustment > 0.01) {
+        const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
+        const parts = [];
+        for (const bn of bundleNotes) parts.push(`${bn.sku} bundle ${fmt(bn.discount)}`);
+        if (hasGrandTotal) {
             if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
             if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
             if (Number(so.insurance_cost) > 0) parts.push(`insurance ${fmt(so.insurance_cost)}`);
@@ -947,18 +969,17 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
             if (Number(so.add_disc) > 0) parts.push(`add_disc ${fmt(so.add_disc)}`);
             if (Number(so.discount_marketplace) > 0) parts.push(`discount_marketplace ${fmt(so.discount_marketplace)}`);
             if (Number(so.shipping_cost_discount) > 0) parts.push(`shipping_disc ${fmt(so.shipping_cost_discount)}`);
-            lines.push({
-                Description: `Marketplace fees & adjustments${parts.length ? ` (${parts.join(' + ')})` : ''}`.substring(0, 4000),
-                Amount: adjustment,
-                DetailType: 'DiscountLineDetail',
-                DiscountLineDetail: { PercentBased: false },
-            });
-            console.log(`💸 Marketplace fee discount: Rp ${adjustment.toLocaleString('id-ID')} (linesTotal=${linesTotal} → grandTotal=${grandTotal})`);
-        } else if (adjustment < -0.01) {
-            // Customer paid more than line+shipping (e.g., insurance added on top).
-            // Negative discount not supported; log and let invoice be off-by-this.
-            console.warn(`⚠️ ${so.salesorder_no}: grand_total ${grandTotal} > linesTotal ${linesTotal} (diff ${-adjustment}); no discount line emitted`);
         }
+        const baseDesc = !hasGrandTotal
+            ? 'Bundle discount'
+            : (bundleNotes.length ? 'Bundle discount + Marketplace fees & adjustments' : 'Marketplace fees & adjustments');
+        lines.push({
+            Description: `${baseDesc}${parts.length ? ` (${parts.join(' + ')})` : ''}`.substring(0, 4000),
+            Amount: adjustment,
+            DetailType: 'DiscountLineDetail',
+            DiscountLineDetail: { PercentBased: false },
+        });
+        console.log(`💸 Combined discount: Rp ${adjustment.toLocaleString('id-ID')} (bundles=${bundleNotes.length}, grandTotal=${hasGrandTotal ? grandTotal : 'n/a'})`);
     }
 
     return lines;

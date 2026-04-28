@@ -62,6 +62,7 @@ const FAKE_ORDERS = [
 const simulate = async (qbo, so) => {
     const taxCodeId = '7'; // No VAT, like prod
     const lines = [];
+    const bundleNotes = []; // accumulate bundle discounts → merged at end (quirk #14)
     for (const it of so.items) {
         const qty = Number(it.qty || 1);
         const lineAmount = Number(it.amount || it.sell_price * qty);
@@ -96,14 +97,7 @@ const simulate = async (qbo, so) => {
                     });
                 }
                 const discount = Math.round((componentSum - jubelioAmount) * 100) / 100;
-                if (discount > 0) {
-                    lines.push({
-                        Description: `${itemCode} bundle discount`,
-                        Amount: discount,
-                        DetailType: 'DiscountLineDetail',
-                        DiscountLineDetail: { PercentBased: false },
-                    });
-                }
+                if (discount > 0) bundleNotes.push({ sku: itemCode, discount });
                 continue;
             }
         }
@@ -121,25 +115,41 @@ const simulate = async (qbo, so) => {
         });
     }
 
-    // Marketplace fee adjustment (mirrors webhook logic in routes/jubelioWebhook.js)
+    // Combined discount (bundle + marketplace fee) — mirrors webhook buildLines.
     const grandTotal = Number(so.grand_total ?? NaN);
+    const bundleDiscSum = bundleNotes.reduce((s, b) => s + b.discount, 0);
+    let adjustment = 0;
+    let hasGrandTotal = false;
     if (Number.isFinite(grandTotal)) {
+        hasGrandTotal = true;
         const linesTotal = lines.reduce((s, l) =>
             s + (l.DetailType === 'DiscountLineDetail' ? -Number(l.Amount || 0) : Number(l.Amount || 0)), 0);
-        const adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
-        if (adjustment > 0.01) {
-            const parts = [];
-            const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
+        adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
+        if (adjustment < -0.01) adjustment = 0;
+    } else if (bundleDiscSum > 0) {
+        adjustment = bundleDiscSum;
+    }
+    if (adjustment > 0.01) {
+        const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
+        const parts = [];
+        for (const bn of bundleNotes) parts.push(`${bn.sku} bundle ${fmt(bn.discount)}`);
+        if (hasGrandTotal) {
             if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
             if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
-            lines.push({
-                Description: `Marketplace fees & adjustments${parts.length ? ` (${parts.join(' + ')})` : ''}`,
-                Amount: adjustment,
-                DetailType: 'DiscountLineDetail',
-                DiscountLineDetail: { PercentBased: false },
-            });
         }
+        const baseDesc = !hasGrandTotal
+            ? 'Bundle discount'
+            : (bundleNotes.length ? 'Bundle discount + Marketplace fees & adjustments' : 'Marketplace fees & adjustments');
+        lines.push({
+            Description: `${baseDesc}${parts.length ? ` (${parts.join(' + ')})` : ''}`,
+            Amount: adjustment,
+            DetailType: 'DiscountLineDetail',
+            DiscountLineDetail: { PercentBased: false },
+        });
     }
+    // Sanity: at most ONE DiscountLineDetail in final output (quirk #14).
+    const discCount = lines.filter(l => l.DetailType === 'DiscountLineDetail').length;
+    if (discCount > 1) throw new Error(`emitted ${discCount} DiscountLineDetail — must be ≤ 1 (quirk #14)`);
     return lines;
 };
 
