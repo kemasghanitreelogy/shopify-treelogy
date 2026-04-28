@@ -647,9 +647,17 @@ const getOrCreateItem = async (qbo, item, incomeAccountId) => {
     const description = String(item.item_name || item.description || '').trim().substring(0, 4000);
 
     // 1) SKU lookup — match existing QBO Inventory/Service by Sku field.
+    // Same SKU may exist on BOTH the canonical Inventory item (post-Phase 1
+    // rename) AND a legacy Service item (pre-migration). Prefer Inventory >
+    // NonInventory > Service so the line uses the canonical record (quirk
+    // #10). Without this, QBO's natural return order may pick the legacy
+    // Service whose UnitPrice has stale variant-collapsed data.
+    const TYPE_RANK = { Inventory: 0, NonInventory: 1, Service: 2 };
     if (itemCode) {
         const bySku = await qboFindItemsBySku(qbo, itemCode);
-        const usable = bySku.find(i => SAFE_ITEM_TYPES.has(i.Type));
+        const candidates = bySku.filter(i => SAFE_ITEM_TYPES.has(i.Type));
+        candidates.sort((a, b) => (TYPE_RANK[a.Type] ?? 9) - (TYPE_RANK[b.Type] ?? 9));
+        const usable = candidates[0];
         if (usable) {
             console.log(`✅ Item match by SKU="${itemCode}" → existing id=${usable.Id} name="${usable.Name}" type=${usable.Type}`);
             return usable.Id;
@@ -659,7 +667,9 @@ const getOrCreateItem = async (qbo, item, incomeAccountId) => {
     // 2) Name lookup — match existing QBO item by full sanitized name.
     if (fullName) {
         const byName = await qboFindItemsByName(qbo, fullName);
-        const usable = byName.find(i => SAFE_ITEM_TYPES.has(i.Type));
+        const candidates = byName.filter(i => SAFE_ITEM_TYPES.has(i.Type));
+        candidates.sort((a, b) => (TYPE_RANK[a.Type] ?? 9) - (TYPE_RANK[b.Type] ?? 9));
+        const usable = candidates[0];
         if (usable) {
             // Lazy Sku backfill: when an existing QBO item matches by Name but
             // has no Sku populated (created manually or by pre-SKU integration
