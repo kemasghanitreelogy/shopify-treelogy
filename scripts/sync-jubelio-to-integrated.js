@@ -42,7 +42,7 @@ const limit = (() => {
     const a = args.find(x => x.startsWith('--limit='));
     return a ? Number(a.split('=')[1]) : Infinity;
 })();
-const deadlineMs = 240_000;
+const deadlineMs = Number(process.env.DEADLINE_MS || 240_000);
 
 const TAG = '[Integrated]';
 const SAFE_ITEM_TYPES = new Set(['Service', 'Inventory', 'NonInventory', 'Group']);
@@ -309,7 +309,10 @@ const buildNewLines = (oldLines, resolutions, allItemsById, integratedIdsBySku) 
     }
 
     console.log('\n🔍 Loading Jubelio order map…');
-    const maps = await JubelioOrderMap.find({ qbo_invoice_id: { $exists: true, $ne: null } }).lean();
+    // Sort by _id descending so the newest invoices (most likely to still
+    // reference legacy items, since older ones got swept already) are
+    // processed first under the deadline.
+    const maps = await JubelioOrderMap.find({ qbo_invoice_id: { $exists: true, $ne: null } }).sort({ _id: -1 }).lean();
     console.log(`   ${maps.length} entries\n`);
 
     const stats = { total: maps.length, scanned: 0, modified: 0, applied: 0, errors: 0, unresolvedLines: 0, skippedAlreadyCanonical: 0, hitDeadline: false };
