@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
 const { alertWebhookError, alertAuthRejected, sendTestAlert, isConfigured: alertsConfigured } = require('../services/alertService');
+const { isBundleSku, getBundleComposition, isBundleAwareEnabled } = require('../services/bundleService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const JubelioCustomerMap = require('../models/JubelioCustomerMap');
@@ -781,6 +782,81 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         const gross = qty * price;
         const lineAmount = Number(it.amount ?? (gross - discAmt));
         const jubelioAmount = Math.round(lineAmount * 100) / 100;
+
+        // ── Bundle expansion ──
+        // When BUNDLE_AWARE is on and item_code matches a canonical bundle SKU,
+        // emit per-component SalesItemLineDetail lines (each at canonical
+        // unitPrice) plus a DiscountLineDetail to balance to the actual paid
+        // line amount. Skip the regular getOrCreateItem flow entirely for the
+        // bundle SKU so QBO never sees a generic "Sales" or auto-created
+        // bundle-shaped Service item.
+        const itemCode = String(it.item_code || '').trim();
+        if (isBundleAwareEnabled() && isBundleSku(itemCode)) {
+            const composition = getBundleComposition(itemCode);
+            const skuToItem = new Map();
+            let allComponentsResolved = true;
+            for (const c of composition.components) {
+                const found = await qboFindItemsBySku(qbo, c.sku);
+                // Prefer Inventory over Service when SKU collides — legacy
+                // Service items from pre-migration era share SKUs with the
+                // canonical Inventory ids and carry stale prices (variant
+                // collapse, quirk #10). Inventory is the post-migration source
+                // of truth.
+                const TYPE_RANK = { Inventory: 0, NonInventory: 1, Service: 2 };
+                const candidates = found.filter(i => SAFE_ITEM_TYPES.has(i.Type) && i.Active !== false);
+                candidates.sort((a, b) => (TYPE_RANK[a.Type] ?? 9) - (TYPE_RANK[b.Type] ?? 9));
+                const usable = candidates[0];
+                if (!usable) {
+                    console.log(`⚠️ Bundle ${itemCode}: component SKU "${c.sku}" not found in QBO — falling back to non-bundle path`);
+                    allComponentsResolved = false;
+                    break;
+                }
+                skuToItem.set(c.sku, usable);
+            }
+
+            if (allComponentsResolved) {
+                let componentSum = 0;
+                for (const c of composition.components) {
+                    const compQty = c.qty * qty;
+                    const compAmount = Math.round(c.unitPrice * compQty * 100) / 100;
+                    componentSum += compAmount;
+                    const compItem = skuToItem.get(c.sku);
+                    const compDetail = {
+                        Qty: compQty,
+                        UnitPrice: c.unitPrice,
+                        ItemRef: { value: compItem.Id },
+                    };
+                    if (taxCodeId) compDetail.TaxCodeRef = { value: taxCodeId };
+                    if (serviceDate) compDetail.ServiceDate = serviceDate;
+                    lines.push({
+                        Description: `[${itemCode}] ${compItem.Name}`.substring(0, 4000),
+                        Amount: compAmount,
+                        DetailType: 'SalesItemLineDetail',
+                        SalesItemLineDetail: compDetail,
+                    });
+                }
+                const discount = Math.round((componentSum - jubelioAmount) * 100) / 100;
+                if (discount > 0) {
+                    lines.push({
+                        Description: `${itemCode} bundle discount`,
+                        Amount: discount,
+                        DetailType: 'DiscountLineDetail',
+                        DiscountLineDetail: { PercentBased: false },
+                    });
+                } else if (discount < 0) {
+                    // Customer paid MORE than canonical components — extremely
+                    // rare (would mean bundle sold above retail). Log and
+                    // continue without discount; component lines already cover
+                    // the canonical sum, leaving a small unpaid balance which
+                    // surfaces in reconciliation.
+                    console.warn(`⚠️ Bundle ${itemCode}: paid Rp${jubelioAmount} > componentSum Rp${componentSum}; no discount line emitted`);
+                }
+                console.log(`📦 Bundle expanded: ${itemCode} qty=${qty} → ${composition.components.length} components, sum=Rp${componentSum}, paid=Rp${jubelioAmount}, discount=Rp${Math.max(0, discount)}`);
+                continue;  // skip regular item flow
+            }
+        }
+        // ── End bundle expansion ──
+
         // QBO hard-validates Amount == Qty * UnitPrice on each line. We round
         // UnitPrice to 2 decimals, then recompute Amount from the rounded unit
         // price so the invariant ALWAYS holds. This may sacrifice up to 0.01
