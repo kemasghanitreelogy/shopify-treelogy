@@ -1086,18 +1086,34 @@ const getOrCreateTerm = (qbo, days) => new Promise((resolve) => {
     });
 });
 
+// QBO inventory concurrency lock. Surfaces as HTTP 400 "Business Validation
+// Error" with text "another user was creating/editing/deleting a transaction
+// with inventory products at exactly the same time. Please try again in 30 min."
+// Despite the 30-min hint, contention almost always clears within seconds —
+// it's our own bursty webhook traffic + QBO's per-realm inventory recompute.
+const isInventoryLockError = (err) => {
+    if (!err) return false;
+    const msg = String(err.message || err);
+    return /another user was (creating|editing|deleting)/i.test(msg)
+        || /transaction with inventory products at exactly the same time/i.test(msg);
+};
+
 // Detects QBO throttle/transient errors that are safe to retry.
-// QBO returns HTTP 429 + errorCode 003001 ("ThrottleExceeded"), and
-// occasionally 5xx for transient platform issues.
+// QBO returns HTTP 429 + errorCode 003001 ("ThrottleExceeded"), occasionally
+// 5xx for transient platform issues, and HTTP 400 "Business Validation Error"
+// for inventory-lock contention (handled with longer backoff in withQboRetry).
 const isRetryableQboError = (err) => {
     if (!err) return false;
     const msg = String(err.message || err);
     return /ThrottleExceeded|statusCode=429|errorCode=003001|"code":"?3001|"code":"?3002/i.test(msg)
-        || /statusCode=5\d\d|HTTP 5\d\d|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg);
+        || /statusCode=5\d\d|HTTP 5\d\d|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg)
+        || isInventoryLockError(err);
 };
 
 // Wraps a QBO call with exponential-backoff retry on throttle/transient errors.
-// Attempts: 1, 2, 3, 4 → waits 1s, 2s, 4s between (plus ±300ms jitter).
+// Default (throttle/5xx): 4 attempts, base 1s → waits 1s, 2s, 4s (~7s total).
+// Inventory-lock errors use base 3s → waits 3s, 6s, 12s (~21s total) since
+// inventory contention clears slower than rate-limit throttle.
 const withQboRetry = async (label, fn, { maxAttempts = 4, baseDelayMs = 1000 } = {}) => {
     let lastErr;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -1106,8 +1122,11 @@ const withQboRetry = async (label, fn, { maxAttempts = 4, baseDelayMs = 1000 } =
         } catch (err) {
             lastErr = err;
             if (attempt < maxAttempts && isRetryableQboError(err)) {
-                const delay = baseDelayMs * 2 ** (attempt - 1) + Math.floor(Math.random() * 300);
-                console.warn(`⏳ QBO retry ${label} attempt ${attempt}/${maxAttempts} (wait ${delay}ms): ${String(err.message).slice(0, 120)}`);
+                const lockHit = isInventoryLockError(err);
+                const base = lockHit ? Math.max(baseDelayMs, 3000) : baseDelayMs;
+                const delay = base * 2 ** (attempt - 1) + Math.floor(Math.random() * 500);
+                const tag = lockHit ? '[INV_LOCK]' : '[transient]';
+                console.warn(`⏳ QBO retry ${label} attempt ${attempt}/${maxAttempts} ${tag} (wait ${delay}ms): ${String(err.message).slice(0, 200)}`);
                 await new Promise(r => setTimeout(r, delay));
                 continue;
             }
