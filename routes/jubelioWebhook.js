@@ -576,6 +576,43 @@ const getGenericItem = async (qbo, incomeAccountId) => {
     }
 };
 
+// Dedicated Shipping item resolver. Without an ItemRef, shipping lines fall
+// into QBO's built-in generic "Sales" item — which makes "Sales by
+// Product/Service" reports pile every shipping fee under an opaque "Sales" row.
+// Shopify orders already get this right because their items[] array carries a
+// "Shipping Charge" line item that flows through getOrCreateItem; non-Shopify
+// channels (Tokopedia, Shopee, Direct, DealPos) put the value in
+// so.shipping_cost on the SO header, which is why the dedicated lookup lives
+// here.
+let _shippingItemId = null;
+const getShippingItem = async (qbo, incomeAccountId) => {
+    if (_shippingItemId) return _shippingItemId;
+    const NAME = 'Shipping Charge';
+    try {
+        const byName = await qboFindItemsByName(qbo, NAME);
+        const usable = byName.find(i => SAFE_ITEM_TYPES.has(i.Type));
+        if (usable) {
+            _shippingItemId = usable.Id;
+            return _shippingItemId;
+        }
+        if (!incomeAccountId) return null;
+        const created = await qboFetch(qbo, '/item', {
+            method: 'POST',
+            body: JSON.stringify({
+                Name: NAME,
+                Type: 'Service',
+                IncomeAccountRef: { value: incomeAccountId },
+            }),
+        });
+        _shippingItemId = created?.Item?.Id || null;
+        if (_shippingItemId) console.log(`✅ Shipping Item dibuat: ${NAME} (ID: ${_shippingItemId})`);
+        return _shippingItemId;
+    } catch (e) {
+        console.log(`⚠️ getShippingItem gagal: ${e.message}`);
+        return null;
+    }
+};
+
 // QBO Item types that can be used as Invoice line items.
 // "Category" is organizational-only and will cause createInvoice to fail with
 // "Invalid Reference Id : An item in this transaction is set up as a category
@@ -782,10 +819,15 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         });
     }
 
-    // Shipping fee (if any) as extra line
+    // Shipping fee (if any) as extra line. Setting ItemRef = "Shipping Charge"
+    // is required so the line shows up under its own product/service row in
+    // QBO reports (Sales by Product/Service Summary, etc.) instead of getting
+    // bucketed into the opaque generic "Sales" row.
     const shipping = Number(so.shipping_cost || 0);
     if (shipping > 0) {
+        const shippingItemId = await getShippingItem(qbo, incomeAccountId);
         const detail = { Qty: 1, UnitPrice: shipping };
+        if (shippingItemId) detail.ItemRef = { value: shippingItemId };
         if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
         if (serviceDate) detail.ServiceDate = serviceDate;
         lines.push({
