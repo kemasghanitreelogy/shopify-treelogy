@@ -12,7 +12,7 @@ const { getQboInstance } = require('../services/qboService');
 
 // Re-implement buildLines's relevant helpers by re-requiring the module — but
 // buildLines is internal. Easiest: replicate the path as a simulation.
-const { isBundleSku, getBundleComposition, isBundleAwareEnabled } = require('../services/bundleService');
+const { isBundleSku, getBundleComposition } = require('../services/bundleService');
 
 const SAFE_ITEM_TYPES = new Set(['Service', 'Inventory', 'NonInventory']);
 
@@ -68,7 +68,7 @@ const simulate = async (qbo, so) => {
         const jubelioAmount = Math.round(lineAmount * 100) / 100;
         const itemCode = String(it.item_code || '').trim();
 
-        if (isBundleAwareEnabled() && isBundleSku(itemCode)) {
+        if (isBundleSku(itemCode)) {
             const composition = getBundleComposition(itemCode);
             const skuToItem = new Map();
             let allResolved = true;
@@ -122,24 +122,22 @@ const simulate = async (qbo, so) => {
     }
 
     // Marketplace fee adjustment (mirrors webhook logic in routes/jubelioWebhook.js)
-    if (String(process.env.MARKETPLACE_FEE_AWARE || '').toLowerCase() === 'true') {
-        const grandTotal = Number(so.grand_total ?? NaN);
-        if (Number.isFinite(grandTotal)) {
-            const linesTotal = lines.reduce((s, l) =>
-                s + (l.DetailType === 'DiscountLineDetail' ? -Number(l.Amount || 0) : Number(l.Amount || 0)), 0);
-            const adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
-            if (adjustment > 0.01) {
-                const parts = [];
-                const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
-                if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
-                if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
-                lines.push({
-                    Description: `Marketplace fees & adjustments${parts.length ? ` (${parts.join(' + ')})` : ''}`,
-                    Amount: adjustment,
-                    DetailType: 'DiscountLineDetail',
-                    DiscountLineDetail: { PercentBased: false },
-                });
-            }
+    const grandTotal = Number(so.grand_total ?? NaN);
+    if (Number.isFinite(grandTotal)) {
+        const linesTotal = lines.reduce((s, l) =>
+            s + (l.DetailType === 'DiscountLineDetail' ? -Number(l.Amount || 0) : Number(l.Amount || 0)), 0);
+        const adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
+        if (adjustment > 0.01) {
+            const parts = [];
+            const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
+            if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
+            if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
+            lines.push({
+                Description: `Marketplace fees & adjustments${parts.length ? ` (${parts.join(' + ')})` : ''}`,
+                Amount: adjustment,
+                DetailType: 'DiscountLineDetail',
+                DiscountLineDetail: { PercentBased: false },
+            });
         }
     }
     return lines;
@@ -148,7 +146,7 @@ const simulate = async (qbo, so) => {
 (async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     const qbo = await getQboInstance();
-    console.log(`\n🔬 Bundle expansion test · BUNDLE_AWARE=${isBundleAwareEnabled() ? 'true' : 'false'}\n`);
+    console.log(`\n🔬 Bundle expansion test (always-on)\n`);
     for (const so of FAKE_ORDERS) {
         console.log(`━━━ ${so.label}`);
         const lines = await simulate(qbo, so);

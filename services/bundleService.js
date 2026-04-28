@@ -70,13 +70,8 @@ const CANONICAL_BUNDLES = {
 const isBundleSku = (sku) => Object.prototype.hasOwnProperty.call(CANONICAL_BUNDLES, String(sku || '').trim());
 const getBundleComposition = (sku) => CANONICAL_BUNDLES[String(sku || '').trim()] || null;
 
-// Bundle expansion is disabled by default; flip BUNDLE_AWARE=true in env to
-// enable on prod. Lets us land the code first, observe a controlled rollout.
-const isBundleAwareEnabled = () => String(process.env.BUNDLE_AWARE || '').toLowerCase() === 'true';
-
 module.exports = {
     CANONICAL_BUNDLES,
     isBundleSku,
     getBundleComposition,
-    isBundleAwareEnabled,
 };
