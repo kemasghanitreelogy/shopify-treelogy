@@ -13,12 +13,21 @@ const webhook = require('../routes/jubelioWebhook');
 const apply = process.argv.includes('--apply');
 
 const TARGETS = [
-    { sn: 'SHF-7498-128887', qbo_invoice_id: '70994', salesorder_id: 1113 },
-    { sn: 'SHF-7497-128887', qbo_invoice_id: '71012', salesorder_id: 1103 },
-    { sn: 'SHF-7496-128887', qbo_invoice_id: '71033', salesorder_id: 1088 },
-    { sn: 'SHF-7495-128887', qbo_invoice_id: '71042', salesorder_id: 1082 },
-    { sn: 'SHF-7494-128887', qbo_invoice_id: '71045', salesorder_id: 1067 },
-    { sn: 'SHF-7493-128887', qbo_invoice_id: '71050', salesorder_id: 1064 },
+    // 27-28 April batch (already applied 2026-04-29 morning)
+    // { sn: 'SHF-7498-128887', qbo_invoice_id: '70994', salesorder_id: 1113 },
+    // { sn: 'SHF-7497-128887', qbo_invoice_id: '71012', salesorder_id: 1103 },
+    // { sn: 'SHF-7496-128887', qbo_invoice_id: '71033', salesorder_id: 1088 },
+    // { sn: 'SHF-7495-128887', qbo_invoice_id: '71042', salesorder_id: 1082 },
+    // { sn: 'SHF-7494-128887', qbo_invoice_id: '71045', salesorder_id: 1067 },
+    // { sn: 'SHF-7493-128887', qbo_invoice_id: '71050', salesorder_id: 1064 },
+    // 29 April batch
+    { sn: 'SHF-7505-128887', qbo_invoice_id: '71072', salesorder_id: 1150 },
+    { sn: 'SHF-7504-128887', qbo_invoice_id: '71083', salesorder_id: 1142 },
+    { sn: 'SHF-7503-128887', qbo_invoice_id: '71090', salesorder_id: 1137 },
+    { sn: 'SHF-7502-128887', qbo_invoice_id: '71091', salesorder_id: 1136 },
+    { sn: 'SHF-7501-128887', qbo_invoice_id: '71092', salesorder_id: 1133 },
+    { sn: 'SHF-7500-128887', qbo_invoice_id: '71099', salesorder_id: 1126 },
+    { sn: 'SHF-7499-128887', qbo_invoice_id: '71112', salesorder_id: 1117 },
 ];
 
 const fmt = (n) => `Rp ${(n || 0).toLocaleString('id-ID')}`;
