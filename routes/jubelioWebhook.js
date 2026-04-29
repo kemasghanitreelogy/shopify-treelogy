@@ -1184,20 +1184,41 @@ const qboUpdateInvoiceSafe = async (qbo, invoiceId, mutatePayload) => {
 // Paid statuses from Jubelio SO that should auto-mark the QBO invoice paid.
 const PAID_STATUSES = new Set(['PAID', 'COMPLETED']);
 
-// Only sync to QBO once the SO has SHIPPED (courier, tracking_no, shipped_date
-// are populated). Earlier statuses (PENDING, INVOICED, PAID, PROCESSING) are
-// acknowledged but skipped so the final invoice has complete data.
-// Override via env JUBELIO_SYNC_STATUSES=SHIPPED,COMPLETED (comma list).
+// Sync gate: SO syncs to QBO as soon as we have evidence the buyer has paid.
+// Two signals (per-channel):
+//   1. so.payment_date set                    — Tokopedia/Shopee/TikTok (escrow funded)
+//   2. status ∈ PAID_STATUSES (PAID|COMPLETED) — Shopify/INTERNAL (these channels
+//                                                 don't populate payment_date in
+//                                                 the webhook payload — verified
+//                                                 against JubelioPayloadLog 2026-04-29)
+// Either signal means grand_total is finalized (incl. service_fee/marketplace
+// deductions for marketplace, or final cart total for Shopify) so we can safely
+// post the invoice + Payment.
+//
+// Shipping fields (courier, tracking_no, shipped_date) may still be empty here;
+// the subsequent SHIPPED/COMPLETED webhook sparse-updates them onto the same
+// invoice (qboUpdateInvoiceSafe uses sparse:true so unspecified fields persist).
+//
+// Earlier behavior: gated on status SHIPPED/COMPLETED only — invoices appeared
+// in QBO 1-3 days after actual payment, not aligned with cash-receipt timing.
+//
+// Override the auto gate via env JUBELIO_SYNC_STATUSES (comma list) for testing
+// or rollback to pre-2026-04-29 behavior.
 const SYNC_STATUSES = new Set(
-    (process.env.JUBELIO_SYNC_STATUSES || 'SHIPPED,COMPLETED')
+    (process.env.JUBELIO_SYNC_STATUSES || '')
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
+const hasPaymentSignal = (so) => {
+    if (so && so.payment_date && String(so.payment_date).trim()) return true;
+    const st = String(so?.status || '').toUpperCase();
+    return PAID_STATUSES.has(st);
+};
 
 // Prefix-based bypass: direct-sale channels (La Brisa, Consignment, WhatsApp,
-// Walk-in) have no courier shipping flow, so sync immediately regardless of
-// status. Marketplace channels (SP Shopee, TP Tokopedia) still gate on
-// SYNC_STATUSES because they carry courier/tracking data. Override via env
-// JUBELIO_BYPASS_STATUS_PREFIXES.
+// Walk-in) have no marketplace escrow flow, may use COD/credit terms, and
+// don't always carry payment_date. Sync immediately regardless of payment_date
+// or status. Marketplace channels (SP Shopee, TP Tokopedia, TT TikTok, SHF
+// Shopify) gate on payment_date. Override via env JUBELIO_BYPASS_STATUS_PREFIXES.
 const BYPASS_STATUS_PREFIXES = new Set(
     (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'LB,CS,DP,DW')
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
@@ -1534,14 +1555,16 @@ router.post('/pesanan', async (req, res) => {
         const shouldVoid = !!payload.is_canceled;
         const prefix = getSoPrefix(so);
         const bypassStatus = BYPASS_STATUS_PREFIXES.has(prefix);
-        const shouldSync = bypassStatus || SYNC_STATUSES.has(statusUpper);
-        log(`🧭 [4/8] DECISION shouldVoid=${shouldVoid} shouldSync=${shouldSync} prefix=${prefix || '-'} bypassStatus=${bypassStatus} syncStatuses=[${[...SYNC_STATUSES].join(',')}]`);
+        const buyerPaid = hasPaymentSignal(so);
+        const statusOverride = SYNC_STATUSES.size > 0 && SYNC_STATUSES.has(statusUpper);
+        const shouldSync = bypassStatus || buyerPaid || statusOverride;
+        log(`🧭 [4/8] DECISION shouldVoid=${shouldVoid} shouldSync=${shouldSync} prefix=${prefix || '-'} bypassStatus=${bypassStatus} buyerPaid=${buyerPaid} statusOverride=${statusOverride}`);
 
-        // Skip early (before QBO connect) if status hasn't matured. Saves latency
-        // and avoids rate-limiting QBO for webhooks we'd drop anyway.
+        // Skip early (before QBO connect) when no payment signal yet. Saves
+        // latency + QBO rate-limit budget for webhooks we'd drop anyway.
         if (!shouldVoid && !shouldSync) {
-            log(`⏸️  [DONE-SKIP] SO ${so.salesorder_no} status=${statusUpper} — skip (waiting for ${[...SYNC_STATUSES].join('/')}) ${Date.now() - t0}ms`);
-            return res.status(200).json({ ok: true, skipped: true, reason: 'waiting-for-status', status: statusUpper, reqId });
+            log(`⏸️  [DONE-SKIP] SO ${so.salesorder_no} status=${statusUpper} payment_date="${so.payment_date || ''}" — skip (awaiting-payment-signal) ${Date.now() - t0}ms`);
+            return res.status(200).json({ ok: true, skipped: true, reason: 'awaiting-payment-signal', status: statusUpper, reqId });
         }
 
         log(`🔌 [5/8] CONNECTING to QBO…`);
