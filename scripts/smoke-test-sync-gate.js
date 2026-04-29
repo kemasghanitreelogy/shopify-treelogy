@@ -11,7 +11,7 @@ const mongoose = require('mongoose');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 
 const PAID_STATUSES = new Set(['PAID', 'COMPLETED']);
-const BYPASS_STATUS_PREFIXES = new Set((process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'LB,CS,DP,DW').split(',').map(s => s.trim().toUpperCase()).filter(Boolean));
+const BYPASS_STATUS_PREFIXES = new Set((process.env.JUBELIO_BYPASS_STATUS_PREFIXES || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean));
 
 const getSoPrefix = (so) => {
     const m = String(so?.salesorder_no || '').match(/^([A-Z]{2,5})-/);

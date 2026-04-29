@@ -1239,14 +1239,21 @@ const hasPaymentSignal = (so) => {
     return PAID_STATUSES.has(st);
 };
 
-// Prefix-based bypass: direct-sale channels (La Brisa, Consignment, WhatsApp,
-// Walk-in, Wholesale) have no marketplace escrow flow, may use COD/credit
-// terms, and don't always carry payment_date. Sync immediately regardless of
-// payment_date or status. Marketplace channels (SP Shopee, TP Tokopedia, TT
-// TikTok, SHF Shopify) gate on payment_date. Override via env
-// JUBELIO_BYPASS_STATUS_PREFIXES.
+// Per-channel sync gate: ALL channels (marketplace + direct-sale) follow the
+// same rule — wait for buyer-paid signal (payment_date set OR status
+// PAID/COMPLETED) before syncing to QBO. Policy decision 2026-04-29: invoice
+// TxnDate in QBO must equal the actual payment receipt date, so we never
+// post an invoice before payment is confirmed.
+//
+// Direct-sale channels (LB/CS/DP/DW/WS) audited against last-30d payload log:
+// every recorded order eventually reached PAID/COMPLETED, so removing the
+// bypass doesn't strand any orders in PENDING.
+//
+// BYPASS_STATUS_PREFIXES retained as an env-only escape hatch in case finance
+// needs to force-sync a channel that's stuck — set
+// JUBELIO_BYPASS_STATUS_PREFIXES=LB,CS to re-enable per-channel bypass.
 const BYPASS_STATUS_PREFIXES = new Set(
-    (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'LB,CS,DP,DW,WS')
+    (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || '')
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
 
