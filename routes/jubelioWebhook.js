@@ -1732,3 +1732,9 @@ router.get('/debug-alert', async (_req, res) => {
 });
 
 module.exports = router;
+// Named exports for reuse in backfill scripts (e.g. force-sync stuck orders).
+// Express router is an object so attaching properties is safe.
+module.exports.upsertQboInvoice = upsertQboInvoice;
+module.exports.markQboInvoicePaid = markQboInvoicePaid;
+module.exports.voidMappedInvoice = voidMappedInvoice;
+module.exports.hasPaymentSignal = hasPaymentSignal;
