@@ -1163,6 +1163,28 @@ const isRetryableQboError = (err) => {
         || isInventoryLockError(err);
 };
 
+// Errors that are known self-healing under Jubelio's 3x retry policy:
+// concurrent webhook races, QBO sync-token contention, transient network
+// blips. We still return 500 so Jubelio retries, but we DON'T fire a
+// Telegram alert on the first failure — alerting would only create noise
+// because the next retry almost always succeeds (verified via incident
+// 2026-04-29: race-cond DupName fired 2 alerts but Jubelio retries
+// successfully created both invoices within seconds).
+//
+// Permanent errors (AST tax exhausted, missing fields, validation) bypass
+// this filter and alert immediately because retry won't help.
+const isLikelyTransientError = (err) => {
+    if (!err) return false;
+    const msg = String(err.message || err);
+    if (/Duplicate Name Exists|name supplied already exists/i.test(msg)) return true;
+    if (/SyncToken|stale\s+(?:invoice|object)/i.test(msg)) return true;
+    if (/ThrottleExceeded|statusCode=429|errorCode=003001|"code":"?3001|"code":"?3002/i.test(msg)) return true;
+    if (/statusCode=5\d\d|HTTP 5\d\d|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg)) return true;
+    if (/ESERVFAIL|EAI_AGAIN|getaddrinfo|ENOTFOUND/i.test(msg)) return true;
+    if (isInventoryLockError(err)) return true;
+    return false;
+};
+
 // Wraps a QBO call with exponential-backoff retry on throttle/transient errors.
 // Default (throttle/5xx): 4 attempts, base 1s → waits 1s, 2s, 4s (~7s total).
 // Inventory-lock errors use base 3s → waits 3s, 6s, 12s (~21s total) since
@@ -1683,13 +1705,21 @@ router.post('/pesanan', async (req, res) => {
             err(`    intuit_tid=${error.intuit_tid || '-'} fault=${JSON.stringify(error.Fault || error.fault || {}).slice(0, 300)}`);
         }
         err(`    duration=${Date.now() - t0}ms`);
-        alertWebhookError({
-            endpoint: 'POST /api/webhook/jubelio/pesanan',
-            reqId,
-            payload: req.body,
-            error,
-            intuitTid: error.intuit_tid,
-        });
+        // Suppress Telegram alert when error is in the "Jubelio's 3x retry
+        // will most likely fix this" category — race-cond DupName, throttle,
+        // sync-token contention, transient network. Still return 500 so
+        // Jubelio actually retries.
+        if (isLikelyTransientError(error)) {
+            log(`⏸  [ALERT-SUPPRESSED] transient pattern — relying on Jubelio retry. (${error.message.slice(0, 200)})`);
+        } else {
+            alertWebhookError({
+                endpoint: 'POST /api/webhook/jubelio/pesanan',
+                reqId,
+                payload: req.body,
+                error,
+                intuitTid: error.intuit_tid,
+            });
+        }
         // 500 → Jubelio akan retry (up to 3x per docs)
         res.status(500).send(`Error: ${error.message}`);
     }
@@ -1735,13 +1765,17 @@ router.post('/faktur', async (req, res) => {
         res.status(200).json({ ok: true, ...result });
     } catch (error) {
         console.error('❌ /faktur delete error:', error.message);
-        alertWebhookError({
-            endpoint: 'POST /api/webhook/jubelio/faktur',
-            reqId: `faktur_${Date.now().toString(36)}`,
-            payload: { salesorder_no: ref_no, action, invoice_no },
-            error,
-            intuitTid: error.intuit_tid,
-        });
+        if (isLikelyTransientError(error)) {
+            console.log(`⏸  /faktur ALERT-SUPPRESSED (transient — Jubelio will retry): ${error.message.slice(0, 200)}`);
+        } else {
+            alertWebhookError({
+                endpoint: 'POST /api/webhook/jubelio/faktur',
+                reqId: `faktur_${Date.now().toString(36)}`,
+                payload: { salesorder_no: ref_no, action, invoice_no },
+                error,
+                intuitTid: error.intuit_tid,
+            });
+        }
         res.status(500).send(`Error: ${error.message}`);
     }
 });
