@@ -866,15 +866,28 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         }
         // ── End bundle expansion ──
 
+        // Emit at GROSS (qty × sell_price) so QBO shows original price + the
+        // discount as a separate value matching the Jubelio UI's "Diskon" field.
+        // The line-level discount accumulates into the merged DiscountLineDetail
+        // at the end (alongside bundle discount + marketplace fee adjustment) —
+        // QBO Indonesia only accepts ONE DiscountLineDetail per invoice (quirk
+        // #14), so all discount sources must be combined.
+        //
+        // Backward compat: marketplace orders typically have it.disc=0 (only
+        // marketplace fees apply at order level), so gross == jubelioAmount and
+        // behavior is unchanged. INTERNAL/WS orders with item-level discount
+        // (e.g. wholesale 30% off) now surface the discount as a visible line.
+        const grossRaw = qty * price;
+        const grossRounded = Math.round(grossRaw * 100) / 100;
+        const itemDiscount = Math.round((grossRounded - jubelioAmount) * 100) / 100;
+
         // QBO hard-validates Amount == Qty * UnitPrice on each line. We round
         // UnitPrice to 2 decimals, then recompute Amount from the rounded unit
-        // price so the invariant ALWAYS holds. This may sacrifice up to 0.01
-        // per line on non-evenly-divisible cases (e.g. 336100/3) — acceptable
-        // trade-off since QBO would otherwise reject the invoice outright.
-        const effectiveUnitPrice = qty > 0 ? Math.round((jubelioAmount / qty) * 100) / 100 : jubelioAmount;
+        // price so the invariant ALWAYS holds.
+        const effectiveUnitPrice = qty > 0 ? Math.round((grossRounded / qty) * 100) / 100 : grossRounded;
         const amount = Math.round((effectiveUnitPrice * qty) * 100) / 100;
-        if (Math.abs(amount - jubelioAmount) >= 0.01) {
-            console.log(`⚠️ Line amount adjusted ${jubelioAmount} → ${amount} (QBO precision for qty=${qty})`);
+        if (Math.abs(amount - grossRounded) >= 0.01) {
+            console.log(`⚠️ Line amount adjusted ${grossRounded} → ${amount} (QBO precision for qty=${qty})`);
         }
 
         const itemId = await getOrCreateItem(qbo, it, incomeAccountId);
@@ -887,14 +900,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         if (taxCodeId) detail.TaxCodeRef = { value: taxCodeId };
         if (serviceDate) detail.ServiceDate = serviceDate;
 
-        let description = it.description || it.item_name || it.item_code || '';
-        if (discAmt > 0 || discPct > 0) {
-            const parts = [];
-            if (discPct > 0) parts.push(`${discPct}%`);
-            if (discAmt > 0) parts.push(`Rp${discAmt.toLocaleString('id-ID')}`);
-            const original = `@Rp${price.toLocaleString('id-ID')}`;
-            description = `${description} [${original} · disc: ${parts.join(' / ')}]`.trim();
-        }
+        const description = it.description || it.item_name || it.item_code || '';
 
         lines.push({
             Description: description.substring(0, 4000),
@@ -902,6 +908,18 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
             DetailType: 'SalesItemLineDetail',
             SalesItemLineDetail: detail,
         });
+
+        if (itemDiscount > 0.01) {
+            // Capture per-item discount; merged into the single DiscountLineDetail
+            // at the end of buildLines together with bundle disc + mkt-fee adj.
+            const discPctTxt = discPct > 0 ? ` ${discPct}%` : '';
+            bundleNotes.push({
+                sku: it.item_code || it.item_name || '?',
+                discount: itemDiscount,
+                kind: 'item',
+                label: `${it.item_code || it.item_name || '?'} item-disc${discPctTxt}`,
+            });
+        }
     }
 
     // Shipping fee (if any) as extra line. Setting ItemRef = "Shipping Charge"
@@ -960,7 +978,10 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     if (adjustment > 0.01) {
         const fmt = (n) => `Rp ${Number(n).toLocaleString('id-ID')}`;
         const parts = [];
-        for (const bn of bundleNotes) parts.push(`${bn.sku} bundle ${fmt(bn.discount)}`);
+        for (const bn of bundleNotes) {
+            const label = bn.label || `${bn.sku} bundle`;
+            parts.push(`${label} ${fmt(bn.discount)}`);
+        }
         if (hasGrandTotal) {
             if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
             if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
@@ -970,9 +991,13 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
             if (Number(so.discount_marketplace) > 0) parts.push(`discount_marketplace ${fmt(so.discount_marketplace)}`);
             if (Number(so.shipping_cost_discount) > 0) parts.push(`shipping_disc ${fmt(so.shipping_cost_discount)}`);
         }
-        const baseDesc = !hasGrandTotal
-            ? 'Bundle discount'
-            : (bundleNotes.length ? 'Bundle discount + Marketplace fees & adjustments' : 'Marketplace fees & adjustments');
+        const hasItem = bundleNotes.some(b => b.kind === 'item');
+        const hasBundle = bundleNotes.some(b => !b.kind || b.kind === 'bundle');
+        const labelParts = [];
+        if (hasItem) labelParts.push('Item discount');
+        if (hasBundle) labelParts.push('Bundle discount');
+        if (hasGrandTotal) labelParts.push('Marketplace fees & adjustments');
+        const baseDesc = labelParts.length ? labelParts.join(' + ') : 'Discount';
         lines.push({
             Description: `${baseDesc}${parts.length ? ` (${parts.join(' + ')})` : ''}`.substring(0, 4000),
             Amount: adjustment,
@@ -1215,12 +1240,13 @@ const hasPaymentSignal = (so) => {
 };
 
 // Prefix-based bypass: direct-sale channels (La Brisa, Consignment, WhatsApp,
-// Walk-in) have no marketplace escrow flow, may use COD/credit terms, and
-// don't always carry payment_date. Sync immediately regardless of payment_date
-// or status. Marketplace channels (SP Shopee, TP Tokopedia, TT TikTok, SHF
-// Shopify) gate on payment_date. Override via env JUBELIO_BYPASS_STATUS_PREFIXES.
+// Walk-in, Wholesale) have no marketplace escrow flow, may use COD/credit
+// terms, and don't always carry payment_date. Sync immediately regardless of
+// payment_date or status. Marketplace channels (SP Shopee, TP Tokopedia, TT
+// TikTok, SHF Shopify) gate on payment_date. Override via env
+// JUBELIO_BYPASS_STATUS_PREFIXES.
 const BYPASS_STATUS_PREFIXES = new Set(
-    (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'LB,CS,DP,DW')
+    (process.env.JUBELIO_BYPASS_STATUS_PREFIXES || 'LB,CS,DP,DW,WS')
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
 
