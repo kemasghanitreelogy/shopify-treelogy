@@ -1,7 +1,14 @@
-// Redirect 2 bundle invoices (Discovery Pack, Movement & Relief) — replace
-// single "Sales" line with GroupLineDetail + discount line so QBO mirrors the
-// Jubelio bundle structure exactly. Both invoices currently unpaid, so changing
-// total isn't a risk; we discount back to original paid amount anyway.
+// Redirect bundle invoices — replace single "Sales" line with per-component
+// SalesItemLineDetail rows + DiscountLineDetail so QBO mirrors Jubelio bundle
+// structure exactly. Components priced at canonical UnitPrice, discount line
+// brings total back to original paid amount.
+//
+// SAFETY: REFUSE to restructure already-paid invoices. QBO does not auto-restore
+// Payment.Line.Amount when invoice line[] is rewritten through the partial-then-
+// recompute path, so a Line[] swap on a paid invoice can silently strand
+// Invoice.Balance > 0 (quirk #17 — inv 69566 was the casualty on 2026-04-28).
+// Earlier comment "Both invoices currently unpaid" was true for the original 2
+// targets (TP-583686, SP-260425) but became wrong when SHF targets were added.
 //
 // Usage:
 //   node scripts/redirect-bundle-invoices.js            # dry-run
@@ -195,6 +202,16 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
             console.log(`━━━ ${t.salesorder_no} (qbo id=${inv.Id}, doc=${inv.DocNumber}, syncToken=${inv.SyncToken})`);
             console.log(`    Current total=Rp ${(inv.TotalAmt || 0).toLocaleString('id-ID')}, balance=Rp ${(inv.Balance || 0).toLocaleString('id-ID')}`);
+
+            // Precondition guard: refuse paid invoices (quirk #17, see header).
+            const linkedPaymentCount = (inv.LinkedTxn || []).filter(lt => lt.TxnType === 'Payment').length;
+            if (Number(inv.Balance || 0) === 0 && linkedPaymentCount > 0) {
+                console.log(`    ⏭  SKIP: invoice already paid (balance=0, ${linkedPaymentCount} payment linked) — refusing to restructure`);
+                audit({ salesorder_no: t.salesorder_no, qboInvoiceId: inv.Id, status: 'skipped_already_paid', linkedPaymentCount });
+                console.log();
+                continue;
+            }
+
             console.log(`    Existing lines:`);
             for (const l of inv.Line || []) {
                 const detail = l.SalesItemLineDetail || l.GroupLineDetail || l.SubTotalLineDetail || {};

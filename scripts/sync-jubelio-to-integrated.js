@@ -105,16 +105,27 @@ const buildCanonicalMaps = (allItems) => {
 
 // Description+price hint → bundle SKU or canonical SKU. Same heuristic family
 // as scripts/redirect-specific-invoices.js but extended to handle bundle hints.
+//
+// IMPORTANT: regex order matters when a description contains MULTIPLE bundle
+// keywords (e.g. Treelogy product names sometimes mention "Inside Out Movement
+// Relief" as a long marketing phrase). Earlier order put "inside out" before
+// "movement relief", causing inv 69566 to be mis-identified as Inside-Out-Protocol
+// (componentSum 860k) when it was actually The-Movement-&-Relief (componentSum
+// 1.480k). We now (a) check ALL bundle patterns and (b) require a unique match
+// — multi-match returns null so the line is left unresolved for manual review.
 const matchByDescAndPrice = (description, unitPrice) => {
     const d = String(description || '').toLowerCase();
     const p = Number(unitPrice || 0);
-    // Bundle keywords
-    if (/discovery\s*pack/.test(d)) return { sku: 'Discovery-Pack', kind: 'bundle' };
-    if (/inside[-\s]*out/.test(d)) return { sku: 'Inside-Out-Protocol', kind: 'bundle' };
-    if (/movement\s*&?\s*relief/.test(d)) return { sku: 'The-Movement-&-Relief', kind: 'bundle' };
-    if (/ritual\s*set.*180\s*gr|180\s*gr.*ritual/.test(d)) return { sku: 'MRS-004', kind: 'bundle' };
-    if (/ritual\s*set.*90\s*gr|90\s*gr.*ritual/.test(d)) return { sku: 'MRS-003', kind: 'bundle' };
-    if (/ritual\s*set.*45\s*gr|45\s*gr.*ritual|starter/.test(d)) return { sku: 'MRS-002', kind: 'bundle' };
+    // Bundle keywords — collect all matches before deciding
+    const bundleHits = [];
+    if (/discovery\s*pack/.test(d)) bundleHits.push('Discovery-Pack');
+    if (/inside[-\s]*out/.test(d)) bundleHits.push('Inside-Out-Protocol');
+    if (/movement\s*&?\s*relief/.test(d)) bundleHits.push('The-Movement-&-Relief');
+    if (/ritual\s*set.*180\s*gr|180\s*gr.*ritual/.test(d)) bundleHits.push('MRS-004');
+    if (/ritual\s*set.*90\s*gr|90\s*gr.*ritual/.test(d)) bundleHits.push('MRS-003');
+    if (/ritual\s*set.*45\s*gr|45\s*gr.*ritual|starter/.test(d)) bundleHits.push('MRS-002');
+    if (bundleHits.length === 1) return { sku: bundleHits[0], kind: 'bundle' };
+    if (bundleHits.length > 1) return null;  // ambiguous — refuse to guess
     // Single canonicals
     if (/powder|bubuk/.test(d)) {
         if (p >= 850000 || /180\s*gr/.test(d)) return { sku: 'OMP-180-001', kind: 'inventory' };
@@ -331,6 +342,18 @@ const buildNewLines = (oldLines, resolutions, allItemsById, integratedIdsBySku) 
             const inv = body?.Invoice;
             if (!inv) { audit({ sn, error: 'invoice not found' }); continue; }
 
+            // Precondition guard: refuse to restructure Line[] when invoice is already
+            // paid. QBO does not auto-restore Payment.Line.Amount if a subsequent line
+            // edit pushes Invoice.TotalAmt back up, so a mid-restructure interaction
+            // can leave Invoice.Balance stranded > 0 with no money missing — only
+            // linkage broken (quirk #17). Inv 69566 was a victim of this on 2026-04-28.
+            const linkedPaymentCount = (inv.LinkedTxn || []).filter(lt => lt.TxnType === 'Payment').length;
+            if (Number(inv.Balance || 0) === 0 && linkedPaymentCount > 0) {
+                audit({ sn, invoiceId: inv.Id, status: 'skipped_already_paid', linkedPaymentCount, totalAmt: inv.TotalAmt });
+                stats.skippedAlreadyCanonical++;  // reuse counter; surfaced in summary
+                continue;
+            }
+
             const oldLines = inv.Line || [];
             const resolutions = oldLines.map(l => {
                 if (l.DetailType !== 'SalesItemLineDetail') return { skip: true, reason: 'non-product line' };
@@ -382,11 +405,19 @@ const buildNewLines = (oldLines, resolutions, allItemsById, integratedIdsBySku) 
                     body: JSON.stringify({ Id: inv.Id, SyncToken: inv.SyncToken, sparse: true, Line: newLines, TxnTaxDetail: {} }),
                 });
                 const newInv = updated?.Invoice;
-                if (Math.abs(Number(newInv?.TotalAmt || 0) - Number(inv.TotalAmt || 0)) > 1) {
-                    console.warn(`     ⚠️  total drift! before=${inv.TotalAmt} after=${newInv?.TotalAmt}`);
+                const drift = Math.abs(Number(newInv?.TotalAmt || 0) - Number(inv.TotalAmt || 0));
+                if (drift > 1) {
+                    // ANOMALY: invoice total moved during a restructure that should be
+                    // total-preserving. This is the exact failure mode that broke inv
+                    // 69566 (matched wrong bundle, total dropped 1.180k → 860k). Surface
+                    // loudly so the operator stops, instead of silently continuing.
+                    console.error(`     🚨 TOTAL DRIFT! before=Rp ${(inv.TotalAmt || 0).toLocaleString('id-ID')} after=Rp ${(newInv?.TotalAmt || 0).toLocaleString('id-ID')} — invoice ${inv.Id}`);
+                    audit({ sn, invoiceId: inv.Id, status: 'applied_with_drift', beforeTotal: inv.TotalAmt, afterTotal: newInv?.TotalAmt, drift });
+                    stats.errors++;
+                } else {
+                    stats.applied++;
+                    audit({ sn, invoiceId: inv.Id, status: 'applied', newSyncToken: newInv?.SyncToken, newTotal: newInv?.TotalAmt });
                 }
-                stats.applied++;
-                audit({ sn, invoiceId: inv.Id, status: 'applied', newSyncToken: newInv?.SyncToken, newTotal: newInv?.TotalAmt });
                 await sleep(120);
             } catch (e) {
                 console.error(`     💥 update failed: ${e.message.slice(0, 200)}`);
