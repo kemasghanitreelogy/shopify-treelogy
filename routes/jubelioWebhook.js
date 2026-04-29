@@ -269,6 +269,18 @@ const findCustomersByField = (qbo, field, value) => withQboRetry('findCustomers'
     });
 }));
 
+// Fallback for "Duplicate Name Exists" recovery when the QBO error message
+// lacks an Id=... fragment. node-quickbooks' findCustomers wrapper sometimes
+// applies an implicit Active=true filter; this raw SOQL include inactive too,
+// so we can recover Customers that finance has soft-deleted but whose
+// DisplayName still blocks creation per QBO's case-insensitive uniqueness rule.
+const findCustomerByDisplayNameAnyState = async (qbo, displayName) => {
+    const escaped = String(displayName).replace(/'/g, "\\'").substring(0, 100);
+    const q = `SELECT Id, DisplayName, Active FROM Customer WHERE DisplayName = '${escaped}'`;
+    const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+    return body?.QueryResponse?.Customer?.[0] || null;
+};
+
 // Tokopedia (and some other channels) redact customer/shipping names in
 // webhook payloads for privacy — values look like "A*** y***nto". Detect
 // these so we can fetch the unredacted form via Jubelio API directly.
@@ -492,13 +504,29 @@ const getOrCreateCustomer = async (qbo, so) => {
                 payload.ShipAddr = shipAddr;
                 payload.BillAddr = shipAddr; // Jubelio only exposes shipping address — use as billing too.
             }
-            qbo.createCustomer(payload, (errC, bodyC) => {
+            qbo.createCustomer(payload, async (errC, bodyC) => {
                 if (errC) {
                     const detail = extractQboError(errC, bodyC);
                     const dupMatch = /Id=(\d+)/i.exec(detail);
                     if (dupMatch) {
                         console.log(`ℹ️ Customer "${displayName}" sudah ada (id=${dupMatch[1]}) — race-recovered.`);
                         return resolve({ Id: dupMatch[1], DisplayName: displayName });
+                    }
+                    // QBO sometimes returns "Duplicate Name Exists Error - The name
+                    // supplied already exists. : null" without surfacing the conflicting
+                    // Id (esp. when the existing record is Active=false). Run a follow-up
+                    // query that includes inactive customers to recover the id.
+                    if (/Duplicate Name Exists|name supplied already exists/i.test(detail)) {
+                        try {
+                            const found = await findCustomerByDisplayNameAnyState(qbo, displayName);
+                            if (found) {
+                                console.log(`ℹ️ Customer "${displayName}" recovered via fallback lookup (id=${found.Id} active=${found.Active})`);
+                                return resolve({ Id: found.Id, DisplayName: found.DisplayName || displayName });
+                            }
+                        } catch (lookupErr) {
+                            return reject(new Error(`createCustomer: ${detail} (fallback lookup failed: ${lookupErr.message})`));
+                        }
+                        return reject(new Error(`createCustomer: ${detail} (fallback lookup returned 0 — DisplayName likely differs only in case/whitespace from a record QBO considers a duplicate; manual rename in QBO needed)`));
                     }
                     return reject(new Error('createCustomer: ' + detail));
                 }
