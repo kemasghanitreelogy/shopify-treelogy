@@ -5,8 +5,8 @@ const express = require('express');
 const router = express.Router();
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
-const { getQboInstance } = require('../services/qboService');
-const { alertAuditReport, alertResyncResult, alertDailyReconcile } = require('../services/alertService');
+const { getQboInstance, forceRefreshToken } = require('../services/qboService');
+const { alertAuditReport, alertResyncResult, alertDailyReconcile, alertTokenRefreshFailed } = require('../services/alertService');
 const { runDailyReconcile, yesterdayWib } = require('../services/dailyReconcile');
 const { runItemMigration, runStripTreelogyMigration, runSkuBackfillMigration } = require('../services/itemMigration');
 const { runOrphanPaymentRecovery } = require('../services/paymentRecovery');
@@ -62,6 +62,32 @@ const getInvoice = (qbo, id) => new Promise((resolve) => {
 });
 const updateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
     qbo.updateInvoice(payload, (err, body) => err ? reject(err) : resolve(body));
+});
+
+// GET/POST /api/admin/qbo-token-refresh
+//   Pre-emptive token refresh — invoked by Vercel Cron every 30 minutes so the
+//   access_token is always fresh when webhook bursts arrive. Eliminates the
+//   race condition in getQboInstance where concurrent webhooks all attempt to
+//   refresh a just-expired access_token, causing one to win + the rest to
+//   throw "Refresh token invalid" because Intuit rotates refresh_token on each
+//   successful refresh.
+router.all('/qbo-token-refresh', requireAdmin, async (req, res) => {
+    const t0 = Date.now();
+    try {
+        const result = await forceRefreshToken();
+        const beforeIso = result.before.tokenCreatedAt
+            ? new Date(Number(result.before.tokenCreatedAt)).toISOString()
+            : 'n/a';
+        const afterIso = result.after.tokenCreatedAt
+            ? new Date(Number(result.after.tokenCreatedAt)).toISOString()
+            : 'n/a';
+        console.log(`✅ Pre-emptive QBO refresh OK realm=${result.realmId} before=${beforeIso} after=${afterIso} rotated=${result.rotated} duration=${Date.now() - t0}ms`);
+        return res.json({ ok: true, durationMs: Date.now() - t0, ...result });
+    } catch (error) {
+        console.error('❌ Pre-emptive QBO refresh FAILED:', error.message);
+        alertTokenRefreshFailed({ error, source: 'cron /api/admin/qbo-token-refresh' });
+        return res.status(500).json({ ok: false, error: error.message });
+    }
 });
 
 // GET/POST /api/admin/audit-txndate?days=14&fix=1&all=1&notify=1

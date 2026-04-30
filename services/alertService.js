@@ -139,6 +139,26 @@ const alertAuthRejected = ({ endpoint, ip, reason }) => {
     fireAndForget(sendRaw(lines.join('\n')));
 };
 
+const alertTokenRefreshFailed = ({ error, source }) => {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const stack = shortStack(error);
+    const lines = [
+        '🚨 <b>QBO Token Refresh FAILED</b>',
+        '',
+        `<b>Source:</b> ${escapeHtml(source || 'unknown')}`,
+        '',
+        '<b>━━━ Error ━━━</b>',
+        `<pre>${escapeHtml(errMsg.slice(0, 600))}</pre>`,
+        stack ? '<b>━━━ Stack ━━━</b>' : null,
+        stack ? `<pre>${escapeHtml(stack)}</pre>` : null,
+        '',
+        `🕐 <b>Time:</b> ${escapeHtml(fmtWib())} WIB`,
+        '',
+        '<i>⚠️ Webhook akan mulai gagal — login ulang via /api/auth/login</i>',
+    ].filter(l => l !== null);
+    fireAndForget(sendRaw(lines.join('\n')));
+};
+
 // Awaited version — used by a debug endpoint that wants to report back success.
 const sendTestAlert = async () => {
     if (!isConfigured()) {
@@ -380,5 +400,6 @@ module.exports = {
     alertAuditReport,
     alertResyncResult,
     alertDailyReconcile,
+    alertTokenRefreshFailed,
     sendTestAlert,
 };
