@@ -318,14 +318,14 @@ const fetchUnredactedSo = async (salesorderId) => {
 // Strip channel prefix from customer DisplayName so dedup catches both
 // "TP - Adha Yuwanto" and "Adha Yuwanto" as the same person.
 const stripCustomerChannelPrefix = (name) =>
-    String(name || '').replace(/^\s*(SP|TP|TT|SHF|LB|CS|DP|DW|WX|WA|D)\s*-\s*/i, '').trim();
+    String(name || '').replace(/^\s*(SP|TP|TT|SHF|LB|CS|DP|DW|WS|WX|WA|D)\s*-\s*/i, '').trim();
 
 // Channel prefix codes derived from salesorder_no. Used to auto-prefix new
 // customer DisplayNames so the QBO customer list always shows the channel
 // origin (matches the existing Treelogy convention "TP - Adha Yuwanto").
 //   SP=Shopee · TP/TT=Tokopedia · SHF=Shopify · LB=La Brisa · CS=Consignment
-//   DP=WhatsApp/direct · DW=Walk-in
-const KNOWN_CHANNEL_PREFIXES = new Set(['SP', 'TP', 'TT', 'SHF', 'LB', 'CS', 'DP', 'DW']);
+//   DP=WhatsApp/direct · DW=Walk-in · WS=Wholesale
+const KNOWN_CHANNEL_PREFIXES = new Set(['SP', 'TP', 'TT', 'SHF', 'LB', 'CS', 'DP', 'DW', 'WS']);
 const PREFIX_CANONICAL = { TT: 'TP' }; // TT is a Tokopedia variant — canonical TP
 const HAS_CHANNEL_PREFIX_RE = /^\s*[A-Z]{2,5}\s*-/;
 const channelPrefixOf = (so) => {
