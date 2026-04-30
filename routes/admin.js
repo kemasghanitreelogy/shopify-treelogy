@@ -65,12 +65,10 @@ const updateInvoice = (qbo, payload) => new Promise((resolve, reject) => {
 });
 
 // GET/POST /api/admin/qbo-token-refresh
-//   Pre-emptive token refresh — invoked by Vercel Cron every 30 minutes so the
-//   access_token is always fresh when webhook bursts arrive. Eliminates the
-//   race condition in getQboInstance where concurrent webhooks all attempt to
-//   refresh a just-expired access_token, causing one to win + the rest to
-//   throw "Refresh token invalid" because Intuit rotates refresh_token on each
-//   successful refresh.
+//   Safety-net token refresh — invoked by Vercel Cron every 6h. Race-condition
+//   prevention now lives in qboService.refreshTokenSafely (DB-backed lock + CAS
+//   write); this cron exists as a health check + insurance against bugs in the
+//   on-demand refresh path. If it fails, alertTokenRefreshFailed pages ops.
 router.all('/qbo-token-refresh', requireAdmin, async (req, res) => {
     const t0 = Date.now();
     try {
