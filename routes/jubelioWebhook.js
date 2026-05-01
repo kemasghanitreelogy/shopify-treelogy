@@ -1177,6 +1177,12 @@ const isLikelyTransientError = (err) => {
     if (!err) return false;
     const msg = String(err.message || err);
     if (/Duplicate Name Exists|name supplied already exists/i.test(msg)) return true;
+    // Duplicate DocNumber (QBO 6140) is now self-healed in upsertQboInvoice
+    // (recover by DocNumber + rebuild mapping). If the recovery query itself
+    // fails on a transient blip, suppress the alert and rely on Jubelio's
+    // retry — the next attempt will hit the self-heal path again and most
+    // likely succeed.
+    if (/Duplicate Document Number|specify a different number|\b6140\b/i.test(msg)) return true;
     if (/SyncToken|stale\s+(?:invoice|object)/i.test(msg)) return true;
     if (/ThrottleExceeded|statusCode=429|errorCode=003001|"code":"?3001|"code":"?3002/i.test(msg)) return true;
     if (/statusCode=5\d\d|HTTP 5\d\d|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg)) return true;
@@ -1230,6 +1236,28 @@ const qboCreatePayment = (qbo, payload) => withQboRetry('createPayment', () => n
 const qboFindPayments = (qbo, criteria) => withQboRetry('findPayments', () => new Promise((resolve, reject) => {
     qbo.findPayments(criteria, (err, body) => err ? reject(new Error('findPayments: ' + extractQboError(err, body))) : resolve(body?.QueryResponse?.Payment || []));
 }));
+
+// QBO error 6140 — DocNumber uniqueness collision. Surfaces when a prior
+// webhook successfully posted the invoice but the JubelioOrderMap write
+// after it never landed (Lambda timeout mid-handler, transient Mongo
+// failure, etc). On the next Jubelio retry our code thinks no mapping
+// exists and tries to create again, hitting this error.
+const isDuplicateDocNumberError = (err) => {
+    const msg = String(err?.message || err || '');
+    return /Duplicate Document Number|specify a different number|\b6140\b/i.test(msg);
+};
+
+// Recover an existing QBO Invoice by its DocNumber. Used by the create-path
+// self-heal: salesorder_no is globally unique in Jubelio so DocNumber → at
+// most one Invoice in QBO. Returns null if QBO has no match (caller must
+// surface the original create error).
+const qboFindInvoiceByDocNumber = async (qbo, docNumber) => {
+    if (!docNumber) return null;
+    const escaped = String(docNumber).replace(/'/g, "\\'").substring(0, 21);
+    const q = `SELECT * FROM Invoice WHERE DocNumber = '${escaped}'`;
+    const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+    return body?.QueryResponse?.Invoice?.[0] || null;
+};
 
 // Retry on QBO "stale SyncToken" when two webhooks for the same SO race.
 const STALE_TOKEN_RE = /stale|synctoken|object version|out[- ]of[- ]date/i;
@@ -1557,21 +1585,45 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     }
 
     console.log(`🆕 Create QBO Invoice untuk SO ${so.salesorder_no}`);
-    const created = await writeWithTaxFallback((p) => qboCreateInvoice(qbo, p));
-    await JubelioOrderMap.create({
-        salesorder_id: so.salesorder_id,
-        salesorder_no: so.salesorder_no,
-        qbo_realm_id: realmId,
-        qbo_invoice_id: String(created.Id),
-        qbo_doc_number: created.DocNumber,
-        last_status: so.status,
-        last_grand_total: so.grand_total,
-        last_synced_at: new Date(),
-        last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
-        last_payment_date_raw: so.payment_date ? String(so.payment_date) : null,
-        last_txn_date: txnDate || null,
-    });
-    return { action: 'created', invoice: created, customerId };
+    let created;
+    let action = 'created';
+    try {
+        created = await writeWithTaxFallback((p) => qboCreateInvoice(qbo, p));
+    } catch (createErr) {
+        if (!isDuplicateDocNumberError(createErr)) throw createErr;
+        // Self-heal lost mapping: a prior webhook succeeded posting the
+        // Invoice to QBO but the JubelioOrderMap write after it never landed
+        // (verified pattern: Lambda timeout / Mongo transient blip mid-handler).
+        // Recover the existing invoice by DocNumber so this retry rebuilds
+        // the missing mapping instead of double-creating.
+        console.warn(`⚠️ Duplicate DocNumber on create for SO ${so.salesorder_no} (docNo=${docNumber}) — attempting self-heal lookup`);
+        const recovered = await qboFindInvoiceByDocNumber(qbo, docNumber);
+        if (!recovered) {
+            throw new Error(`createInvoice duplicate DocNumber ${docNumber} but recovery query returned 0 (manual investigation needed): ${createErr.message}`);
+        }
+        console.log(`🩹 Self-heal recovered QBO Invoice ${recovered.Id} (docNo=${recovered.DocNumber}) for SO ${so.salesorder_no} — rebuilding mapping`);
+        created = recovered;
+        action = 'recovered';
+    }
+    // Upsert (not create) so a concurrent webhook that already inserted the
+    // mapping doesn't trip the unique index — also makes the recovery path
+    // safe under retries.
+    await JubelioOrderMap.findOneAndUpdate(
+        { salesorder_id: so.salesorder_id, qbo_realm_id: realmId },
+        {
+            salesorder_no: so.salesorder_no,
+            qbo_invoice_id: String(created.Id),
+            qbo_doc_number: created.DocNumber,
+            last_status: so.status,
+            last_grand_total: so.grand_total,
+            last_synced_at: new Date(),
+            last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
+            last_payment_date_raw: so.payment_date ? String(so.payment_date) : null,
+            last_txn_date: txnDate || null,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    return { action, invoice: created, customerId };
 };
 
 // Shared helper: void a QBO invoice by Jubelio SO identifier. Idempotent.
