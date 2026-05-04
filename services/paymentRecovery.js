@@ -51,17 +51,27 @@ const qboFetch = async (qbo, path, opts = {}) => {
 const findOrphanPayments = async (qbo) => {
     const out = [];
     const PAGE = 200;
+    let totalScanned = 0;
+    let lastBatchSize = 0;
     for (let startPosition = 1; startPosition < 5000; startPosition += PAGE) {
         const q = `SELECT * FROM Payment STARTPOSITION ${startPosition} MAXRESULTS ${PAGE}`;
         const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
         const payments = body?.QueryResponse?.Payment || [];
+        lastBatchSize = payments.length;
         if (payments.length === 0) break;
+        totalScanned += payments.length;
         for (const p of payments) {
             const linkedAny = (p.Line || []).some(l => (l.LinkedTxn || []).length > 0);
             const isOrphan = !linkedAny || Number(p.UnappliedAmt || 0) > 0;
             if (isOrphan) out.push(p);
         }
         if (payments.length < PAGE) break;
+    }
+    // Cap-hit warning: if loop terminated at the 5000-row cap with a full last
+    // batch, there are likely more Payments we never scanned. Surface this so
+    // we can add a date filter or raise the cap before drift becomes silent.
+    if (totalScanned >= 4500 && lastBatchSize === PAGE) {
+        console.warn(`⚠️  HIGH-WATER: paymentRecovery.findOrphanPayments scanned ${totalScanned}/5000 with full last batch — additional Payments may exist beyond the cap. Consider adding a date filter or raising MAX cap.`);
     }
     return out;
 };
