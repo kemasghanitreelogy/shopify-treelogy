@@ -14,6 +14,10 @@ const JubelioOrderMapSchema = new mongoose.Schema({
     last_transaction_date_raw: String,   // raw value from Jubelio webhook
     last_payment_date_raw: String,        // raw payment_date — TxnDate source of truth
     last_txn_date: String,                // YYYY-MM-DD computed (UTC+8 Jubelio TZ)
+    // True when the SO carried a #UNPAID marker in `note` and the webhook
+    // skipped auto-payment creation. Finance records the QBO Payment manually
+    // when the customer actually pays. Audit-only flag.
+    manual_payment: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Compound unique so sandbox & production mappings can coexist for the same SO.

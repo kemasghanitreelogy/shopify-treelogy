@@ -1358,6 +1358,16 @@ const hasPaymentSignal = (so) => {
     return PAID_STATUSES.has(st);
 };
 
+// Treelogy ops convention (2026-05-05): when an order is shipped/recorded
+// before the customer has actually paid, the operator types `#UNPAID`
+// anywhere in the Jubelio "Keterangan" (note) field. Jubelio still requires
+// the "Sudah Lunas" toggle ON to save the order, so this marker is the only
+// reliable signal that the order is actually unpaid. When detected, the
+// webhook creates the QBO Invoice as usual but skips Payment creation —
+// finance records the Payment manually in QBO when the customer eventually
+// pays. Volume is low (<10/month); no automatic clearing of the marker.
+const hasUnpaidMarker = (so) => /#unpaid\b/i.test(String(so?.note || ''));
+
 // Per-channel sync gate: ALL channels (marketplace + direct-sale) follow the
 // same rule — wait for buyer-paid signal (payment_date set OR status
 // PAID/COMPLETED) before syncing to QBO. Policy decision 2026-04-29: invoice
@@ -1620,6 +1630,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
                 last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
                 last_payment_date_raw: so.payment_date ? String(so.payment_date) : null,
                 last_txn_date: txnDate || null,
+                manual_payment: hasUnpaidMarker(so),
             }
         );
         return { action: 'updated', invoice: updated, customerId };
@@ -1661,6 +1672,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
             last_transaction_date_raw: so.transaction_date ? String(so.transaction_date) : null,
             last_payment_date_raw: so.payment_date ? String(so.payment_date) : null,
             last_txn_date: txnDate || null,
+            manual_payment: hasUnpaidMarker(so),
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
@@ -1773,8 +1785,11 @@ router.post('/pesanan', async (req, res) => {
         // Skipped upserts mean SO is unchanged from last sync — payment side is
         // already reconciled from the earlier webhook, no need to re-run.
         let payment = null;
+        const unpaidMarker = hasUnpaidMarker(so);
         if (upserted.action === 'skipped') {
             log(`💰 [7/8] Upsert skipped (idempotent) — skip payment too.`);
+        } else if (unpaidMarker) {
+            log(`💰 [7/8] #UNPAID marker present in note — skip auto-payment (finance will record Payment manually in QBO when customer pays).`);
         } else if (PAID_STATUSES.has(statusUpper)) {
             log(`💰 [7/8] Status ${statusUpper} — marking Invoice as PAID…`);
             payment = await markQboInvoicePaid(qbo, upserted.invoice, upserted.customerId, so);
@@ -1893,3 +1908,4 @@ module.exports.upsertQboInvoice = upsertQboInvoice;
 module.exports.markQboInvoicePaid = markQboInvoicePaid;
 module.exports.voidMappedInvoice = voidMappedInvoice;
 module.exports.hasPaymentSignal = hasPaymentSignal;
+module.exports.hasUnpaidMarker = hasUnpaidMarker;
