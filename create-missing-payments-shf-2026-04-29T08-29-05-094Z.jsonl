@@ -1,0 +1,14 @@
+{"ts":"2026-04-29T08:29:07.689Z","sn":"SHF-7505-128887","qbo_invoice_id":"71072","salesorder_id":1150,"action":"plan","dryRun":false,"balance":590000,"txn_date_src":"transaction_date"}
+{"ts":"2026-04-29T08:29:09.637Z","sn":"SHF-7505-128887","qbo_invoice_id":"71072","salesorder_id":1150,"status":"applied","payment_id":"71113","payment_amount":590000,"payment_txn_date":"2026-04-29"}
+{"ts":"2026-04-29T08:29:10.509Z","sn":"SHF-7504-128887","qbo_invoice_id":"71083","salesorder_id":1142,"action":"plan","dryRun":false,"balance":415000,"txn_date_src":"transaction_date"}
+{"ts":"2026-04-29T08:29:11.705Z","sn":"SHF-7504-128887","qbo_invoice_id":"71083","salesorder_id":1142,"status":"applied","payment_id":"71114","payment_amount":415000,"payment_txn_date":"2026-04-29"}
+{"ts":"2026-04-29T08:29:12.345Z","sn":"SHF-7503-128887","qbo_invoice_id":"71090","salesorder_id":1137,"action":"plan","dryRun":false,"balance":980000,"txn_date_src":"transaction_date"}
+{"ts":"2026-04-29T08:29:13.681Z","sn":"SHF-7503-128887","qbo_invoice_id":"71090","salesorder_id":1137,"status":"applied","payment_id":"71115","payment_amount":980000,"payment_txn_date":"2026-04-29"}
+{"ts":"2026-04-29T08:29:14.347Z","sn":"SHF-7502-128887","qbo_invoice_id":"71091","salesorder_id":1136,"action":"plan","dryRun":false,"balance":1180000,"txn_date_src":"transaction_date"}
+{"ts":"2026-04-29T08:29:15.564Z","sn":"SHF-7502-128887","qbo_invoice_id":"71091","salesorder_id":1136,"status":"applied","payment_id":"71116","payment_amount":1180000,"payment_txn_date":"2026-04-29"}
+{"ts":"2026-04-29T08:29:16.808Z","sn":"SHF-7501-128887","qbo_invoice_id":"71092","salesorder_id":1133,"action":"plan","dryRun":false,"balance":690000,"txn_date_src":"transaction_date"}
+{"ts":"2026-04-29T08:29:17.933Z","sn":"SHF-7501-128887","qbo_invoice_id":"71092","salesorder_id":1133,"status":"applied","payment_id":"71117","payment_amount":690000,"payment_txn_date":"2026-04-29"}
+{"ts":"2026-04-29T08:29:18.550Z","sn":"SHF-7500-128887","qbo_invoice_id":"71099","salesorder_id":1126,"action":"plan","dryRun":false,"balance":390000,"txn_date_src":"transaction_date"}
+{"ts":"2026-04-29T08:29:19.702Z","sn":"SHF-7500-128887","qbo_invoice_id":"71099","salesorder_id":1126,"status":"applied","payment_id":"71118","payment_amount":390000,"payment_txn_date":"2026-04-29"}
+{"ts":"2026-04-29T08:29:20.413Z","sn":"SHF-7499-128887","qbo_invoice_id":"71112","salesorder_id":1117,"action":"plan","dryRun":false,"balance":415000,"txn_date_src":"transaction_date"}
+{"ts":"2026-04-29T08:29:21.577Z","sn":"SHF-7499-128887","qbo_invoice_id":"71112","salesorder_id":1117,"status":"applied","payment_id":"71119","payment_amount":415000,"payment_txn_date":"2026-04-29"}

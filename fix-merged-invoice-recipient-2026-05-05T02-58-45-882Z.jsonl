@@ -1,0 +1,5 @@
+{"ts":"2026-05-05T02:58:50.082Z","so":"TP-583774525508847513-128884","mode":"APPLY","phase":"plan","invoice_id":"71233","invoice_doc":"TP-583774525508847513","old_customer":{"id":"14641","name":"TP - S***stri W***yanti"},"new_customer":{"id":"14921","name":"TP - R*** (Kab. Sidoarjo)","action":"reuse"},"payments":[{"id":"71721","amount":690000,"current_customer":"14641"}],"recipient":{"name":"R***","phone":"(+62)815*****66","city":"Kab. Sidoarjo","contact_id":1046},"steps":[{"ev":"reuse_disambig_phone_match","customerId":"14921","displayName":"TP - R*** (Kab. Sidoarjo)"}]}
+{"ts":"2026-05-05T02:58:50.878Z","so":"TP-583774525508847513-128884","ev":"payment_unlinked","paymentId":"71721"}
+{"ts":"2026-05-05T02:58:52.075Z","so":"TP-583774525508847513-128884","ev":"invoice_rewired","invoiceId":"71233","newCustomerId":"14921","syncToken_after":"10"}
+{"ts":"2026-05-05T02:58:52.750Z","so":"TP-583774525508847513-128884","ev":"payment_rewired_relinked","paymentId":"71721","newCustomerId":"14921","syncToken_after":"6"}
+{"ts":"2026-05-05T02:58:53.260Z","so":"TP-583774525508847513-128884","ev":"verified","invoice_customer":"14921","balance":690000}

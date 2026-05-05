@@ -1,0 +1,46 @@
+{"ts":"2026-04-28T05:31:56.952Z","salesorder_no":"TP-583677760920585566-128884","invoiceId":"69870","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=389900","dryRun":false}
+{"ts":"2026-04-28T05:32:21.407Z","salesorder_no":"TP-583677760920585566-128884","invoiceId":"69870","status":"applied"}
+{"ts":"2026-04-28T05:32:22.051Z","salesorder_no":"TP-583682244870308895-128884","invoiceId":"69874","lineId":"1","fromItemId":"1","toItemId":"20","reason":"desc match: Capsule 180 (OMC-180-001) · unitPrice=690000","dryRun":false}
+{"ts":"2026-04-28T05:32:22.051Z","salesorder_no":"TP-583682244870308895-128884","invoiceId":"69874","lineId":"2","fromItemId":"42","toItemId":"20","reason":"Service id=42 mapping","dryRun":false}
+{"ts":"2026-04-28T05:32:23.138Z","salesorder_no":"TP-583682244870308895-128884","invoiceId":"69874","status":"applied"}
+{"ts":"2026-04-28T05:32:26.473Z","salesorder_no":"TP-583683593446000612-128884","invoiceId":"69878","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=389900","dryRun":false}
+{"ts":"2026-04-28T05:32:28.056Z","salesorder_no":"TP-583683593446000612-128884","invoiceId":"69878","status":"applied"}
+{"ts":"2026-04-28T05:32:28.964Z","salesorder_no":"TP-583684722538743518-128884","invoiceId":"69871","lineId":"1","fromItemId":"1","toItemId":"20","reason":"desc match: Capsule 180 (OMC-180-001) · unitPrice=690000","dryRun":false}
+{"ts":"2026-04-28T05:32:29.801Z","salesorder_no":"TP-583684722538743518-128884","invoiceId":"69871","status":"applied"}
+{"ts":"2026-04-28T05:32:33.763Z","salesorder_no":"TP-583685091417425706-128884","invoiceId":"69881","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=389900","dryRun":false}
+{"ts":"2026-04-28T05:32:34.792Z","salesorder_no":"TP-583685091417425706-128884","invoiceId":"69881","status":"applied"}
+{"ts":"2026-04-28T05:32:35.436Z","salesorder_no":"TP-583686031763277753-128884","invoiceId":"69879","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=389900","dryRun":false}
+{"ts":"2026-04-28T05:32:35.437Z","salesorder_no":"TP-583686031763277753-128884","invoiceId":"69879","lineId":"2","fromItemId":"1","toItemId":"15","reason":"desc match: Oil 30ml (OMO-30-001) · unitPrice=470000","dryRun":false}
+{"ts":"2026-04-28T05:32:36.654Z","salesorder_no":"TP-583686031763277753-128884","invoiceId":"69879","status":"applied"}
+{"ts":"2026-04-28T05:32:37.332Z","salesorder_no":"TP-583687573187036687-128884","invoiceId":"69875","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:32:38.298Z","salesorder_no":"TP-583687573187036687-128884","invoiceId":"69875","status":"applied"}
+{"ts":"2026-04-28T05:32:38.936Z","salesorder_no":"TP-583692778014017032-128884","invoiceId":"69968","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=389900","dryRun":false}
+{"ts":"2026-04-28T05:32:40.034Z","salesorder_no":"TP-583692778014017032-128884","invoiceId":"69968","status":"applied"}
+{"ts":"2026-04-28T05:32:40.869Z","salesorder_no":"TP-583693188804282204-128884","invoiceId":"69958","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=389900","dryRun":false}
+{"ts":"2026-04-28T05:32:42.017Z","salesorder_no":"TP-583693188804282204-128884","invoiceId":"69958","status":"applied"}
+{"ts":"2026-04-28T05:32:42.723Z","salesorder_no":"TP-583700131971695830-128884","invoiceId":"69967","lineId":"1","fromItemId":"1","toItemId":"15","reason":"desc match: Oil 30ml (OMO-30-001) · unitPrice=470000","dryRun":false}
+{"ts":"2026-04-28T05:32:43.614Z","salesorder_no":"TP-583700131971695830-128884","invoiceId":"69967","status":"applied"}
+{"ts":"2026-04-28T05:32:44.314Z","salesorder_no":"TP-583704358844466787-128884","invoiceId":"69957","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=389900","dryRun":false}
+{"ts":"2026-04-28T05:32:45.360Z","salesorder_no":"TP-583704358844466787-128884","invoiceId":"69957","status":"applied"}
+{"ts":"2026-04-28T05:32:46.094Z","salesorder_no":"TP-583710156336695156-128884","invoiceId":"70180","lineId":"1","fromItemId":"1","toItemId":"20","reason":"desc match: Capsule 180 (OMC-180-001) · unitPrice=690000","dryRun":false}
+{"ts":"2026-04-28T05:32:47.176Z","salesorder_no":"TP-583710156336695156-128884","invoiceId":"70180","status":"applied"}
+{"ts":"2026-04-28T05:32:48.062Z","salesorder_no":"SP-260424KBJ3UCD0","invoiceId":"69841","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:23.107Z","salesorder_no":"SP-260424KBJ3UCD0","invoiceId":"69841","status":"applied"}
+{"ts":"2026-04-28T05:33:23.799Z","salesorder_no":"SP-260424MGHXN0CV","invoiceId":"69676","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:25.221Z","salesorder_no":"SP-260424MGHXN0CV","invoiceId":"69676","status":"applied"}
+{"ts":"2026-04-28T05:33:25.952Z","salesorder_no":"SP-260424MRN2W13G","invoiceId":"69675","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:27.314Z","salesorder_no":"SP-260424MRN2W13G","invoiceId":"69675","status":"applied"}
+{"ts":"2026-04-28T05:33:28.075Z","salesorder_no":"SP-260425NXSA49EX","invoiceId":"69844","lineId":"1","fromItemId":"1","toItemId":"20","reason":"desc match: Capsule 180 (OMC-180-001) · unitPrice=690000","dryRun":false}
+{"ts":"2026-04-28T05:33:28.941Z","salesorder_no":"SP-260425NXSA49EX","invoiceId":"69844","status":"applied"}
+{"ts":"2026-04-28T05:33:29.621Z","salesorder_no":"SP-260425PRKB480U","invoiceId":"69839","lineId":"1","fromItemId":"1","toItemId":"22","reason":"desc match: Powder 45gr (default) (OMP-45-001) · unitPrice=320000","dryRun":false}
+{"ts":"2026-04-28T05:33:30.559Z","salesorder_no":"SP-260425PRKB480U","invoiceId":"69839","status":"applied"}
+{"ts":"2026-04-28T05:33:31.250Z","salesorder_no":"SP-260425Q100HA8P","invoiceId":"69861","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:32.562Z","salesorder_no":"SP-260425Q100HA8P","invoiceId":"69861","status":"applied"}
+{"ts":"2026-04-28T05:33:33.320Z","salesorder_no":"SP-260425QA2RH9VP","invoiceId":"70076","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:34.544Z","salesorder_no":"SP-260425QA2RH9VP","invoiceId":"70076","status":"applied"}
+{"ts":"2026-04-28T05:33:35.254Z","salesorder_no":"SP-260425QAPMK8W9","invoiceId":"70087","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:36.585Z","salesorder_no":"SP-260425QAPMK8W9","invoiceId":"70087","status":"applied"}
+{"ts":"2026-04-28T05:33:37.370Z","salesorder_no":"SP-260425QTTRCK11","invoiceId":"70096","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:38.515Z","salesorder_no":"SP-260425QTTRCK11","invoiceId":"70096","status":"applied"}
+{"ts":"2026-04-28T05:33:39.151Z","salesorder_no":"SP-260427V5GYE2JR","invoiceId":"70073","lineId":"1","fromItemId":"1","toItemId":"18","reason":"desc match: Capsule 90 (OMC-90-001) · unitPrice=390000","dryRun":false}
+{"ts":"2026-04-28T05:33:40.225Z","salesorder_no":"SP-260427V5GYE2JR","invoiceId":"70073","status":"applied"}

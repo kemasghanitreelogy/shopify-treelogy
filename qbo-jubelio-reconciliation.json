@@ -1,0 +1,1458 @@
+{
+  "generatedAt": "2026-04-28T03:03:14.378Z",
+  "summary": {
+    "jubelio": {
+      "totalVariants": 13,
+      "activeVariants": 10,
+      "archivedVariants": 3,
+      "actions": {
+        "OK_AS_IS": 2,
+        "PATCH_QBO_ITEM": 1,
+        "CONSOLIDATE_DUPLICATES": 2,
+        "CREATE_QBO_ITEM": 8
+      }
+    },
+    "qbo": {
+      "total": 51,
+      "matched": 7,
+      "orphans": 44,
+      "actions": {
+        "KEEP_LEGACY": 14,
+        "MATCHED": 7,
+        "INACTIVATE_OR_KEEP": 12,
+        "INACTIVATE_COPY": 1,
+        "INACTIVATE_GENERIC": 1,
+        "REVIEW_MANUAL": 5,
+        "KEEP_HELPER": 1,
+        "REVIEW_SHOPIFY": 10
+      }
+    }
+  },
+  "jubelioReport": [
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 50,
+        "item_id": 85,
+        "item_code": "OMP-180-001",
+        "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "stripped_name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "variation_label": "Net Weight=180 gram",
+        "sell_price": 990000,
+        "end_qty": 50,
+        "available_qty": 49,
+        "stores": [
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Tokopedia - Tokopedia",
+          "Shopify - Shopify",
+          "Shopee - Shopee"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (Net Weight=180 gram)\", Sku=\"OMP-180-001\"."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 50,
+        "item_id": 83,
+        "item_code": "OMP-45-001",
+        "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "stripped_name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "variation_label": "Net Weight=45 gram",
+        "sell_price": 320000,
+        "end_qty": 288,
+        "available_qty": 285,
+        "stores": [
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Tokopedia - Tokopedia",
+          "Shopify - Shopify",
+          "Shopee - Shopee"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": {
+        "id": "53",
+        "name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (OMP-45-001)",
+        "fullyQualifiedName": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (OMP-45-001)",
+        "type": "Service",
+        "sku": "OMP-45-001",
+        "active": true,
+        "createTime": "2026-04-27T02:26:06-07:00",
+        "lastUpdated": "2026-04-27T02:26:06-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "high",
+        "reason": "Service+Sku, created 2026-04-27 (after first Jubelio webhook)"
+      },
+      "qboExtras": [
+        {
+          "id": "44",
+          "name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "fullyQualifiedName": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "type": "Service",
+          "sku": "OMP-45-001",
+          "active": true,
+          "createTime": "2026-04-23T02:38:46-07:00",
+          "lastUpdated": "2026-04-26T20:45:36-07:00",
+          "incomeAccount": "Channel sales",
+          "bucket": "JUBELIO_INTEGRATION",
+          "confidence": "medium",
+          "reason": "Service+Sku — likely from integration or SKU-backfilled"
+        }
+      ],
+      "matchedBySku": 2,
+      "matchedByName": 0,
+      "action": "CONSOLIDATE_DUPLICATES",
+      "recommendation": "KEEP id=53 (Service, sku=OMP-45-001); redirect invoice lines lalu INACTIVATE id=44 (sku=OMP-45-001, Service)."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 50,
+        "item_id": 84,
+        "item_code": "OMP-90-001",
+        "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "stripped_name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "variation_label": "Net Weight=90 gram",
+        "sell_price": 540000,
+        "end_qty": 245,
+        "available_qty": 242,
+        "stores": [
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Tokopedia - Tokopedia",
+          "Shopify - Shopify",
+          "Shopee - Shopee"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (Net Weight=90 gram)\", Sku=\"OMP-90-001\"."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 48,
+        "item_id": 80,
+        "item_code": "OMC-180-001",
+        "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "stripped_name": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "variation_label": "Ukuran=180 Caps",
+        "sell_price": 690000,
+        "end_qty": 417,
+        "available_qty": 386,
+        "stores": [
+          "Tokopedia - Tokopedia",
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Shopee - Shopee",
+          "Shopee - Shopee",
+          "Shopify - Shopify"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": {
+        "id": "42",
+        "name": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "fullyQualifiedName": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "type": "Service",
+        "sku": "OMC-180-001",
+        "active": true,
+        "createTime": "2026-04-22T22:25:38-07:00",
+        "lastUpdated": "2026-04-26T20:21:07-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "medium",
+        "reason": "Service+Sku — likely from integration or SKU-backfilled"
+      },
+      "qboExtras": [],
+      "matchedBySku": 1,
+      "matchedByName": 0,
+      "action": "OK_AS_IS",
+      "recommendation": "Sudah benar — id 42 Sku=OMC-180-001 Type=Service."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 48,
+        "item_id": 79,
+        "item_code": "OMC-90-001",
+        "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "stripped_name": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "variation_label": "Ukuran=90 Caps",
+        "sell_price": 390000,
+        "end_qty": 539,
+        "available_qty": 480,
+        "stores": [
+          "Tokopedia - Tokopedia",
+          "Shopee - Shopee",
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Shopify - Shopify"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium (Ukuran=90 Caps)\", Sku=\"OMC-90-001\"."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 49,
+        "item_id": 81,
+        "item_code": "OMO-30-001",
+        "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "stripped_name": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "variation_label": "Net Volume=30 ml",
+        "sell_price": 470000,
+        "end_qty": 263,
+        "available_qty": 251,
+        "stores": [
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Tokopedia - Tokopedia",
+          "Shopee - Shopee",
+          "Shopify - Shopify"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium (Net Volume=30 ml)\", Sku=\"OMO-30-001\"."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 49,
+        "item_id": 82,
+        "item_code": "OMO-60-001",
+        "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "stripped_name": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "variation_label": "Net Volume=60 ml",
+        "sell_price": 790000,
+        "end_qty": 92,
+        "available_qty": 88,
+        "stores": [
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Tokopedia - Tokopedia",
+          "Shopee - Shopee",
+          "Shopify - Shopify"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": {
+        "id": "41",
+        "name": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "fullyQualifiedName": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "type": "Service",
+        "sku": "OMO-60-001",
+        "active": true,
+        "createTime": "2026-04-22T22:24:37-07:00",
+        "lastUpdated": "2026-04-26T20:45:57-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "medium",
+        "reason": "Service+Sku — likely from integration or SKU-backfilled"
+      },
+      "qboExtras": [],
+      "matchedBySku": 1,
+      "matchedByName": 0,
+      "action": "OK_AS_IS",
+      "recommendation": "Sudah benar — id 41 Sku=OMO-60-001 Type=Service."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 47,
+        "item_id": 75,
+        "item_code": "MRS-001",
+        "item_name": "TREELOGY Moringa Ritual Set",
+        "stripped_name": "Moringa Ritual Set",
+        "variation_label": "Moringa Ritual Set=Moringa Ritual Set - No Powder Included",
+        "sell_price": 1090000,
+        "end_qty": 96,
+        "available_qty": 96,
+        "stores": [
+          "Shopee - Shopee",
+          "Shopee - Shopee",
+          "Shop | Tokopedia - Shop | Tokopedia",
+          "Tokopedia - Tokopedia",
+          "Shopify - Shopify"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": {
+        "id": "51",
+        "name": "TREELOGY Moringa Ritual Set",
+        "fullyQualifiedName": "TREELOGY Moringa Ritual Set",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-04-26T02:37:02-07:00",
+        "lastUpdated": "2026-04-26T02:37:02-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic",
+        "_matchedBy": "name"
+      },
+      "qboExtras": [
+        {
+          "id": "13",
+          "name": "Moringa Ritual Set",
+          "fullyQualifiedName": "Moringa Set Box:Moringa Ritual Set",
+          "type": "Inventory",
+          "sku": "MRS-002",
+          "active": true,
+          "createTime": "2024-11-24T04:00:36-08:00",
+          "lastUpdated": "2026-04-26T23:27:04-07:00",
+          "incomeAccount": "Channel sales",
+          "bucket": "LEGACY_INVENTORY",
+          "confidence": "high",
+          "reason": "Type=Inventory — integration only creates Service items",
+          "_matchedBy": "name"
+        }
+      ],
+      "matchedBySku": 0,
+      "matchedByName": 2,
+      "action": "CONSOLIDATE_DUPLICATES",
+      "recommendation": "KEEP id=51 (Service, sku=—); redirect invoice lines lalu INACTIVATE id=13 (sku=MRS-002, Inventory)."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 65,
+        "item_id": 98,
+        "item_code": "Bamboo-Whisk",
+        "item_name": "Bamboo Whisk - 120 prongs",
+        "stripped_name": "Bamboo Whisk - 120 prongs",
+        "variation_label": "Bamboo Whisk - 120 Prongs=Bamboo Whisk",
+        "sell_price": 290000,
+        "end_qty": 50,
+        "available_qty": 50,
+        "stores": [
+          "Shopify - Shopify"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"Bamboo Whisk - 120 prongs (Bamboo Whisk - 120 Prongs=Bamboo Whisk)\", Sku=\"Bamboo-Whisk\"."
+    },
+    {
+      "jubelio": {
+        "source": "active",
+        "item_group_id": 64,
+        "item_id": 97,
+        "item_code": "Bamboo-Scoop",
+        "item_name": "Bamboo Scoop",
+        "stripped_name": "Bamboo Scoop",
+        "variation_label": null,
+        "sell_price": 120000,
+        "end_qty": 48,
+        "available_qty": 47,
+        "stores": [
+          "Shopify - Shopify"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": {
+        "id": "24",
+        "name": "Bamboo Scoop",
+        "fullyQualifiedName": "Bamboo Scoop:Bamboo Scoop",
+        "type": "Inventory",
+        "sku": "Bamboo-Scoop",
+        "active": true,
+        "createTime": "2025-11-30T19:42:27-08:00",
+        "lastUpdated": "2026-04-26T19:58:26-07:00",
+        "incomeAccount": "Sales of Product Income",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "qboExtras": [],
+      "matchedBySku": 1,
+      "matchedByName": 0,
+      "action": "PATCH_QBO_ITEM",
+      "recommendation": "Patch id 24: keep as Inventory (legacy stock tracking) — tapi pastikan integrasi pakai item ini, bukan bikin Service paralel."
+    },
+    {
+      "jubelio": {
+        "source": "archived",
+        "item_group_id": 58,
+        "item_id": 92,
+        "item_code": "OMC180",
+        "item_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 180caps / Kapsul Daun Kelor Organik Premium 180caps",
+        "stripped_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 180caps / Kapsul Daun Kelor Organik Premium 180caps",
+        "variation_label": "Ukuran=180 Caps",
+        "sell_price": 780000,
+        "end_qty": null,
+        "available_qty": null,
+        "stores": [
+          "Shopee - Shopee"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 180caps / Kapsul Daun Kelor Organik Premium 180caps (Ukuran=180 Caps)\", Sku=\"OMC180\"."
+    },
+    {
+      "jubelio": {
+        "source": "archived",
+        "item_group_id": 59,
+        "item_id": 93,
+        "item_code": "OMC90",
+        "item_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 90caps / Kapsul Daun Kelor Organik Premium 90caps",
+        "stripped_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 90caps / Kapsul Daun Kelor Organik Premium 90caps",
+        "variation_label": "Ukuran=90 Caps",
+        "sell_price": 390000,
+        "end_qty": null,
+        "available_qty": null,
+        "stores": [
+          "Shopee - Shopee"
+        ],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 90caps / Kapsul Daun Kelor Organik Premium 90caps (Ukuran=90 Caps)\", Sku=\"OMC90\"."
+    },
+    {
+      "jubelio": {
+        "source": "archived",
+        "item_group_id": 62,
+        "item_id": 94,
+        "item_code": "46129731666108",
+        "item_name": "Inside Out  Moringa Protocol",
+        "stripped_name": "Inside Out  Moringa Protocol",
+        "variation_label": "The Movement & Relief=90 Moringa Capsules  + 30ml Moringa Oil",
+        "sell_price": 690000,
+        "end_qty": 0,
+        "available_qty": 0,
+        "stores": [],
+        "tax_rate": 0
+      },
+      "qboCanonical": null,
+      "qboExtras": [],
+      "matchedBySku": 0,
+      "matchedByName": 0,
+      "action": "CREATE_QBO_ITEM",
+      "recommendation": "Buat QBO Service item baru: Name=\"Inside Out  Moringa Protocol (The Movement & Relief=90 Moringa Capsules  + 30ml Moringa Oil)\", Sku=\"46129731666108\"."
+    }
+  ],
+  "qboReport": [
+    {
+      "qbo": {
+        "id": "23",
+        "name": "Bamboo Scoop",
+        "fullyQualifiedName": "Bamboo Scoop",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2025-11-30T19:40:53-08:00",
+        "lastUpdated": "2025-11-30T19:42:27-08:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "24",
+        "name": "Bamboo Scoop",
+        "fullyQualifiedName": "Bamboo Scoop:Bamboo Scoop",
+        "type": "Inventory",
+        "sku": "Bamboo-Scoop",
+        "active": true,
+        "createTime": "2025-11-30T19:42:27-08:00",
+        "lastUpdated": "2026-04-26T19:58:26-07:00",
+        "incomeAccount": "Sales of Product Income",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": {
+        "item_code": "Bamboo-Scoop",
+        "item_name": "Bamboo Scoop",
+        "source": "active"
+      },
+      "action": "MATCHED"
+    },
+    {
+      "qbo": {
+        "id": "10",
+        "name": "Consignment - Moringa Dried Leaf Powder - 90 grams",
+        "fullyQualifiedName": "Consignment - Moringa Dried Leaf Powder - 90 grams",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-07-31T21:52:23-07:00",
+        "lastUpdated": "2024-07-31T21:53:21-07:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "11",
+        "name": "Consignment - Moringa Dried Leaf Powder - 90 grams",
+        "fullyQualifiedName": "Consignment - Moringa Dried Leaf Powder - 90 grams:Consignment - Moringa Dried Leaf Powder - 90 grams",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-07-31T21:53:21-07:00",
+        "lastUpdated": "2026-01-05T23:51:43-08:00",
+        "incomeAccount": "Consignment - Moringa Dried Leaf Powder - 90 grams",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "2",
+        "name": "Hours",
+        "fullyQualifiedName": "Hours",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2022-01-08T23:26:54-08:00",
+        "lastUpdated": "2022-01-08T23:26:54-08:00",
+        "incomeAccount": "Sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "QBO default (\"Sales\", \"Hours\") — biarkan, tidak perlu sync."
+    },
+    {
+      "qbo": {
+        "id": "50",
+        "name": "Inside Out Moringa Protocol copy",
+        "fullyQualifiedName": "Inside Out Moringa Protocol copy",
+        "type": "Service",
+        "sku": "Inside-Out-Protocol",
+        "active": true,
+        "createTime": "2026-04-23T18:55:50-07:00",
+        "lastUpdated": "2026-04-26T23:13:07-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "medium",
+        "reason": "Service+Sku — likely from integration or SKU-backfilled"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_COPY",
+      "recommendation": "Item duplikat (suffix \"copy\") — redirect invoice lines ke item asli lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "54",
+        "name": "Jubelio Sync Item",
+        "fullyQualifiedName": "Jubelio Sync Item",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-04-27T02:31:19-07:00",
+        "lastUpdated": "2026-04-27T02:31:19-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_GENERIC_FALLBACK",
+        "confidence": "high",
+        "reason": "name starts with \"Jubelio Sync Item\""
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_GENERIC",
+      "recommendation": "Migrasikan invoice yang reference item ini lalu inactivate (jalankan /api/admin/migrate-items)."
+    },
+    {
+      "qbo": {
+        "id": "19",
+        "name": "Moringa Capsules-180Pcs",
+        "fullyQualifiedName": "Moringa Capsules-180Pcs",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2025-02-26T21:44:20-08:00",
+        "lastUpdated": "2025-02-26T21:45:10-08:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "20",
+        "name": "Moringa Capsules-180Pcs",
+        "fullyQualifiedName": "Moringa Capsules-180Pcs:Moringa Capsules-180Pcs",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2025-02-26T21:45:10-08:00",
+        "lastUpdated": "2026-04-26T20:46:49-07:00",
+        "incomeAccount": "Moringa Capsules-180Pcs",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "17",
+        "name": "Moringa Capsules-90Pcs",
+        "fullyQualifiedName": "Moringa Capsules-90Pcs",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2025-02-26T21:42:27-08:00",
+        "lastUpdated": "2025-02-26T21:43:40-08:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "18",
+        "name": "Moringa Capsules-90Pcs",
+        "fullyQualifiedName": "Moringa Capsules-90Pcs:Moringa Capsules-90Pcs",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2025-02-26T21:43:40-08:00",
+        "lastUpdated": "2026-04-26T20:46:08-07:00",
+        "incomeAccount": "Moringa Capsules-90Pcs",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "21",
+        "name": "Moringa Dried Leaf Powder - 45grams",
+        "fullyQualifiedName": "Moringa Dried Leaf Powder - 45grams",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2025-03-09T18:20:47-07:00",
+        "lastUpdated": "2025-03-09T18:42:02-07:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "22",
+        "name": "Moringa Dried Leaf Powder - 45grams",
+        "fullyQualifiedName": "Moringa Dried Leaf Powder - 45grams:Moringa Dried Leaf Powder - 45grams",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2025-03-09T18:42:02-07:00",
+        "lastUpdated": "2026-04-24T02:26:43-07:00",
+        "incomeAccount": "Moringa Dried Leaf Powder - 45grams",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "9",
+        "name": "Moringa Dried Leaf Powder - 90grams",
+        "fullyQualifiedName": "Moringa Dried Leaf Powder - 90grams",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-06-16T18:48:10-07:00",
+        "lastUpdated": "2026-04-26T19:12:58-07:00",
+        "incomeAccount": "Moringa Leaf Powder 90grams",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "5",
+        "name": "Moringa Leaf Powder 180grams",
+        "fullyQualifiedName": "Moringa Leaf Powder 180grams",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-04-02T19:01:04-07:00",
+        "lastUpdated": "2024-06-02T20:46:27-07:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "8",
+        "name": "Consignment - Moringa Dried Leaf Powder - 180grams",
+        "fullyQualifiedName": "Moringa Leaf Powder 180grams:Consignment - Moringa Dried Leaf Powder - 180grams",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-06-02T20:46:27-07:00",
+        "lastUpdated": "2025-06-30T20:48:51-07:00",
+        "incomeAccount": "Consignment - Moringa Dried Leaf Powder - 180grams",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "6",
+        "name": "Moringa Dried Leaf Powder 180grams",
+        "fullyQualifiedName": "Moringa Leaf Powder 180grams:Moringa Dried Leaf Powder 180grams",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-04-02T19:01:29-07:00",
+        "lastUpdated": "2026-04-22T19:16:32-07:00",
+        "incomeAccount": "Moringa Leaf Powder 180grams",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "3",
+        "name": "Moringa Leaf Powder 180grams - Discounted Price",
+        "fullyQualifiedName": "Moringa Leaf Powder 180grams - Discounted Price",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-04-02T18:59:25-07:00",
+        "lastUpdated": "2024-04-02T19:00:22-07:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "4",
+        "name": "Moringa Leaf Powder 180grams - Discounted Price",
+        "fullyQualifiedName": "Moringa Leaf Powder 180grams - Discounted Price:Moringa Leaf Powder 180grams - Discounted Price",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-04-02T19:00:22-07:00",
+        "lastUpdated": "2024-06-23T22:46:37-07:00",
+        "incomeAccount": "Moringa Leaf Powder 180grams - Discounted Price",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "14",
+        "name": "Moringa Seed Oil - 30ml",
+        "fullyQualifiedName": "Moringa Seed Oil - 30ml",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-12-19T23:41:46-08:00",
+        "lastUpdated": "2024-12-19T23:43:05-08:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "15",
+        "name": "Moringa Seed Oil - 30ml",
+        "fullyQualifiedName": "Moringa Seed Oil - 30ml:Moringa Seed Oil - 30ml",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-12-19T23:43:05-08:00",
+        "lastUpdated": "2026-04-26T19:22:39-07:00",
+        "incomeAccount": "Moringa Seed Oil - 30ml",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "16",
+        "name": "Moringa Seed Oil - 60ml",
+        "fullyQualifiedName": "Moringa Seed Oil - 60ml",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-12-22T19:51:36-08:00",
+        "lastUpdated": "2026-04-23T01:26:08-07:00",
+        "incomeAccount": "Moringa Seed Oil - 60ml",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "12",
+        "name": "Moringa Set Box",
+        "fullyQualifiedName": "Moringa Set Box",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-11-24T03:56:53-08:00",
+        "lastUpdated": "2024-11-24T04:00:36-08:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "13",
+        "name": "Moringa Ritual Set",
+        "fullyQualifiedName": "Moringa Set Box:Moringa Ritual Set",
+        "type": "Inventory",
+        "sku": "MRS-002",
+        "active": true,
+        "createTime": "2024-11-24T04:00:36-08:00",
+        "lastUpdated": "2026-04-26T23:27:04-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": {
+        "item_code": "MRS-001",
+        "item_name": "TREELOGY Moringa Ritual Set",
+        "source": "active"
+      },
+      "action": "MATCHED"
+    },
+    {
+      "qbo": {
+        "id": "42",
+        "name": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "fullyQualifiedName": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "type": "Service",
+        "sku": "OMC-180-001",
+        "active": true,
+        "createTime": "2026-04-22T22:25:38-07:00",
+        "lastUpdated": "2026-04-26T20:21:07-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "medium",
+        "reason": "Service+Sku — likely from integration or SKU-backfilled"
+      },
+      "matchedTo": {
+        "item_code": "OMC-180-001",
+        "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "source": "active"
+      },
+      "action": "MATCHED"
+    },
+    {
+      "qbo": {
+        "id": "44",
+        "name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "fullyQualifiedName": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "type": "Service",
+        "sku": "OMP-45-001",
+        "active": true,
+        "createTime": "2026-04-23T02:38:46-07:00",
+        "lastUpdated": "2026-04-26T20:45:36-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "medium",
+        "reason": "Service+Sku — likely from integration or SKU-backfilled"
+      },
+      "matchedTo": {
+        "item_code": "OMP-45-001",
+        "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "source": "active"
+      },
+      "action": "MATCHED"
+    },
+    {
+      "qbo": {
+        "id": "53",
+        "name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (OMP-45-001)",
+        "fullyQualifiedName": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (OMP-45-001)",
+        "type": "Service",
+        "sku": "OMP-45-001",
+        "active": true,
+        "createTime": "2026-04-27T02:26:06-07:00",
+        "lastUpdated": "2026-04-27T02:26:06-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "high",
+        "reason": "Service+Sku, created 2026-04-27 (after first Jubelio webhook)"
+      },
+      "matchedTo": {
+        "item_code": "OMP-45-001",
+        "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "source": "active"
+      },
+      "action": "MATCHED"
+    },
+    {
+      "qbo": {
+        "id": "41",
+        "name": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "fullyQualifiedName": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "type": "Service",
+        "sku": "OMO-60-001",
+        "active": true,
+        "createTime": "2026-04-22T22:24:37-07:00",
+        "lastUpdated": "2026-04-26T20:45:57-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "medium",
+        "reason": "Service+Sku — likely from integration or SKU-backfilled"
+      },
+      "matchedTo": {
+        "item_code": "OMO-60-001",
+        "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "source": "active"
+      },
+      "action": "MATCHED"
+    },
+    {
+      "qbo": {
+        "id": "1",
+        "name": "Sales",
+        "fullyQualifiedName": "Sales",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2022-01-08T23:26:54-08:00",
+        "lastUpdated": "2022-01-08T23:26:54-08:00",
+        "incomeAccount": "Sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "QBO default (\"Sales\", \"Hours\") — biarkan, tidak perlu sync."
+    },
+    {
+      "qbo": {
+        "id": "39",
+        "name": "SAMPLE",
+        "fullyQualifiedName": "SAMPLE",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-10T20:31:46-07:00",
+        "lastUpdated": "2026-03-10T20:32:02-07:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "40",
+        "name": "SAMPLE",
+        "fullyQualifiedName": "SAMPLE:SAMPLE",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-10T20:32:02-07:00",
+        "lastUpdated": "2026-03-10T20:32:02-07:00",
+        "incomeAccount": "Sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_MANUAL",
+      "recommendation": "Service tanpa SKU & tanpa padanan Jubelio — cek apakah masih dipakai. Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "7",
+        "name": "Shipping Charge",
+        "fullyQualifiedName": "Shipping Charge",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2024-04-15T00:11:10-07:00",
+        "lastUpdated": "2024-04-15T00:11:10-07:00",
+        "incomeAccount": "Shipping Charge",
+        "bucket": "JUBELIO_SHIPPING",
+        "confidence": "high",
+        "reason": "matches getShippingItem helper name"
+      },
+      "matchedTo": null,
+      "action": "KEEP_HELPER",
+      "recommendation": "Helper \"Shipping Charge\" untuk biaya kirim — biarkan aktif, dipakai integrasi."
+    },
+    {
+      "qbo": {
+        "id": "28",
+        "name": "Shopify discount item",
+        "fullyQualifiedName": "Shopify discount item",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:19:55-08:00",
+        "lastUpdated": "2026-03-04T19:19:55-08:00",
+        "incomeAccount": "Shopify discount",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "25",
+        "name": "Shopify gift card item - EUR",
+        "fullyQualifiedName": "Shopify gift card item - EUR",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:19:53-08:00",
+        "lastUpdated": "2026-03-04T19:19:53-08:00",
+        "incomeAccount": "Shopify Gift card - EUR",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "26",
+        "name": "Shopify gift card item - IDR",
+        "fullyQualifiedName": "Shopify gift card item - IDR",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:19:54-08:00",
+        "lastUpdated": "2026-03-04T19:19:54-08:00",
+        "incomeAccount": "Shopify Gift card - IDR",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "27",
+        "name": "Shopify gift card item - USD",
+        "fullyQualifiedName": "Shopify gift card item - USD",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:19:54-08:00",
+        "lastUpdated": "2026-03-04T19:19:54-08:00",
+        "incomeAccount": "Shopify Gift card - USD",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "32",
+        "name": "Shopify sale tips item",
+        "fullyQualifiedName": "Shopify sale tips item",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:20:03-08:00",
+        "lastUpdated": "2026-03-04T19:20:03-08:00",
+        "incomeAccount": "Shopify Tips",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "34",
+        "name": "Shopify sales item",
+        "fullyQualifiedName": "Shopify sales item",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:20:06-08:00",
+        "lastUpdated": "2026-03-04T19:20:06-08:00",
+        "incomeAccount": "Shopify sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "29",
+        "name": "Shopify sales tax item - EUR",
+        "fullyQualifiedName": "Shopify sales tax item - EUR",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:19:56-08:00",
+        "lastUpdated": "2026-03-04T19:19:56-08:00",
+        "incomeAccount": "Shopify sales tax payable - EUR",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "30",
+        "name": "Shopify sales tax item - IDR",
+        "fullyQualifiedName": "Shopify sales tax item - IDR",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:19:57-08:00",
+        "lastUpdated": "2026-03-04T19:19:57-08:00",
+        "incomeAccount": "Shopify sales tax payable - IDR",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "31",
+        "name": "Shopify sales tax item - USD",
+        "fullyQualifiedName": "Shopify sales tax item - USD",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:19:58-08:00",
+        "lastUpdated": "2026-03-04T19:19:58-08:00",
+        "incomeAccount": "Shopify sales tax payable - USD",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "33",
+        "name": "Shopify shipping item",
+        "fullyQualifiedName": "Shopify shipping item",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T19:20:04-08:00",
+        "lastUpdated": "2026-03-04T19:20:04-08:00",
+        "incomeAccount": "Shopify shipping income",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_SHOPIFY",
+      "recommendation": "Item dari Shopify connector (bukan Jubelio). Konfirmasi: Shopify connector masih aktif? Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "37",
+        "name": "The Discovery Pack",
+        "fullyQualifiedName": "The Discovery Pack",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T21:50:45-08:00",
+        "lastUpdated": "2026-03-04T21:53:02-08:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "38",
+        "name": "The Discovery Pack",
+        "fullyQualifiedName": "The Discovery Pack:The Discovery Pack",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T21:53:02-08:00",
+        "lastUpdated": "2026-03-04T21:53:02-08:00",
+        "incomeAccount": "Sales of Product Income",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "49",
+        "name": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & I",
+        "fullyQualifiedName": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & I",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-04-23T04:38:48-07:00",
+        "lastUpdated": "2026-04-26T19:47:31-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_MANUAL",
+      "recommendation": "Service tanpa SKU & tanpa padanan Jubelio — cek apakah masih dipakai. Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "55",
+        "name": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas A",
+        "fullyQualifiedName": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas A",
+        "type": "Service",
+        "sku": "Discovery-Pack",
+        "active": true,
+        "createTime": "2026-04-27T02:35:36-07:00",
+        "lastUpdated": "2026-04-27T02:35:36-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "high",
+        "reason": "Service+Sku, created 2026-04-27 (after first Jubelio webhook)"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_MANUAL",
+      "recommendation": "Tidak ada padanan Jubelio — review manual."
+    },
+    {
+      "qbo": {
+        "id": "35",
+        "name": "The Movement & Relief",
+        "fullyQualifiedName": "The Movement & Relief",
+        "type": "Category",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T21:48:51-08:00",
+        "lastUpdated": "2026-03-04T21:50:27-08:00",
+        "incomeAccount": "",
+        "bucket": "CATEGORY",
+        "confidence": "n/a",
+        "reason": "organizational only, no SKU"
+      },
+      "matchedTo": null,
+      "action": "KEEP_LEGACY",
+      "recommendation": "Folder organisasi QBO — biarkan, tidak perlu sync ke Jubelio."
+    },
+    {
+      "qbo": {
+        "id": "36",
+        "name": "The Movement & Relief",
+        "fullyQualifiedName": "The Movement & Relief:The Movement & Relief",
+        "type": "Inventory",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-03-04T21:50:27-08:00",
+        "lastUpdated": "2026-03-04T21:50:27-08:00",
+        "incomeAccount": "Sales of Product Income",
+        "bucket": "LEGACY_INVENTORY",
+        "confidence": "high",
+        "reason": "Type=Inventory — integration only creates Service items"
+      },
+      "matchedTo": null,
+      "action": "INACTIVATE_OR_KEEP",
+      "recommendation": "Legacy Inventory tanpa padanan Jubelio — kemungkinan barang lama / sudah tidak dijual. Konfirmasi finance lalu inactivate."
+    },
+    {
+      "qbo": {
+        "id": "43",
+        "name": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Se",
+        "fullyQualifiedName": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Se",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-04-22T23:19:57-07:00",
+        "lastUpdated": "2026-04-26T19:47:32-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_MANUAL",
+      "recommendation": "Service tanpa SKU & tanpa padanan Jubelio — cek apakah masih dipakai. Kalau tidak, inactivate."
+    },
+    {
+      "qbo": {
+        "id": "52",
+        "name": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Per",
+        "fullyQualifiedName": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Per",
+        "type": "Service",
+        "sku": "The-Movement-&-Relief",
+        "active": true,
+        "createTime": "2026-04-26T23:49:01-07:00",
+        "lastUpdated": "2026-04-26T23:49:01-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "JUBELIO_INTEGRATION",
+        "confidence": "high",
+        "reason": "Service+Sku, created 2026-04-27 (after first Jubelio webhook)"
+      },
+      "matchedTo": null,
+      "action": "REVIEW_MANUAL",
+      "recommendation": "Tidak ada padanan Jubelio — review manual."
+    },
+    {
+      "qbo": {
+        "id": "51",
+        "name": "TREELOGY Moringa Ritual Set",
+        "fullyQualifiedName": "TREELOGY Moringa Ritual Set",
+        "type": "Service",
+        "sku": "",
+        "active": true,
+        "createTime": "2026-04-26T02:37:02-07:00",
+        "lastUpdated": "2026-04-26T02:37:02-07:00",
+        "incomeAccount": "Channel sales",
+        "bucket": "AMBIGUOUS_SERVICE",
+        "confidence": "low",
+        "reason": "Service without Sku — could be legacy or renamed generic"
+      },
+      "matchedTo": {
+        "item_code": "MRS-001",
+        "item_name": "TREELOGY Moringa Ritual Set",
+        "source": "active"
+      },
+      "action": "MATCHED"
+    }
+  ]
+}

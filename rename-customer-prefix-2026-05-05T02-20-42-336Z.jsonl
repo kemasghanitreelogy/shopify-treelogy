@@ -1,0 +1,3 @@
+{"ts":"2026-05-05T02:20:45.251Z","mode":"APPLY","customerId":"564","currentName":"Veranika Effendy","newName":"SHF - Veranika Effendy","prefix":"SHF","prefixSource":"inferred","inferenceReport":{"invoiceCount":2,"prefixes":["SHF"],"samples":["SHF-7510-128887"]},"email":"veranikaveranika@gmail.com"}
+{"ts":"2026-05-05T02:20:45.878Z","event":"qbo_renamed","customerId":"564","newName":"SHF - Veranika Effendy"}
+{"ts":"2026-05-05T02:20:45.931Z","event":"jubelio_map_synced","customerId":"564","matched":0,"modified":0}

@@ -1,0 +1,7 @@
+salesorder_no,qbo_invoice_id,doc_number,customer_name,txn_date,current_total,target_total,diff,payment_applied,balance,linked_payment_ids,recommended_action
+SP-260424MM1WMQ92,69690,SP-260424MM1WMQ92,"SP - Fionita",2026-04-24,1326250,1096250,230000,1250000,76250,"70307",Reduce invoice + reconcile partial payment
+SP-260421CSQM3TER,69809,SP-260421CSQM3TER,"SP - Wiwit Olina",2026-04-21,1326250,1096250,230000,1250000,76250,"70066",Reduce invoice + reconcile partial payment
+SP-2604198MHG81Y4,69830,SP-2604198MHG81Y4,"SP - Fayra Hafidzha Almashyra",2026-04-19,1048840,867840,181000,999000,49840,"69831",Reduce invoice + reconcile partial payment
+SP-260423J7NBGSPS,69475,SP-260423J7NBGSPS,"SP - Abdullah",2026-04-23,1250000,1096250,153750,1250000,0,"70114",Create Credit Memo or apply customer credit
+SP-260423HAJVWVWN,69470,SP-260423HAJVWVWN,"SP - Rika Utami",2026-04-23,1250000,1096250,153750,1250000,0,"69983",Create Credit Memo or apply customer credit
+SP-260421DNC0D4CY,69409,SP-260421DNC0D4CY,"Clara",2026-04-21,1250000,1096250,153750,1250000,0,"69982",Create Credit Memo or apply customer credit

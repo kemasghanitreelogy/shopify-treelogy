@@ -1,0 +1,1910 @@
+[
+  {
+    "bundle_sku": "Inside-Out-Protocol",
+    "bundle_name": "Inside Out  Moringa Protocol (Capsule 90 + Oil 30ml)",
+    "bundle_item_id": 96,
+    "bundle_group_id": 63,
+    "bundle_price": 690000,
+    "components": [],
+    "detailKeys": [
+      "item_group_id",
+      "item_group_name",
+      "description",
+      "notes",
+      "sell_tax_id",
+      "buy_tax_id",
+      "sales_acct_id",
+      "cogs_acct_id",
+      "invt_acct_id",
+      "sell_this",
+      "buy_this",
+      "stock_this",
+      "dropship_this",
+      "uom_id",
+      "sell_unit",
+      "buy_unit",
+      "is_active",
+      "purch_acct_id",
+      "status",
+      "item_category_id",
+      "package_content",
+      "package_weight",
+      "package_height",
+      "package_width",
+      "package_length",
+      "variations",
+      "sell_price",
+      "buy_price",
+      "last_modified",
+      "brand_id",
+      "rop",
+      "is_favourite",
+      "use_single_image_set",
+      "use_serial_number",
+      "brand_name",
+      "store_priority_qty_treshold",
+      "created_date",
+      "use_batch_number",
+      "lead_time",
+      "is_po",
+      "unlimited_stock_store_ids",
+      "crosslisting_category_id",
+      "sales_return_acct_id",
+      "safety_stock",
+      "debt_acct_id",
+      "sales_income_tax_id",
+      "purch_income_tax_id",
+      "sell_tax_name",
+      "buy_tax_name",
+      "sales_return_acct_name",
+      "sales_acct_name",
+      "invt_acct_name",
+      "cogs_acct_name",
+      "purch_acct_name",
+      "uom_name",
+      "product_skus",
+      "channels",
+      "bundles",
+      "bom_id",
+      "min",
+      "max",
+      "attributes"
+    ],
+    "_raw": {
+      "item_group_id": 63,
+      "item_group_name": "Inside Out  Moringa Protocol (Capsule 90 + Oil 30ml)",
+      "description": "<p>For the stiffness you feel every morning, the energy that fades too early, and the skin that needs more than it's getting. One moringa protocol, capsules from the inside, oil from the outside. 30 days to feel the difference. 60 days to make it yours.<br>\n</p>",
+      "notes": null,
+      "sell_tax_id": null,
+      "buy_tax_id": null,
+      "sales_acct_id": 28,
+      "cogs_acct_id": 30,
+      "invt_acct_id": 4,
+      "sell_this": true,
+      "buy_this": true,
+      "stock_this": true,
+      "dropship_this": null,
+      "uom_id": -1,
+      "sell_unit": "Buah",
+      "buy_unit": "Buah",
+      "is_active": true,
+      "purch_acct_id": null,
+      "status": null,
+      "item_category_id": 14788,
+      "package_content": null,
+      "package_weight": "500.0000",
+      "package_height": "0.0000",
+      "package_width": "0.0000",
+      "package_length": "0.0000",
+      "variations": null,
+      "sell_price": "690000.0000",
+      "buy_price": "0.0000",
+      "last_modified": "2026-04-28T03:12:58.471Z",
+      "brand_id": null,
+      "rop": "0.0000",
+      "is_favourite": null,
+      "use_single_image_set": false,
+      "use_serial_number": false,
+      "brand_name": null,
+      "store_priority_qty_treshold": null,
+      "created_date": "2026-04-17T06:15:59.862Z",
+      "use_batch_number": false,
+      "lead_time": null,
+      "is_po": null,
+      "unlimited_stock_store_ids": null,
+      "crosslisting_category_id": 14788,
+      "sales_return_acct_id": null,
+      "safety_stock": 0,
+      "debt_acct_id": null,
+      "sales_income_tax_id": null,
+      "purch_income_tax_id": null,
+      "sell_tax_name": null,
+      "buy_tax_name": null,
+      "sales_return_acct_name": null,
+      "sales_acct_name": "4-4000 - Penjualan",
+      "invt_acct_name": "1-1200 - Persediaan Barang",
+      "cogs_acct_name": "5-5000 - Harga Pokok Penjualan (COGS)",
+      "purch_acct_name": null,
+      "uom_name": "Buah",
+      "product_skus": [
+        {
+          "item_id": 96,
+          "item_code": "Inside-Out-Protocol",
+          "barcode": null,
+          "sell_price": 690000,
+          "end_qty": -32,
+          "average_cost": 0,
+          "amount": 0,
+          "variation_values": [
+            {
+              "label": "The Movement & Relief",
+              "value": "90 Moringa Capsules  + 30ml Moringa Oil"
+            }
+          ],
+          "prices": [
+            {
+              "store_id": 128887,
+              "channel_id": 1048576,
+              "sell_price": 690000
+            }
+          ],
+          "images": [
+            {
+              "item_id": 96,
+              "image_id": 228,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/hand_drops_a_green_Treelogy_Organic_Moringa_Capsule_EN.webp?v=1775007773",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/hand_drops_a_green_treelogy_organic_moringa_capsule_en_thumb.jpeg",
+              "file_name": "hand_drops_a_green_Treelogy_Organic_Moringa_Capsule_EN.webp?v=1775007773",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 229,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/hand_drops_a_green_Treelogy_Organic_Moringa_Capsule_ID.webp?v=1775007773",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/hand_drops_a_green_treelogy_organic_moringa_capsule_id_thumb.jpeg",
+              "file_name": "hand_drops_a_green_Treelogy_Organic_Moringa_Capsule_ID.webp?v=1775007773",
+              "sequence_number": 1,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 230,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/close-up_composite_image_of_a_smiling_woman.webp?v=1775007319",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/close-up_composite_image_of_a_smiling_woman_thumb.jpeg",
+              "file_name": "close-up_composite_image_of_a_smiling_woman.webp?v=1775007319",
+              "sequence_number": 2,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 231,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/close-up_composite_image_of_a_smiling_woman_EN.webp?v=1775007319",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/close-up_composite_image_of_a_smiling_woman_en_thumb.jpeg",
+              "file_name": "close-up_composite_image_of_a_smiling_woman_EN.webp?v=1775007319",
+              "sequence_number": 3,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 232,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/woman_s_hand_holds_an_open_can_of_Treelogy_Organic_Moringa_Capsules.webp?v=1775007319",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/woman_s_hand_holds_an_open_can_of_treelogy_organic_moringa_capsules_thumb.jpeg",
+              "file_name": "woman_s_hand_holds_an_open_can_of_Treelogy_Organic_Moringa_Capsules.webp?v=1775007319",
+              "sequence_number": 4,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 233,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/woman_s_hand_holds_an_open_can_of_Treelogy_Organic_Moringa_Capsules_EN.webp?v=1775007319",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/woman_s_hand_holds_an_open_can_of_treelogy_organic_moringa_capsules_en_thumb.jpeg",
+              "file_name": "woman_s_hand_holds_an_open_can_of_Treelogy_Organic_Moringa_Capsules_EN.webp?v=1775007319",
+              "sequence_number": 5,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 234,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/vertical_timeline_infographic_in_Indonesian_detailing_the_benefits_of_Treelogy_Moring_EN.webp?v=1775007319",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/vertical_timeline_infographic_in_indonesian_detailing_the_benefits_of_treelogy_moring_en_thumb.jpeg",
+              "file_name": "vertical_timeline_infographic_in_Indonesian_detailing_the_benefits_of_Treelogy_Moring_EN.webp?v=1775007319",
+              "sequence_number": 6,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 235,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/ertical_timeline_infographic_in_Indonesian_detailing_the_benefits_of_Treelogy_Moringa.webp?v=1775007319",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/ertical_timeline_infographic_in_indonesian_detailing_the_benefits_of_treelogy_moringa_thumb.jpeg",
+              "file_name": "ertical_timeline_infographic_in_Indonesian_detailing_the_benefits_of_Treelogy_Moringa.webp?v=1775007319",
+              "sequence_number": 7,
+              "channel_info": null
+            },
+            {
+              "item_id": 96,
+              "image_id": 236,
+              "cloud_key": "https://cdn.shopify.com/s/files/1/0668/4776/8764/files/close-up_of_two_open_Treelogy_Organic_Moringa_Capsule_EN.webp?v=1775007319",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/close-up_of_two_open_treelogy_organic_moringa_capsule_en_thumb.jpeg",
+              "file_name": "close-up_of_two_open_Treelogy_Organic_Moringa_Capsule_EN.webp?v=1775007319",
+              "sequence_number": 8,
+              "channel_info": null
+            }
+          ]
+        }
+      ],
+      "channels": [
+        {
+          "channel_id": 64,
+          "channel_name": "Shopee",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128882,
+          "channel_full_name": "Shopee",
+          "channel_category_id": null,
+          "sell_here": null,
+          "sell_price": null
+        },
+        {
+          "channel_id": 128,
+          "channel_name": "Tokopedia",
+          "store_name": "Treelogy Moringa (TTS)",
+          "store_id": 128884,
+          "channel_full_name": "Tokopedia",
+          "channel_category_id": null,
+          "sell_here": null,
+          "sell_price": null
+        },
+        {
+          "channel_id": 131076,
+          "channel_name": "Shop | Tokopedia",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128883,
+          "channel_full_name": "Shop | Tokopedia",
+          "channel_category_id": null,
+          "sell_here": null,
+          "sell_price": null
+        },
+        {
+          "channel_id": 1048576,
+          "channel_name": "Shopify",
+          "store_name": "treelogy.com",
+          "store_id": 128887,
+          "channel_full_name": "Shopify",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-inside-out-protocol",
+          "channel_category_id": null,
+          "channel_item_id": "46129731666108"
+        }
+      ],
+      "bundles": [
+        {
+          "item_id": 79,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMC-90-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "bom_comp_id": 12,
+          "sell_price": 390000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/dc4033affac04cc6b758418a4eeceddftplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        },
+        {
+          "item_id": 81,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMO-30-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "bom_comp_id": 13,
+          "sell_price": 470000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/6ccc8bd246384a77a31b08f87cf4e6b0tplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        }
+      ],
+      "bom_id": 6,
+      "min": null,
+      "max": null,
+      "attributes": [
+        {
+          "attribute_id": 1000002962,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 6007,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 6008,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 12676,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 12678,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 1000001757,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 1000001758,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 1000001793,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 1000001794,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 1000001795,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 1000001797,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 1000001798,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 7360,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 7361,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": 7362,
+          "attribute_value": null
+        },
+        {
+          "attribute_id": -1000,
+          "attribute_value": 0
+        }
+      ]
+    }
+  },
+  {
+    "bundle_sku": "Discovery-Pack",
+    "bundle_name": "Treelogy The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas Alami",
+    "bundle_item_id": 73,
+    "bundle_group_id": 45,
+    "bundle_price": 1180000,
+    "components": [],
+    "detailKeys": [
+      "item_group_id",
+      "item_group_name",
+      "description",
+      "notes",
+      "sell_tax_id",
+      "buy_tax_id",
+      "sales_acct_id",
+      "cogs_acct_id",
+      "invt_acct_id",
+      "sell_this",
+      "buy_this",
+      "stock_this",
+      "dropship_this",
+      "uom_id",
+      "sell_unit",
+      "buy_unit",
+      "is_active",
+      "purch_acct_id",
+      "status",
+      "item_category_id",
+      "package_content",
+      "package_weight",
+      "package_height",
+      "package_width",
+      "package_length",
+      "variations",
+      "sell_price",
+      "buy_price",
+      "last_modified",
+      "brand_id",
+      "rop",
+      "is_favourite",
+      "use_single_image_set",
+      "use_serial_number",
+      "brand_name",
+      "store_priority_qty_treshold",
+      "created_date",
+      "use_batch_number",
+      "lead_time",
+      "is_po",
+      "unlimited_stock_store_ids",
+      "crosslisting_category_id",
+      "sales_return_acct_id",
+      "safety_stock",
+      "debt_acct_id",
+      "sales_income_tax_id",
+      "purch_income_tax_id",
+      "sell_tax_name",
+      "buy_tax_name",
+      "sales_return_acct_name",
+      "sales_acct_name",
+      "invt_acct_name",
+      "cogs_acct_name",
+      "purch_acct_name",
+      "uom_name",
+      "product_skus",
+      "channels",
+      "bundles",
+      "bom_id",
+      "min",
+      "max",
+      "attributes"
+    ],
+    "_raw": {
+      "item_group_id": 45,
+      "item_group_name": "Treelogy The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas Alami",
+      "description": "<p>------BAHASA INDONESIA------</p><p>Perkenalan lengkap dengan Moringa — nutrisi pagi, vitalitas seimbang, dan kesegaran harian. Mau kapsul, powder, atau oil? Discovery Pack menghadirkan ketiganya, sehingga kamu bisa pilih yang paling sesuai dengan gaya hidupmu.</p><p><br></p><p><strong>Bundling:</strong></p><ul><li>45 g Powder untuk smoothies  </li><li>90 Capsules yang praktis dikonsumsi </li><li>30 ml Oil untuk perawatan kulit & rambut </li></ul><p><br></p><p><strong>Penyimpanan:</strong><br>Simpan tertutup rapat pada suhu kamar, jauh dari sinar matahari langsung dan kelembaban<br><br><strong>Sertifikasi:</strong><br>• Bersertifikat Organik EU / USDA / SNI<br>• Bersertifikat BPOM (kapsul daun kelor murni pertama & satu-satunya yang terdaftar)<br>• Halal BPJPH<br>• HACCP / ISO / GMP<br><br><strong>Dengan Treelogy, Anda memilih kesehatan yang dapat Anda percaya, dari awal hingga akhir.</strong><br><br></p><p>------ENGLISH BELOW------ </p><p>A complete introduction to Moringa, morning nutrition, balanced vitality, daily freshness. Whether you prefer capsules, powder, or oil, The Discovery Pack delivers all three, so you can choose the format that fits your lifestyle.</p><p><br></p><p><strong>Bundling:</strong></p><ul><li>45 g Powder for smoothies  </li><li>90 Capsules for convenience</li><li>30 ml Oil for skin or hair care</li></ul><p><strong>Storage:</strong><br>Store sealed at room temperature, away from direct sunlight and moisture<strong>Certifications:</strong><br>• Organic Certified EU / USDA / SNI<br>• BPOM Certified (the first & only pure moringa leaf capsules registered)<br>• Halal BPJPH<br>• HACCP / ISO / GMP<br><strong><br>With Treelogy, you choose wellness you can trust, from the ground up.</strong></p>",
+      "notes": null,
+      "sell_tax_id": null,
+      "buy_tax_id": null,
+      "sales_acct_id": null,
+      "cogs_acct_id": null,
+      "invt_acct_id": null,
+      "sell_this": true,
+      "buy_this": true,
+      "stock_this": true,
+      "dropship_this": null,
+      "uom_id": -1,
+      "sell_unit": "Buah",
+      "buy_unit": "Buah",
+      "is_active": true,
+      "purch_acct_id": null,
+      "status": null,
+      "item_category_id": 18458,
+      "package_content": null,
+      "package_weight": "500.0000",
+      "package_height": null,
+      "package_width": null,
+      "package_length": null,
+      "variations": [],
+      "sell_price": null,
+      "buy_price": null,
+      "last_modified": "2026-04-27T02:16:14.603Z",
+      "brand_id": null,
+      "rop": null,
+      "is_favourite": null,
+      "use_single_image_set": false,
+      "use_serial_number": false,
+      "brand_name": null,
+      "store_priority_qty_treshold": null,
+      "created_date": "2026-03-24T07:56:36.423Z",
+      "use_batch_number": false,
+      "lead_time": null,
+      "is_po": null,
+      "unlimited_stock_store_ids": null,
+      "crosslisting_category_id": 18458,
+      "sales_return_acct_id": null,
+      "safety_stock": 0,
+      "debt_acct_id": null,
+      "sales_income_tax_id": null,
+      "purch_income_tax_id": null,
+      "sell_tax_name": null,
+      "buy_tax_name": null,
+      "sales_return_acct_name": null,
+      "sales_acct_name": null,
+      "invt_acct_name": null,
+      "cogs_acct_name": null,
+      "purch_acct_name": null,
+      "uom_name": "Buah",
+      "product_skus": [
+        {
+          "item_id": 73,
+          "item_code": "Discovery-Pack",
+          "barcode": null,
+          "sell_price": 1180000,
+          "end_qty": -7,
+          "average_cost": 0,
+          "amount": 0,
+          "variation_values": [],
+          "prices": [
+            {
+              "store_id": 128882,
+              "channel_id": 64,
+              "sell_price": 1180000
+            },
+            {
+              "store_id": 128884,
+              "channel_id": 128,
+              "sell_price": 1180000
+            },
+            {
+              "store_id": 128884,
+              "channel_id": 128,
+              "sell_price": 1180000
+            },
+            {
+              "store_id": 128883,
+              "channel_id": 131076,
+              "sell_price": 1180000
+            },
+            {
+              "store_id": 128883,
+              "channel_id": 131076,
+              "sell_price": 1180000
+            },
+            {
+              "store_id": 128887,
+              "channel_id": 1048576,
+              "sell_price": 880000
+            }
+          ],
+          "images": [
+            {
+              "item_id": 73,
+              "image_id": 117,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/c7a461a3812a4f26b19e719be08c1765~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/c7a461a3812a4f26b19e719be08c1765tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "c7a461a3812a4f26b19e719be08c1765~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 73,
+              "image_id": 118,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/ce028e49c88a40149c0da6f3a0650123~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/ce028e49c88a40149c0da6f3a0650123tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "ce028e49c88a40149c0da6f3a0650123~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 73,
+              "image_id": 119,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/77f770f6196f4197ae345d416d74dd6f~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/77f770f6196f4197ae345d416d74dd6ftplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "77f770f6196f4197ae345d416d74dd6f~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 73,
+              "image_id": 120,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/e406b4cae2314e98915ef734636ad09b~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/e406b4cae2314e98915ef734636ad09btplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "e406b4cae2314e98915ef734636ad09b~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 73,
+              "image_id": 121,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/2c4ab9776eaa4a6891f0b82f6df90a34~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/2c4ab9776eaa4a6891f0b82f6df90a34tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "2c4ab9776eaa4a6891f0b82f6df90a34~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 73,
+              "image_id": 122,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/9834f27375804d2aa4c1975e9b9c1e27~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/9834f27375804d2aa4c1975e9b9c1e27tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "9834f27375804d2aa4c1975e9b9c1e27~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 73,
+              "image_id": 123,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/e9a42ea5a1b34dc9935c7d8c77fbb3f6~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/e9a42ea5a1b34dc9935c7d8c77fbb3f6tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "e9a42ea5a1b34dc9935c7d8c77fbb3f6~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            }
+          ]
+        }
+      ],
+      "channels": [
+        {
+          "channel_id": 64,
+          "channel_name": "Shopee",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128882,
+          "channel_full_name": "Shopee",
+          "attributes": [
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "100061",
+              "attribute_value": "2027-02-02T17:00:00.000Z"
+            },
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "100999",
+              "attribute_value": "1"
+            },
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "101219",
+              "attribute_value": "No"
+            },
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "100010",
+              "attribute_value": "24 Months"
+            },
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "100022",
+              "attribute_value": "Unisex"
+            },
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "100037",
+              "attribute_value": "Indonesia"
+            },
+            {
+              "attribute_name": "logistics",
+              "attribute_value": [
+                {
+                  "enabled": false,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8008,
+                  "logistic_name": "Instant Prioritas",
+                  "estimated_shipping_fee": 12000
+                },
+                {
+                  "enabled": true,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8003,
+                  "logistic_name": "Reguler",
+                  "estimated_shipping_fee": 10000
+                },
+                {
+                  "enabled": true,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8002,
+                  "logistic_name": "Next Day",
+                  "estimated_shipping_fee": 49000
+                },
+                {
+                  "enabled": false,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8005,
+                  "logistic_name": "Hemat Kargo",
+                  "estimated_shipping_fee": 8000
+                },
+                {
+                  "enabled": false,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8007,
+                  "logistic_name": "Instant",
+                  "estimated_shipping_fee": 10000
+                }
+              ]
+            }
+          ],
+          "sell_here": true,
+          "channel_url": "https://shopee.co.id/product/1592826980/49000815284",
+          "channel_category_id": "100006",
+          "channel_item_id": "49000815284"
+        },
+        {
+          "channel_id": 128,
+          "channel_name": "Tokopedia",
+          "store_name": "Treelogy Moringa (TTS)",
+          "store_id": 128884,
+          "channel_full_name": "Tokopedia",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-discovery-pack-minyak-bubuk-kapsul-kelor-organik-premium-kulit-cerah-energi-imunitas-alami-1733075840222857179",
+          "channel_category_id": null,
+          "channel_item_id": "1733076205828802523"
+        },
+        {
+          "channel_id": 131076,
+          "channel_name": "Shop | Tokopedia",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128883,
+          "channel_full_name": "Shop | Tokopedia",
+          "attributes": [
+            {
+              "store_id": 128883,
+              "display_name": "Fitur Bahan",
+              "attribute_name": "100472",
+              "attribute_value": [
+                "1000958"
+              ]
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Nomor Ijin Edar  (BPOM / PIRT)",
+              "attribute_name": "101066",
+              "attribute_value": [
+                "7481195869887547157"
+              ]
+            },
+            {
+              "store_id": 128883,
+              "display_name": "COD",
+              "attribute_name": "is_cod_open",
+              "attribute_value": "0"
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Platform",
+              "attribute_name": "listing_platforms",
+              "attribute_value": [
+                "TIKTOK_SHOP",
+                "TOKOPEDIA"
+              ]
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Kondisi Barang",
+              "attribute_name": "is_pre_owned",
+              "attribute_value": "1"
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Asuransi pengiriman",
+              "attribute_name": "shipping_insurance_requirement",
+              "attribute_value": "REQUIRED"
+            },
+            {
+              "attribute_name": "warehouse_ids",
+              "attribute_value": [
+                "7395920185951127297"
+              ]
+            }
+          ],
+          "sell_here": true,
+          "channel_url": "https://shop.tiktok.com/view/product/1733075840222857179",
+          "channel_category_id": "919176",
+          "channel_item_id": "1733076205828802523"
+        },
+        {
+          "channel_id": 1048576,
+          "channel_name": "Shopify",
+          "store_name": "treelogy.com",
+          "store_id": 128887,
+          "channel_full_name": "Shopify",
+          "attributes": [
+            {
+              "attribute_name": "warehouse_ids",
+              "attribute_value": [
+                "gid://shopify/Location/74785390780"
+              ]
+            }
+          ],
+          "sell_here": true,
+          "channel_url": "https://treelogymoringa.myshopify.com/products/the-discovery-pack",
+          "channel_category_id": null,
+          "channel_item_id": "45506369192124"
+        }
+      ],
+      "bundles": [
+        {
+          "item_id": 83,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMP-45-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "bom_comp_id": 7,
+          "sell_price": 320000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/55b85f24-8253-417d-9963-cd94cb73bb93pngtplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        },
+        {
+          "item_id": 81,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMO-30-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "bom_comp_id": 8,
+          "sell_price": 470000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/6ccc8bd246384a77a31b08f87cf4e6b0tplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        },
+        {
+          "item_id": 79,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMC-90-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "bom_comp_id": 9,
+          "sell_price": 390000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/dc4033affac04cc6b758418a4eeceddftplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        }
+      ],
+      "bom_id": 4,
+      "min": null,
+      "max": null,
+      "attributes": [
+        {
+          "store_id": 0,
+          "display_name": "Tanggal Kedaluwarsa",
+          "attribute_name": 6008,
+          "attribute_value": "'2027-02-03T00:00:00.000+07:00'"
+        },
+        {
+          "store_id": 0,
+          "display_name": "Masa Penyimpanan",
+          "attribute_name": 6007,
+          "attribute_value": "24 Bulan"
+        }
+      ]
+    }
+  },
+  {
+    "bundle_sku": "MRS-004",
+    "bundle_name": "TREELOGY Moringa Ritual Set + Powder 180gr (The Complete Ritual Bundle)",
+    "bundle_item_id": 78,
+    "bundle_group_id": 57,
+    "bundle_price": 1780000,
+    "components": [],
+    "detailKeys": [
+      "item_group_id",
+      "item_group_name",
+      "description",
+      "notes",
+      "sell_tax_id",
+      "buy_tax_id",
+      "sales_acct_id",
+      "cogs_acct_id",
+      "invt_acct_id",
+      "sell_this",
+      "buy_this",
+      "stock_this",
+      "dropship_this",
+      "uom_id",
+      "sell_unit",
+      "buy_unit",
+      "is_active",
+      "purch_acct_id",
+      "status",
+      "item_category_id",
+      "package_content",
+      "package_weight",
+      "package_height",
+      "package_width",
+      "package_length",
+      "variations",
+      "sell_price",
+      "buy_price",
+      "last_modified",
+      "brand_id",
+      "rop",
+      "is_favourite",
+      "use_single_image_set",
+      "use_serial_number",
+      "brand_name",
+      "store_priority_qty_treshold",
+      "created_date",
+      "use_batch_number",
+      "lead_time",
+      "is_po",
+      "unlimited_stock_store_ids",
+      "crosslisting_category_id",
+      "sales_return_acct_id",
+      "safety_stock",
+      "debt_acct_id",
+      "sales_income_tax_id",
+      "purch_income_tax_id",
+      "sell_tax_name",
+      "buy_tax_name",
+      "sales_return_acct_name",
+      "sales_acct_name",
+      "invt_acct_name",
+      "cogs_acct_name",
+      "purch_acct_name",
+      "uom_name",
+      "product_skus",
+      "channels",
+      "bundles",
+      "bom_id",
+      "min",
+      "max",
+      "attributes"
+    ],
+    "_raw": {
+      "item_group_id": 57,
+      "item_group_name": "TREELOGY Moringa Ritual Set + Powder 180gr (The Complete Ritual Bundle)",
+      "description": "<p>—————— BAHASA INDONESIA ——————</p><p><br></p><p><strong>TREELOGY Moringa Ritual Set</strong><br><br></p><p>Cara sederhana dan elegan untuk menikmati moringa setiap hari. Dibuat untuk pengalaman yang memuaskan dan tanpa proses yang merepotkan, set ini mencakup semua yang Anda butuhkan untuk mencampur dan menyajikan minuman atau taburan moringa Anda dengan mudah.</p><p><br></p><p><strong>Setiap set meliputi:</strong></p><p>• Kotak penyimpanan bambu dengan tutup yang berfungsi ganda sebagai baki saji</p><p>• Whisk alami berbahan bambu 120-cabang — tanda kualitas, dirancang untuk pencampuran yang halus</p><p>• Sendok takar bambu untuk porsi yang tepat dan higienis</p><p>• Mangkuk kaca untuk pencampuran dan penyajian yang mudah</p><p><br></p><p><strong>Nilai Pentingnya:</strong></p><p>• Membuat persiapan moringa disengaja dan mudah</p><p>• Dibuat dari bahan alami dan berkelanjutan</p><p>• Serbaguna — gunakan dengan moringa atau campuran bubuk lainnya</p><p>• Paket bubuk opsional untuk set pemula yang lengkap</p><p><br></p><p><strong>Kualitas & Keahlian:</strong></p><p>• Whisk alami berbahan bambu 120-cabang untuk pencampuran yang halus dan konsisten</p><p>• Alat bambu yang tahan lama dan mangkuk kaca yang kokoh</p><p>• Bebas plastik, dibuat untuk penggunaan harian yang tahan lama</p><p><br></p><p><strong>Pilihan & Perawatan:</strong></p><p>• Dijual sebagai satu set lengkap, dengan atau tanpa Treelogy Organic Moringa Powder</p><p>• Cuci alat bambu dengan tangan, keringkan di udara, dan simpan di tempat kering</p><p><br></p><p><strong>Dengan Treelogy, Anda memilih kesehatan yang dapat Anda percaya, dari awal hingga akhir.</strong></p><p><br><br></p><p>———————— ENGLISH ————————<strong><br><br><br>TREELOGY Moringa Ritual Set<br><br></strong>A simple and refined way to enjoy moringa every day. Crafted for a smooth, mess-free experience, this set includes everything you need to mix and serve your moringa drinks or toppings with ease.</p><p><br></p><p><strong>Each set includes:</strong></p><p>• Bamboo storage box with a lid that doubles as a serving tray</p><p>• 120-prong bamboo whisk — a sign of quality, designed for smooth blending</p><p>• Bamboo scoop for precise, hygienic portioning</p><p>• Glass bowl for easy mixing and serving<br><br></p><p><strong> Why It Matters:</strong></p><p>• Makes moringa preparation intentional and easy</p><p>• Crafted from natural, sustainable materials</p><p>• Versatile — use with moringa or other powdered blends</p><p>• Optional powder bundle for a complete starter set</p><p><br></p><p><strong>Quality & Craftsmanship:</strong></p><p>• 120-prong whisk for smooth, consistent blending</p><p>• Durable bamboo tools and a sturdy glass bowl</p><p>• Plastic-free, built for lasting daily use</p><p><br></p><p><strong>Options & Care:</strong></p><p>• Sold as a full set, with or without Treelogy Organic Moringa Powder</p><p>• Hand-wash bamboo tools, air-dry, and store in a dry place</p><p><br></p><p><strong>With Treelogy, you choose wellness you can trust, from the ground up.</strong></p>",
+      "notes": null,
+      "sell_tax_id": null,
+      "buy_tax_id": null,
+      "sales_acct_id": 28,
+      "cogs_acct_id": 30,
+      "invt_acct_id": 4,
+      "sell_this": true,
+      "buy_this": true,
+      "stock_this": true,
+      "dropship_this": null,
+      "uom_id": -1,
+      "sell_unit": "Buah",
+      "buy_unit": "Buah",
+      "is_active": true,
+      "purch_acct_id": null,
+      "status": null,
+      "item_category_id": null,
+      "package_content": null,
+      "package_weight": "1500.0000",
+      "package_height": "0.0000",
+      "package_width": "0.0000",
+      "package_length": "0.0000",
+      "variations": null,
+      "sell_price": "1780000.0000",
+      "buy_price": "0.0000",
+      "last_modified": "2026-04-28T03:11:26.800Z",
+      "brand_id": null,
+      "rop": "0.0000",
+      "is_favourite": null,
+      "use_single_image_set": false,
+      "use_serial_number": false,
+      "brand_name": null,
+      "store_priority_qty_treshold": null,
+      "created_date": "2026-03-25T06:26:04.645Z",
+      "use_batch_number": false,
+      "lead_time": null,
+      "is_po": null,
+      "unlimited_stock_store_ids": null,
+      "crosslisting_category_id": null,
+      "sales_return_acct_id": null,
+      "safety_stock": 0,
+      "debt_acct_id": null,
+      "sales_income_tax_id": null,
+      "purch_income_tax_id": null,
+      "sell_tax_name": null,
+      "buy_tax_name": null,
+      "sales_return_acct_name": null,
+      "sales_acct_name": "4-4000 - Penjualan",
+      "invt_acct_name": "1-1200 - Persediaan Barang",
+      "cogs_acct_name": "5-5000 - Harga Pokok Penjualan (COGS)",
+      "purch_acct_name": null,
+      "uom_name": "Buah",
+      "product_skus": [
+        {
+          "item_id": 78,
+          "item_code": "MRS-004",
+          "barcode": null,
+          "sell_price": 1780000,
+          "end_qty": null,
+          "average_cost": null,
+          "amount": null,
+          "variation_values": [
+            {
+              "label": "Moringa Ritual Set",
+              "value": "Complete Ritual Bundle – Includes 180g Powder"
+            }
+          ],
+          "prices": [
+            {
+              "store_id": 128882,
+              "channel_id": 64,
+              "sell_price": 1780000
+            },
+            {
+              "store_id": 128882,
+              "channel_id": 64,
+              "sell_price": 2080000
+            },
+            {
+              "store_id": 128884,
+              "channel_id": 128,
+              "sell_price": 1780000
+            },
+            {
+              "store_id": 128883,
+              "channel_id": 131076,
+              "sell_price": 1780000
+            },
+            {
+              "store_id": 128887,
+              "channel_id": 1048576,
+              "sell_price": 1780000
+            }
+          ],
+          "images": [
+            {
+              "item_id": 78,
+              "image_id": 223,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/758bc3136c204eb5bb4df253af49aa6a~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/758bc3136c204eb5bb4df253af49aa6atplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "758bc3136c204eb5bb4df253af49aa6a~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 78,
+              "image_id": 224,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/eff85d29af02464fa0fc52e19c452d14~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/eff85d29af02464fa0fc52e19c452d14tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "eff85d29af02464fa0fc52e19c452d14~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 1,
+              "channel_info": null
+            },
+            {
+              "item_id": 78,
+              "image_id": 225,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/e73a1a3340c84225bc4dacc994a27550~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/e73a1a3340c84225bc4dacc994a27550tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "e73a1a3340c84225bc4dacc994a27550~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 2,
+              "channel_info": null
+            },
+            {
+              "item_id": 78,
+              "image_id": 226,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/c4b8584180844a5bbd197960eae482f0~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/c4b8584180844a5bbd197960eae482f0tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "c4b8584180844a5bbd197960eae482f0~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 3,
+              "channel_info": null
+            },
+            {
+              "item_id": 78,
+              "image_id": 227,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/e52b526d8a4b48478cba3b9224fbe972~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/e52b526d8a4b48478cba3b9224fbe972tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "e52b526d8a4b48478cba3b9224fbe972~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 4,
+              "channel_info": null
+            }
+          ]
+        }
+      ],
+      "channels": [
+        {
+          "channel_id": 64,
+          "channel_name": "Shopee",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128882,
+          "channel_full_name": "Shopee",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://shopee.co.id/product/1592826980/47450290638",
+          "channel_category_id": "100006",
+          "channel_item_id": "330025433447"
+        },
+        {
+          "channel_id": 128,
+          "channel_name": "Tokopedia",
+          "store_name": "Treelogy Moringa (TTS)",
+          "store_id": 128884,
+          "channel_full_name": "Tokopedia",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-moringa-ritual-set-1731746420475922395",
+          "channel_category_id": null,
+          "channel_item_id": "1731747589511022555"
+        },
+        {
+          "channel_id": 131076,
+          "channel_name": "Shop | Tokopedia",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128883,
+          "channel_full_name": "Shop | Tokopedia",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://shop.tiktok.com/view/product/1731746420475922395",
+          "channel_category_id": "601677",
+          "channel_item_id": "1731747589511022555"
+        },
+        {
+          "channel_id": 1048576,
+          "channel_name": "Shopify",
+          "store_name": "treelogy.com",
+          "store_id": 128887,
+          "channel_full_name": "Shopify",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-ritual-set",
+          "channel_category_id": null,
+          "channel_item_id": "44562191548604"
+        }
+      ],
+      "bundles": [
+        {
+          "item_id": 85,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMP-180-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "bom_comp_id": 5,
+          "sell_price": 990000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/431d2d47914b4cee94ca879df13b079ctplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        },
+        {
+          "item_id": 75,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "MRS-001",
+          "barcode": null,
+          "item_name": "TREELOGY Moringa Ritual Set",
+          "bom_comp_id": 6,
+          "sell_price": 1090000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/eff85d29af02464fa0fc52e19c452d14tplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        }
+      ],
+      "bom_id": 3,
+      "min": null,
+      "max": null,
+      "attributes": [
+        {
+          "attribute_id": -1000,
+          "attribute_value": 0
+        }
+      ]
+    }
+  },
+  {
+    "bundle_sku": "MRS-002",
+    "bundle_name": "TREELOGY Moringa Ritual Set + Powder 45gr (Ritual Starter Bundle)",
+    "bundle_item_id": 76,
+    "bundle_group_id": 55,
+    "bundle_price": 1290000,
+    "components": [],
+    "detailKeys": [
+      "item_group_id",
+      "item_group_name",
+      "description",
+      "notes",
+      "sell_tax_id",
+      "buy_tax_id",
+      "sales_acct_id",
+      "cogs_acct_id",
+      "invt_acct_id",
+      "sell_this",
+      "buy_this",
+      "stock_this",
+      "dropship_this",
+      "uom_id",
+      "sell_unit",
+      "buy_unit",
+      "is_active",
+      "purch_acct_id",
+      "status",
+      "item_category_id",
+      "package_content",
+      "package_weight",
+      "package_height",
+      "package_width",
+      "package_length",
+      "variations",
+      "sell_price",
+      "buy_price",
+      "last_modified",
+      "brand_id",
+      "rop",
+      "is_favourite",
+      "use_single_image_set",
+      "use_serial_number",
+      "brand_name",
+      "store_priority_qty_treshold",
+      "created_date",
+      "use_batch_number",
+      "lead_time",
+      "is_po",
+      "unlimited_stock_store_ids",
+      "crosslisting_category_id",
+      "sales_return_acct_id",
+      "safety_stock",
+      "debt_acct_id",
+      "sales_income_tax_id",
+      "purch_income_tax_id",
+      "sell_tax_name",
+      "buy_tax_name",
+      "sales_return_acct_name",
+      "sales_acct_name",
+      "invt_acct_name",
+      "cogs_acct_name",
+      "purch_acct_name",
+      "uom_name",
+      "product_skus",
+      "channels",
+      "bundles",
+      "bom_id",
+      "min",
+      "max",
+      "attributes"
+    ],
+    "_raw": {
+      "item_group_id": 55,
+      "item_group_name": "TREELOGY Moringa Ritual Set + Powder 45gr (Ritual Starter Bundle)",
+      "description": "<p>—————— BAHASA INDONESIA ——————</p><p><br></p><p><strong>TREELOGY Moringa Ritual Set</strong><br><br></p><p>Cara sederhana dan elegan untuk menikmati moringa setiap hari. Dibuat untuk pengalaman yang memuaskan dan tanpa proses yang merepotkan, set ini mencakup semua yang Anda butuhkan untuk mencampur dan menyajikan minuman atau taburan moringa Anda dengan mudah.</p><p><br></p><p><strong>Setiap set meliputi:</strong></p><p>• Kotak penyimpanan bambu dengan tutup yang berfungsi ganda sebagai baki saji</p><p>• Whisk alami berbahan bambu 120-cabang — tanda kualitas, dirancang untuk pencampuran yang halus</p><p>• Sendok takar bambu untuk porsi yang tepat dan higienis</p><p>• Mangkuk kaca untuk pencampuran dan penyajian yang mudah</p><p><br></p><p><strong>Nilai Pentingnya:</strong></p><p>• Membuat persiapan moringa disengaja dan mudah</p><p>• Dibuat dari bahan alami dan berkelanjutan</p><p>• Serbaguna — gunakan dengan moringa atau campuran bubuk lainnya</p><p>• Paket bubuk opsional untuk set pemula yang lengkap</p><p><br></p><p><strong>Kualitas & Keahlian:</strong></p><p>• Whisk alami berbahan bambu 120-cabang untuk pencampuran yang halus dan konsisten</p><p>• Alat bambu yang tahan lama dan mangkuk kaca yang kokoh</p><p>• Bebas plastik, dibuat untuk penggunaan harian yang tahan lama</p><p><br></p><p><strong>Pilihan & Perawatan:</strong></p><p>• Dijual sebagai satu set lengkap, dengan atau tanpa Treelogy Organic Moringa Powder</p><p>• Cuci alat bambu dengan tangan, keringkan di udara, dan simpan di tempat kering</p><p><br></p><p><strong>Dengan Treelogy, Anda memilih kesehatan yang dapat Anda percaya, dari awal hingga akhir.</strong></p><p><br><br></p><p>———————— ENGLISH ————————<strong><br><br><br>TREELOGY Moringa Ritual Set<br><br></strong>A simple and refined way to enjoy moringa every day. Crafted for a smooth, mess-free experience, this set includes everything you need to mix and serve your moringa drinks or toppings with ease.</p><p><br></p><p><strong>Each set includes:</strong></p><p>• Bamboo storage box with a lid that doubles as a serving tray</p><p>• 120-prong bamboo whisk — a sign of quality, designed for smooth blending</p><p>• Bamboo scoop for precise, hygienic portioning</p><p>• Glass bowl for easy mixing and serving<br><br></p><p><strong> Why It Matters:</strong></p><p>• Makes moringa preparation intentional and easy</p><p>• Crafted from natural, sustainable materials</p><p>• Versatile — use with moringa or other powdered blends</p><p>• Optional powder bundle for a complete starter set</p><p><br></p><p><strong>Quality & Craftsmanship:</strong></p><p>• 120-prong whisk for smooth, consistent blending</p><p>• Durable bamboo tools and a sturdy glass bowl</p><p>• Plastic-free, built for lasting daily use</p><p><br></p><p><strong>Options & Care:</strong></p><p>• Sold as a full set, with or without Treelogy Organic Moringa Powder</p><p>• Hand-wash bamboo tools, air-dry, and store in a dry place</p><p><br></p><p><strong>With Treelogy, you choose wellness you can trust, from the ground up.</strong></p>",
+      "notes": null,
+      "sell_tax_id": null,
+      "buy_tax_id": null,
+      "sales_acct_id": 28,
+      "cogs_acct_id": 30,
+      "invt_acct_id": 4,
+      "sell_this": true,
+      "buy_this": true,
+      "stock_this": true,
+      "dropship_this": null,
+      "uom_id": -1,
+      "sell_unit": "Buah",
+      "buy_unit": "Buah",
+      "is_active": true,
+      "purch_acct_id": null,
+      "status": null,
+      "item_category_id": null,
+      "package_content": null,
+      "package_weight": "1500.0000",
+      "package_height": "0.0000",
+      "package_width": "0.0000",
+      "package_length": "0.0000",
+      "variations": null,
+      "sell_price": "1290000.0000",
+      "buy_price": "0.0000",
+      "last_modified": "2026-04-28T03:09:51.830Z",
+      "brand_id": null,
+      "rop": "0.0000",
+      "is_favourite": null,
+      "use_single_image_set": false,
+      "use_serial_number": false,
+      "brand_name": null,
+      "store_priority_qty_treshold": null,
+      "created_date": "2026-03-25T06:26:04.287Z",
+      "use_batch_number": false,
+      "lead_time": null,
+      "is_po": null,
+      "unlimited_stock_store_ids": null,
+      "crosslisting_category_id": null,
+      "sales_return_acct_id": null,
+      "safety_stock": 0,
+      "debt_acct_id": null,
+      "sales_income_tax_id": null,
+      "purch_income_tax_id": null,
+      "sell_tax_name": null,
+      "buy_tax_name": null,
+      "sales_return_acct_name": null,
+      "sales_acct_name": "4-4000 - Penjualan",
+      "invt_acct_name": "1-1200 - Persediaan Barang",
+      "cogs_acct_name": "5-5000 - Harga Pokok Penjualan (COGS)",
+      "purch_acct_name": null,
+      "uom_name": "Buah",
+      "product_skus": [
+        {
+          "item_id": 76,
+          "item_code": "MRS-002",
+          "barcode": null,
+          "sell_price": 1290000,
+          "end_qty": -2,
+          "average_cost": 0,
+          "amount": 0,
+          "variation_values": [
+            {
+              "label": "Moringa Ritual Set",
+              "value": "Starter Ritual Bundle – Includes 45g Powder"
+            }
+          ],
+          "prices": [
+            {
+              "store_id": 128882,
+              "channel_id": 64,
+              "sell_price": 1290000
+            },
+            {
+              "store_id": 128882,
+              "channel_id": 64,
+              "sell_price": 1410000
+            },
+            {
+              "store_id": 128884,
+              "channel_id": 128,
+              "sell_price": 1290000
+            },
+            {
+              "store_id": 128883,
+              "channel_id": 131076,
+              "sell_price": 1290000
+            },
+            {
+              "store_id": 128887,
+              "channel_id": 1048576,
+              "sell_price": 1290000
+            }
+          ],
+          "images": [
+            {
+              "item_id": 76,
+              "image_id": 213,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/e52b526d8a4b48478cba3b9224fbe972~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/e52b526d8a4b48478cba3b9224fbe972tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "e52b526d8a4b48478cba3b9224fbe972~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 76,
+              "image_id": 214,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/758bc3136c204eb5bb4df253af49aa6a~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/758bc3136c204eb5bb4df253af49aa6atplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "758bc3136c204eb5bb4df253af49aa6a~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 1,
+              "channel_info": null
+            },
+            {
+              "item_id": 76,
+              "image_id": 215,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/eff85d29af02464fa0fc52e19c452d14~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/eff85d29af02464fa0fc52e19c452d14tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "eff85d29af02464fa0fc52e19c452d14~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 2,
+              "channel_info": null
+            },
+            {
+              "item_id": 76,
+              "image_id": 216,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/c4b8584180844a5bbd197960eae482f0~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/c4b8584180844a5bbd197960eae482f0tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "c4b8584180844a5bbd197960eae482f0~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 3,
+              "channel_info": null
+            },
+            {
+              "item_id": 76,
+              "image_id": 217,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/e73a1a3340c84225bc4dacc994a27550~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/e73a1a3340c84225bc4dacc994a27550tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "e73a1a3340c84225bc4dacc994a27550~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 4,
+              "channel_info": null
+            }
+          ]
+        }
+      ],
+      "channels": [
+        {
+          "channel_id": 64,
+          "channel_name": "Shopee",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128882,
+          "channel_full_name": "Shopee",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://shopee.co.id/product/1592826980/47450290638",
+          "channel_category_id": "100006",
+          "channel_item_id": "330025433449"
+        },
+        {
+          "channel_id": 128,
+          "channel_name": "Tokopedia",
+          "store_name": "Treelogy Moringa (TTS)",
+          "store_id": 128884,
+          "channel_full_name": "Tokopedia",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-moringa-ritual-set-1731746420475922395",
+          "channel_category_id": null,
+          "channel_item_id": "1731747589510891483"
+        },
+        {
+          "channel_id": 131076,
+          "channel_name": "Shop | Tokopedia",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128883,
+          "channel_full_name": "Shop | Tokopedia",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://shop.tiktok.com/view/product/1731746420475922395",
+          "channel_category_id": "601677",
+          "channel_item_id": "1731747589510891483"
+        },
+        {
+          "channel_id": 1048576,
+          "channel_name": "Shopify",
+          "store_name": "treelogy.com",
+          "store_id": 128887,
+          "channel_full_name": "Shopify",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-ritual-set",
+          "channel_category_id": null,
+          "channel_item_id": "44562189451452"
+        }
+      ],
+      "bundles": [
+        {
+          "item_id": 83,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMP-45-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "bom_comp_id": 1,
+          "sell_price": 320000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/55b85f24-8253-417d-9963-cd94cb73bb93pngtplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        },
+        {
+          "item_id": 75,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "MRS-001",
+          "barcode": null,
+          "item_name": "TREELOGY Moringa Ritual Set",
+          "bom_comp_id": 2,
+          "sell_price": 1090000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/eff85d29af02464fa0fc52e19c452d14tplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        }
+      ],
+      "bom_id": 1,
+      "min": null,
+      "max": null,
+      "attributes": [
+        {
+          "attribute_id": -1000,
+          "attribute_value": 0
+        }
+      ]
+    }
+  },
+  {
+    "bundle_sku": "The-Movement-&-Relief",
+    "bundle_name": "TREELOGY The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Perawatan Kulit & Rambut",
+    "bundle_item_id": 74,
+    "bundle_group_id": 46,
+    "bundle_price": 1450000,
+    "components": [],
+    "detailKeys": [
+      "item_group_id",
+      "item_group_name",
+      "description",
+      "notes",
+      "sell_tax_id",
+      "buy_tax_id",
+      "sales_acct_id",
+      "cogs_acct_id",
+      "invt_acct_id",
+      "sell_this",
+      "buy_this",
+      "stock_this",
+      "dropship_this",
+      "uom_id",
+      "sell_unit",
+      "buy_unit",
+      "is_active",
+      "purch_acct_id",
+      "status",
+      "item_category_id",
+      "package_content",
+      "package_weight",
+      "package_height",
+      "package_width",
+      "package_length",
+      "variations",
+      "sell_price",
+      "buy_price",
+      "last_modified",
+      "brand_id",
+      "rop",
+      "is_favourite",
+      "use_single_image_set",
+      "use_serial_number",
+      "brand_name",
+      "store_priority_qty_treshold",
+      "created_date",
+      "use_batch_number",
+      "lead_time",
+      "is_po",
+      "unlimited_stock_store_ids",
+      "crosslisting_category_id",
+      "sales_return_acct_id",
+      "safety_stock",
+      "debt_acct_id",
+      "sales_income_tax_id",
+      "purch_income_tax_id",
+      "sell_tax_name",
+      "buy_tax_name",
+      "sales_return_acct_name",
+      "sales_acct_name",
+      "invt_acct_name",
+      "cogs_acct_name",
+      "purch_acct_name",
+      "uom_name",
+      "product_skus",
+      "channels",
+      "bundles",
+      "bom_id",
+      "min",
+      "max",
+      "attributes"
+    ],
+    "_raw": {
+      "item_group_id": 46,
+      "item_group_name": "TREELOGY The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Perawatan Kulit & Rambut",
+      "description": "<p style=\"text-align: left;\"><span>------BAHASA INDONESIA------</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Untuk kamu yang sudah mengenal Moringa, paket perawatan ini menggabungkan dukungan nutrisi harian dengan oil yang menutrisi kulit dan rambut. Sederhana, efektif, terpercaya.</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Bundling:</span></p><p style=\"text-align: left;\"><span>• 180 capsules untuk dukungan nutrisi</span></p><p style=\"text-align: left;\"><span>• 60 ml Oil untuk perawatan kulit & rambut harian</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Penyimpanan:</span></p><p style=\"text-align: left;\"><span>Simpan tertutup rapat pada suhu kamar, jauh dari sinar matahari langsung dan kelembaban</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Sertifikasi:</span></p><p style=\"text-align: left;\"><span>• Bersertifikat Organik EU / USDA / SNI</span></p><p style=\"text-align: left;\"><span>• Bersertifikat BPOM (kapsul daun kelor murni pertama & satu-satunya yang terdaftar)</span></p><p style=\"text-align: left;\"><span>• Halal BPJPH</span></p><p style=\"text-align: left;\"><span>• HACCP / ISO / GMP</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Dengan Treelogy, Anda memilih kesehatan yang dapat Anda percaya, dari awal hingga akhir.</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>------ENGLISH BELOW------</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>For those who know Moringa, a maintenance pack combining daily nutritional support with potent nourishing oil for skin & hair. Simple, effective, reliable.</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Bundling:</span></p><p style=\"text-align: left;\"><span>• 180 capsules for nutritional support </span></p><p style=\"text-align: left;\"><span>• 60 ml Oil for daily skincare & haircare</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Storage:</span></p><p style=\"text-align: left;\"><span>Store sealed at room temperature, away from direct sunlight and moisture</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>Certifications:</span></p><p style=\"text-align: left;\"><span>• Organic Certified EU / USDA / SNI</span></p><p style=\"text-align: left;\"><span>• BPOM Certified (the first & only pure moringa leaf capsules registered)</span></p><p style=\"text-align: left;\"><span>• Halal BPJPH</span></p><p style=\"text-align: left;\"><span>• HACCP / ISO / GMP</span></p><p style=\"text-align: left;\"><span><br></span></p><p style=\"text-align: left;\"><span>With Treelogy, you choose wellness you can trust, from the ground up.</span></p>",
+      "notes": null,
+      "sell_tax_id": null,
+      "buy_tax_id": null,
+      "sales_acct_id": null,
+      "cogs_acct_id": null,
+      "invt_acct_id": null,
+      "sell_this": true,
+      "buy_this": true,
+      "stock_this": true,
+      "dropship_this": null,
+      "uom_id": -1,
+      "sell_unit": "Buah",
+      "buy_unit": "Buah",
+      "is_active": true,
+      "purch_acct_id": null,
+      "status": null,
+      "item_category_id": 15166,
+      "package_content": null,
+      "package_weight": "600.0000",
+      "package_height": null,
+      "package_width": null,
+      "package_length": null,
+      "variations": [],
+      "sell_price": null,
+      "buy_price": null,
+      "last_modified": "2026-04-28T02:31:14.359Z",
+      "brand_id": null,
+      "rop": null,
+      "is_favourite": null,
+      "use_single_image_set": false,
+      "use_serial_number": false,
+      "brand_name": null,
+      "store_priority_qty_treshold": null,
+      "created_date": "2026-03-24T07:56:41.398Z",
+      "use_batch_number": false,
+      "lead_time": null,
+      "is_po": null,
+      "unlimited_stock_store_ids": null,
+      "crosslisting_category_id": 15166,
+      "sales_return_acct_id": null,
+      "safety_stock": 0,
+      "debt_acct_id": null,
+      "sales_income_tax_id": null,
+      "purch_income_tax_id": null,
+      "sell_tax_name": null,
+      "buy_tax_name": null,
+      "sales_return_acct_name": null,
+      "sales_acct_name": null,
+      "invt_acct_name": null,
+      "cogs_acct_name": null,
+      "purch_acct_name": null,
+      "uom_name": "Buah",
+      "product_skus": [
+        {
+          "item_id": 74,
+          "item_code": "The-Movement-&-Relief",
+          "barcode": null,
+          "sell_price": 1450000,
+          "end_qty": -48,
+          "average_cost": 0,
+          "amount": 0,
+          "variation_values": [],
+          "prices": [
+            {
+              "store_id": 128882,
+              "channel_id": 64,
+              "sell_price": 1400000
+            },
+            {
+              "store_id": 128884,
+              "channel_id": 128,
+              "sell_price": 1450000
+            },
+            {
+              "store_id": 128883,
+              "channel_id": 131076,
+              "sell_price": 1450000
+            },
+            {
+              "store_id": 128887,
+              "channel_id": 1048576,
+              "sell_price": 1180000
+            },
+            {
+              "store_id": 128887,
+              "channel_id": 1048576,
+              "sell_price": 1250000
+            }
+          ],
+          "images": [
+            {
+              "item_id": 74,
+              "image_id": 124,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/19097e503e034f7ca47a67a8af2f71f5~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/19097e503e034f7ca47a67a8af2f71f5tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "19097e503e034f7ca47a67a8af2f71f5~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 74,
+              "image_id": 125,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/fc0e4c929ecc4fe8a9bed7e8ed69e855~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/fc0e4c929ecc4fe8a9bed7e8ed69e855tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "fc0e4c929ecc4fe8a9bed7e8ed69e855~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 74,
+              "image_id": 126,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/f9ba93e545924092b147a4551f80a286~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/f9ba93e545924092b147a4551f80a286tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "f9ba93e545924092b147a4551f80a286~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 74,
+              "image_id": 127,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/0c5305de8ddd424e866dd47de7180e45~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/0c5305de8ddd424e866dd47de7180e45tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "0c5305de8ddd424e866dd47de7180e45~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 74,
+              "image_id": 128,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/4c78ea74ded7414c8c4091c27dbc2058~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/4c78ea74ded7414c8c4091c27dbc2058tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "4c78ea74ded7414c8c4091c27dbc2058~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 74,
+              "image_id": 129,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/a378c92ff5284d01b14d4447b6f27bfb~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/a378c92ff5284d01b14d4447b6f27bfbtplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "a378c92ff5284d01b14d4447b6f27bfb~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            },
+            {
+              "item_id": 74,
+              "image_id": 130,
+              "cloud_key": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/3ae87004196b4d4896019237dafccd6c~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/3ae87004196b4d4896019237dafccd6ctplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+              "file_name": "3ae87004196b4d4896019237dafccd6c~tplv-aphluv4xwc-origin-jpeg.jpeg?dr=15568&from=520841845&idc=my&ps=933b5bde&shcp=2c1af732&shp=1f0b6a75&t=555f072d",
+              "sequence_number": 0,
+              "channel_info": null
+            }
+          ]
+        }
+      ],
+      "channels": [
+        {
+          "channel_id": 64,
+          "channel_name": "Shopee",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128882,
+          "channel_full_name": "Shopee",
+          "attributes": [
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "100010",
+              "attribute_value": "12 Months"
+            },
+            {
+              "store_id": 128882,
+              "value_unit": "",
+              "attribute_name": "100061",
+              "attribute_value": "2027-10-30T16:00:00.000Z"
+            },
+            {
+              "attribute_name": "logistics",
+              "attribute_value": [
+                {
+                  "enabled": true,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8008,
+                  "logistic_name": "Instant Prioritas",
+                  "estimated_shipping_fee": 12000
+                },
+                {
+                  "enabled": true,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8003,
+                  "logistic_name": "Reguler",
+                  "estimated_shipping_fee": 10000
+                },
+                {
+                  "enabled": true,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8002,
+                  "logistic_name": "Next Day",
+                  "estimated_shipping_fee": 49000
+                },
+                {
+                  "enabled": false,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8005,
+                  "logistic_name": "Hemat Kargo",
+                  "estimated_shipping_fee": 8000
+                },
+                {
+                  "enabled": true,
+                  "is_free": false,
+                  "size_id": 0,
+                  "logistic_id": 8007,
+                  "logistic_name": "Instant",
+                  "estimated_shipping_fee": 10000
+                }
+              ]
+            }
+          ],
+          "sell_here": true,
+          "channel_url": "https://shopee.co.id/product/1592826980/42127146755",
+          "channel_category_id": "100006",
+          "channel_item_id": "42127146755"
+        },
+        {
+          "channel_id": 128,
+          "channel_name": "Tokopedia",
+          "store_name": "Treelogy Moringa (TTS)",
+          "store_id": 128884,
+          "channel_full_name": "Tokopedia",
+          "attributes": null,
+          "sell_here": true,
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-the-movement-relief-moringa-daun-kelor-premium-180-kapsul-oil-60ml-bantu-pegal-sendi-perawatan-kulit-rambut-1733531009044613083",
+          "channel_category_id": null,
+          "channel_item_id": "1733531268102588379"
+        },
+        {
+          "channel_id": 131076,
+          "channel_name": "Shop | Tokopedia",
+          "store_name": "Treelogy Moringa",
+          "store_id": 128883,
+          "channel_full_name": "Shop | Tokopedia",
+          "attributes": [
+            {
+              "store_id": 128883,
+              "display_name": "Nomor Ijin Edar  (BPOM / PIRT)",
+              "attribute_name": "101066",
+              "attribute_value": [
+                "7481195869887547157"
+              ]
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Negara Produsen",
+              "attribute_name": "100336",
+              "attribute_value": [
+                "1000851"
+              ]
+            },
+            {
+              "store_id": 128883,
+              "display_name": "COD",
+              "attribute_name": "is_cod_open",
+              "attribute_value": "0"
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Platform",
+              "attribute_name": "listing_platforms",
+              "attribute_value": [
+                "TIKTOK_SHOP",
+                "TOKOPEDIA"
+              ]
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Kondisi Barang",
+              "attribute_name": "is_pre_owned",
+              "attribute_value": "1"
+            },
+            {
+              "store_id": 128883,
+              "display_name": "Asuransi pengiriman",
+              "attribute_name": "shipping_insurance_requirement",
+              "attribute_value": "REQUIRED"
+            },
+            {
+              "attribute_name": "warehouse_ids",
+              "attribute_value": [
+                "7395920185951127297"
+              ]
+            }
+          ],
+          "sell_here": true,
+          "channel_url": "https://shop.tiktok.com/view/product/1733531009044613083",
+          "channel_category_id": "700650",
+          "channel_item_id": "1733531268102588379"
+        },
+        {
+          "channel_id": 1048576,
+          "channel_name": "Shopify",
+          "store_name": "treelogy.com",
+          "store_id": 128887,
+          "channel_full_name": "Shopify",
+          "attributes": [
+            {
+              "attribute_name": "warehouse_ids",
+              "attribute_value": [
+                "gid://shopify/Location/74785390780"
+              ]
+            }
+          ],
+          "sell_here": true,
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-inside-out-protocol",
+          "channel_category_id": null,
+          "channel_item_id": "46129728487612"
+        }
+      ],
+      "bundles": [
+        {
+          "item_id": 82,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMO-60-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "bom_comp_id": 10,
+          "sell_price": 790000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/6ccc8bd246384a77a31b08f87cf4e6b0tplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        },
+        {
+          "item_id": 80,
+          "qty": 1,
+          "uom_id": -1,
+          "unit": "Buah",
+          "item_code": "OMC-180-001",
+          "barcode": null,
+          "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "bom_comp_id": 11,
+          "sell_price": 690000,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/dc4033affac04cc6b758418a4eeceddftplv-aphluv4xwc-origin-jpeg_thumb.jpeg"
+        }
+      ],
+      "bom_id": 5,
+      "min": null,
+      "max": null,
+      "attributes": [
+        {
+          "store_id": 0,
+          "display_name": "Masa Penyimpanan",
+          "attribute_name": 6007,
+          "attribute_value": "12 Bulan"
+        },
+        {
+          "store_id": 0,
+          "display_name": "Tanggal Kedaluwarsa",
+          "attribute_name": 6008,
+          "attribute_value": "'2027-10-30T23:00:00.000+07:00'"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,14 @@
+{"ts":"2026-04-28T07:59:17.692Z","sn":"SHF-7390-128887","invoiceId":"69566","status":"unresolved","summary":["UNRESOLVED desc match \"Inside-Out-Protocol\" rejected: componentSum=860000 < lineAmount=1180000 (would require negative discount)"]}
+{"ts":"2026-04-28T08:00:24.884Z","sn":"SHF-7410-128887","invoiceId":"69791","status":"unresolved","summary":["UNRESOLVED desc match \"Inside-Out-Protocol\" rejected: componentSum=860000 < lineAmount=1180000 (would require negative discount)"]}
+{"ts":"2026-04-28T08:02:13.194Z","sn":"SP-260427UDP66HRJ","invoiceId":"70126","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:02:14.087Z","sn":"SP-260427UDP66HRJ","invoiceId":"70126","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:02:14.694Z","sn":"SP-260426SDNBXU1P","invoiceId":"70127","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:02:15.733Z","sn":"SP-260426SDNBXU1P","invoiceId":"70127","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:02:16.389Z","sn":"SP-260426TFVCTEPK","invoiceId":"70128","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:02:17.393Z","sn":"SP-260426TFVCTEPK","invoiceId":"70128","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:02:18.076Z","sn":"SP-260426TMFQQY61","invoiceId":"70129","plan":["55→62 (bundle Discovery-Pack)"],"dryRun":false}
+{"ts":"2026-04-28T08:02:19.359Z","sn":"SP-260426TMFQQY61","invoiceId":"70129","status":"applied","newSyncToken":"1","newTotal":999000}
+{"ts":"2026-04-28T08:02:19.988Z","sn":"SP-260426T8QGJM4D","invoiceId":"70130","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:02:20.893Z","sn":"SP-260426T8QGJM4D","invoiceId":"70130","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:02:21.546Z","sn":"TP-583707029088470117-128884","invoiceId":"70131","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:02:22.617Z","sn":"TP-583707029088470117-128884","invoiceId":"70131","status":"applied","newSyncToken":"1","newTotal":690000}

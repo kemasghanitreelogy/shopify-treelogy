@@ -1,0 +1,6 @@
+{"ts":"2026-04-28T05:51:58.519Z","event":"plan","so":"SHF-7464-128887","inv":"70290","lines":[{"lineId":"2","amount":25000,"description":"Shipping (Domestic Shipping)","currentRef":{"value":"1","name":"Sales"}}]}
+{"ts":"2026-04-28T05:52:13.947Z","event":"plan","so":"SHF-7460-128887","inv":"70281","lines":[{"lineId":"2","amount":15000,"description":"Shipping (Domestic Shipping)","currentRef":{"value":"1","name":"Sales"}}]}
+{"ts":"2026-04-28T05:52:15.465Z","event":"plan","so":"SHF-7445-128887","inv":"70265","lines":[{"lineId":"2","amount":25000,"description":"Shipping (Domestic Shipping)","currentRef":{"value":"1","name":"Sales"}}]}
+{"ts":"2026-04-28T05:52:15.913Z","event":"plan","so":"SHF-7461-128887","inv":"70283","lines":[{"lineId":"2","amount":25000,"description":"Shipping (Domestic Shipping)","currentRef":{"value":"1","name":"Sales"}}]}
+{"ts":"2026-04-28T05:52:37.711Z","event":"plan","so":"SHF-7456-128887","inv":"70238","lines":[{"lineId":"2","amount":25000,"description":"Shipping (Domestic Shipping)","currentRef":{"value":"1","name":"Sales"}}]}
+{"ts":"2026-04-28T05:52:38.268Z","event":"plan","so":"SHF-7453-128887","inv":"70232","lines":[{"lineId":"2","amount":25000,"description":"Shipping (Domestic Shipping)","currentRef":{"value":"1","name":"Sales"}}]}

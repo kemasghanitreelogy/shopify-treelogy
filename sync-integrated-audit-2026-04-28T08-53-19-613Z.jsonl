@@ -1,0 +1,180 @@
+{"ts":"2026-04-28T08:53:28.423Z","sn":"TP-583734543038384030-128884","invoiceId":"70305","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:29.487Z","sn":"TP-583734543038384030-128884","invoiceId":"70305","status":"applied","newSyncToken":"1","newTotal":1249900}
+{"ts":"2026-04-28T08:53:30.712Z","sn":"SHF-7423-128887","invoiceId":"70297","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:31.734Z","sn":"SHF-7423-128887","invoiceId":"70297","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:53:32.370Z","sn":"SHF-7429-128887","invoiceId":"70295","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:33.469Z","sn":"SHF-7429-128887","invoiceId":"70295","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:53:34.139Z","sn":"SHF-7422-128887","invoiceId":"70293","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:35.237Z","sn":"SHF-7422-128887","invoiceId":"70293","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:53:36.910Z","sn":"SHF-7462-128887","invoiceId":"70285","plan":["50→61 (bundle Inside-Out-Protocol)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:38.385Z","sn":"SHF-7462-128887","invoiceId":"70285","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:53:40.112Z","sn":"SHF-7459-128887","invoiceId":"70279","plan":["50→61 (bundle Inside-Out-Protocol)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:41.545Z","sn":"SHF-7459-128887","invoiceId":"70279","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:53:42.226Z","sn":"SHF-7451-128887","invoiceId":"70277","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:43.364Z","sn":"SHF-7451-128887","invoiceId":"70277","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:53:43.984Z","sn":"SHF-7450-128887","invoiceId":"70275","plan":["50→61 (bundle Inside-Out-Protocol)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:45.193Z","sn":"SHF-7450-128887","invoiceId":"70275","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:53:45.846Z","sn":"SHF-7449-128887","invoiceId":"70273","plan":["50→61 (bundle Inside-Out-Protocol)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:47.584Z","sn":"SHF-7449-128887","invoiceId":"70273","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:53:48.259Z","sn":"SHF-7448-128887","invoiceId":"70271","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:49.389Z","sn":"SHF-7448-128887","invoiceId":"70271","status":"applied","newSyncToken":"2","newTotal":1062000}
+{"ts":"2026-04-28T08:53:50.622Z","sn":"SHF-7446-128887","invoiceId":"70267","plan":["50→61 (bundle Inside-Out-Protocol)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:51.842Z","sn":"SHF-7446-128887","invoiceId":"70267","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:53:53.185Z","sn":"SHF-7438-128887","invoiceId":"70263","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:54.316Z","sn":"SHF-7438-128887","invoiceId":"70263","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:53:55.051Z","sn":"SHF-7465-128887","invoiceId":"70261","plan":["41→16"],"dryRun":false}
+{"ts":"2026-04-28T08:53:55.926Z","sn":"SHF-7465-128887","invoiceId":"70261","status":"applied","newSyncToken":"2","newTotal":790000}
+{"ts":"2026-04-28T08:53:56.664Z","sn":"SHF-7441-128887","invoiceId":"70259","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:57.796Z","sn":"SHF-7441-128887","invoiceId":"70259","status":"applied","newSyncToken":"2","newTotal":1062000}
+{"ts":"2026-04-28T08:53:58.426Z","sn":"SHF-7430-128887","invoiceId":"70257","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:53:59.679Z","sn":"SHF-7430-128887","invoiceId":"70257","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:54:00.357Z","sn":"SHF-7435-128887","invoiceId":"70255","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:54:01.500Z","sn":"SHF-7435-128887","invoiceId":"70255","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:54:02.831Z","sn":"TP-583724632983373359-128884","invoiceId":"70249","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:54:03.937Z","sn":"TP-583724632983373359-128884","invoiceId":"70249","status":"applied","newSyncToken":"1","newTotal":1250000}
+{"ts":"2026-04-28T08:54:04.536Z","sn":"SP-2604280RPP48XV","invoiceId":"70248","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:05.729Z","sn":"SP-2604280RPP48XV","invoiceId":"70248","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:54:06.934Z","sn":"SP-260427W0JMUP9C","invoiceId":"70245","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:07.844Z","sn":"SP-260427W0JMUP9C","invoiceId":"70245","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:54:08.480Z","sn":"SHF-7458-128887","invoiceId":"70242","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:09.390Z","sn":"SHF-7458-128887","invoiceId":"70242","status":"applied","newSyncToken":"2","newTotal":2484000}
+{"ts":"2026-04-28T08:54:10.077Z","sn":"SHF-7457-128887","invoiceId":"70240","plan":["41→16"],"dryRun":false}
+{"ts":"2026-04-28T08:54:11.033Z","sn":"SHF-7457-128887","invoiceId":"70240","status":"applied","newSyncToken":"2","newTotal":790000}
+{"ts":"2026-04-28T08:54:11.818Z","sn":"SHF-7456-128887","invoiceId":"70238","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:13.047Z","sn":"SHF-7456-128887","invoiceId":"70238","status":"applied","newSyncToken":"3","newTotal":415000}
+{"ts":"2026-04-28T08:54:13.679Z","sn":"SHF-7455-128887","invoiceId":"70236","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:54:14.919Z","sn":"SHF-7455-128887","invoiceId":"70236","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:54:15.521Z","sn":"SHF-7454-128887","invoiceId":"70234","plan":["50→61 (bundle Inside-Out-Protocol)"],"dryRun":false}
+{"ts":"2026-04-28T08:54:16.893Z","sn":"SHF-7454-128887","invoiceId":"70234","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:17.568Z","sn":"SHF-7453-128887","invoiceId":"70232","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:18.519Z","sn":"SHF-7453-128887","invoiceId":"70232","status":"applied","newSyncToken":"3","newTotal":415000}
+{"ts":"2026-04-28T08:54:19.141Z","sn":"SHF-7452-128887","invoiceId":"70230","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:54:20.345Z","sn":"SHF-7452-128887","invoiceId":"70230","status":"applied","newSyncToken":"2","newTotal":1180000}
+{"ts":"2026-04-28T08:54:20.966Z","sn":"TP-583574550967059830-128884","invoiceId":"70226","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:21.969Z","sn":"TP-583574550967059830-128884","invoiceId":"70226","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:22.626Z","sn":"TP-583586820137846322-128884","invoiceId":"70224","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:23.780Z","sn":"TP-583586820137846322-128884","invoiceId":"70224","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:24.525Z","sn":"TP-583595453411461031-128884","invoiceId":"70222","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:25.488Z","sn":"TP-583595453411461031-128884","invoiceId":"70222","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:26.258Z","sn":"TP-583586979288090162-128884","invoiceId":"70220","plan":["42→20","42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:27.365Z","sn":"TP-583586979288090162-128884","invoiceId":"70220","status":"applied","newSyncToken":"2","newTotal":1380000}
+{"ts":"2026-04-28T08:54:27.991Z","sn":"TP-583578869620442833-128884","invoiceId":"70218","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:28.993Z","sn":"TP-583578869620442833-128884","invoiceId":"70218","status":"applied","newSyncToken":"2","newTotal":390000}
+{"ts":"2026-04-28T08:54:29.666Z","sn":"TP-583580801633322847-128884","invoiceId":"70216","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:30.763Z","sn":"TP-583580801633322847-128884","invoiceId":"70216","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:31.481Z","sn":"TP-583590046244766899-128884","invoiceId":"70214","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:32.504Z","sn":"TP-583590046244766899-128884","invoiceId":"70214","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:33.151Z","sn":"TP-583601605537204016-128884","invoiceId":"70212","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:34.117Z","sn":"TP-583601605537204016-128884","invoiceId":"70212","status":"applied","newSyncToken":"2","newTotal":390000}
+{"ts":"2026-04-28T08:54:34.808Z","sn":"TP-583571122059839351-128884","invoiceId":"70210","plan":["42→20","42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:35.952Z","sn":"TP-583571122059839351-128884","invoiceId":"70210","status":"applied","newSyncToken":"2","newTotal":1380000}
+{"ts":"2026-04-28T08:54:36.587Z","sn":"TP-583587397993203125-128884","invoiceId":"70208","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:37.526Z","sn":"TP-583587397993203125-128884","invoiceId":"70208","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:38.241Z","sn":"TP-583605664794445616-128884","invoiceId":"70205","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:39.233Z","sn":"TP-583605664794445616-128884","invoiceId":"70205","status":"applied","newSyncToken":"2","newTotal":690000}
+{"ts":"2026-04-28T08:54:39.928Z","sn":"TP-583708486981945147-128884","invoiceId":"70201","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:40.910Z","sn":"TP-583708486981945147-128884","invoiceId":"70201","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:54:41.617Z","sn":"TP-583706916920067812-128884","invoiceId":"70200","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:42.705Z","sn":"TP-583706916920067812-128884","invoiceId":"70200","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:54:43.338Z","sn":"TP-583718007354786863-128884","invoiceId":"70199","plan":["44→22"],"dryRun":false}
+{"ts":"2026-04-28T08:54:44.317Z","sn":"TP-583718007354786863-128884","invoiceId":"70199","status":"applied","newSyncToken":"1","newTotal":320000}
+{"ts":"2026-04-28T08:54:44.997Z","sn":"TP-583719766803580818-128884","invoiceId":"70198","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:46.386Z","sn":"TP-583719766803580818-128884","invoiceId":"70198","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:54:47.012Z","sn":"TP-583713086073964314-128884","invoiceId":"70197","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:48.052Z","sn":"TP-583713086073964314-128884","invoiceId":"70197","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:54:48.723Z","sn":"TP-583700582063245276-128884","invoiceId":"70196","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:54:49.960Z","sn":"TP-583700582063245276-128884","invoiceId":"70196","status":"applied","newSyncToken":"1","newTotal":1249900}
+{"ts":"2026-04-28T08:54:50.584Z","sn":"TP-583708108853838856-128884","invoiceId":"70195","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:51.676Z","sn":"TP-583708108853838856-128884","invoiceId":"70195","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:54:52.346Z","sn":"TP-583689816216995075-128884","invoiceId":"70194","plan":["41→16"],"dryRun":false}
+{"ts":"2026-04-28T08:54:53.110Z","sn":"TP-583689816216995075-128884","invoiceId":"70194","status":"applied","newSyncToken":"1","newTotal":789900}
+{"ts":"2026-04-28T08:54:53.768Z","sn":"TP-583708842035611470-128884","invoiceId":"70193","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:54.724Z","sn":"TP-583708842035611470-128884","invoiceId":"70193","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:54:55.349Z","sn":"TP-583680976087320089-128884","invoiceId":"70192","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:54:56.445Z","sn":"TP-583680976087320089-128884","invoiceId":"70192","status":"applied","newSyncToken":"1","newTotal":1249900}
+{"ts":"2026-04-28T08:54:57.044Z","sn":"TP-583717785537316769-128884","invoiceId":"70191","plan":["44→22"],"dryRun":false}
+{"ts":"2026-04-28T08:54:58.159Z","sn":"TP-583717785537316769-128884","invoiceId":"70191","status":"applied","newSyncToken":"1","newTotal":990000}
+{"ts":"2026-04-28T08:54:58.864Z","sn":"TP-583708637292758068-128884","invoiceId":"70190","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:54:59.894Z","sn":"TP-583708637292758068-128884","invoiceId":"70190","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:55:00.510Z","sn":"TP-583709500414723630-128884","invoiceId":"70189","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:01.600Z","sn":"TP-583709500414723630-128884","invoiceId":"70189","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:55:02.492Z","sn":"TP-583706726131074944-128884","invoiceId":"70188","plan":["42→20","41→16"],"dryRun":false}
+{"ts":"2026-04-28T08:55:03.594Z","sn":"TP-583706726131074944-128884","invoiceId":"70188","status":"applied","newSyncToken":"1","newTotal":859900}
+{"ts":"2026-04-28T08:55:04.271Z","sn":"TP-583718146390394554-128884","invoiceId":"70187","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:05.310Z","sn":"TP-583718146390394554-128884","invoiceId":"70187","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:55:06.005Z","sn":"TP-583711743522407927-128884","invoiceId":"70186","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:07.010Z","sn":"TP-583711743522407927-128884","invoiceId":"70186","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:55:07.635Z","sn":"TP-583704492115462069-128884","invoiceId":"70185","plan":["41→16","42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:08.567Z","sn":"TP-583704492115462069-128884","invoiceId":"70185","status":"applied","newSyncToken":"1","newTotal":1179800}
+{"ts":"2026-04-28T08:55:09.219Z","sn":"TP-583690966562538706-128884","invoiceId":"70184","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:55:10.397Z","sn":"TP-583690966562538706-128884","invoiceId":"70184","status":"applied","newSyncToken":"1","newTotal":1249900}
+{"ts":"2026-04-28T08:55:11.099Z","sn":"TP-583683723543938867-128884","invoiceId":"70183","plan":["52→63 (bundle The-Movement-&-Relief)"],"dryRun":false}
+{"ts":"2026-04-28T08:55:12.138Z","sn":"TP-583683723543938867-128884","invoiceId":"70183","status":"applied","newSyncToken":"1","newTotal":1249900}
+{"ts":"2026-04-28T08:55:12.730Z","sn":"TP-583719365149558666-128884","invoiceId":"70182","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:13.669Z","sn":"TP-583719365149558666-128884","invoiceId":"70182","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:55:14.346Z","sn":"TT-583708833610499333-128883","invoiceId":"70181","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:15.513Z","sn":"TT-583708833610499333-128883","invoiceId":"70181","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:55:16.622Z","sn":"TP-583714759892371257-128884","invoiceId":"70179","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:17.663Z","sn":"TP-583714759892371257-128884","invoiceId":"70179","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:55:18.305Z","sn":"TP-583714885011867190-128884","invoiceId":"70178","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:19.296Z","sn":"TP-583714885011867190-128884","invoiceId":"70178","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:19.941Z","sn":"TP-583709955329393900-128884","invoiceId":"70177","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:20.935Z","sn":"TP-583709955329393900-128884","invoiceId":"70177","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:21.621Z","sn":"SP-260427US2UA9MT","invoiceId":"70162","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:22.665Z","sn":"SP-260427US2UA9MT","invoiceId":"70162","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:23.308Z","sn":"SP-260426S63C3KHA","invoiceId":"70161","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:24.419Z","sn":"SP-260426S63C3KHA","invoiceId":"70161","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:25.033Z","sn":"SP-260427UQ1GVPFK","invoiceId":"70158","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:26.024Z","sn":"SP-260427UQ1GVPFK","invoiceId":"70158","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:26.663Z","sn":"SP-260427UR98447A","invoiceId":"70160","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:27.601Z","sn":"SP-260427UR98447A","invoiceId":"70160","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:55:28.318Z","sn":"SP-260427UPG9NSA4","invoiceId":"70159","plan":["54→18"],"dryRun":false}
+{"ts":"2026-04-28T08:55:29.494Z","sn":"SP-260427UPG9NSA4","invoiceId":"70159","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:30.208Z","sn":"SP-260425QBQ19SSD","invoiceId":"70157","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:31.477Z","sn":"SP-260425QBQ19SSD","invoiceId":"70157","status":"applied","newSyncToken":"1","newTotal":690000}
+{"ts":"2026-04-28T08:55:32.151Z","sn":"SP-260426S800SX3Q","invoiceId":"70156","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:33.073Z","sn":"SP-260426S800SX3Q","invoiceId":"70156","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:33.686Z","sn":"SP-260425QHD2B341","invoiceId":"70155","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:34.624Z","sn":"SP-260425QHD2B341","invoiceId":"70155","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:35.258Z","sn":"TP-583701164903925710-128884","invoiceId":"70154","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:36.136Z","sn":"TP-583701164903925710-128884","invoiceId":"70154","status":"applied","newSyncToken":"1","newTotal":389900}
+{"ts":"2026-04-28T08:55:36.770Z","sn":"SP-260426TNWJHB5D","invoiceId":"70153","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:37.938Z","sn":"SP-260426TNWJHB5D","invoiceId":"70153","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:38.639Z","sn":"SP-260426SP02AH86","invoiceId":"70152","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:39.657Z","sn":"SP-260426SP02AH86","invoiceId":"70152","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:40.355Z","sn":"SP-260426T1J7VVDM","invoiceId":"70151","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:41.418Z","sn":"SP-260426T1J7VVDM","invoiceId":"70151","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:42.039Z","sn":"SP-260425QW8625VH","invoiceId":"70150","plan":["54→18"],"dryRun":false}
+{"ts":"2026-04-28T08:55:43.050Z","sn":"SP-260425QW8625VH","invoiceId":"70150","status":"applied","newSyncToken":"1","newTotal":780000}
+{"ts":"2026-04-28T08:55:43.723Z","sn":"SP-260425Q8AA8BA8","invoiceId":"70149","plan":["44→22","54→18"],"dryRun":false}
+{"ts":"2026-04-28T08:55:44.831Z","sn":"SP-260425Q8AA8BA8","invoiceId":"70149","status":"applied","newSyncToken":"1","newTotal":710000}
+{"ts":"2026-04-28T08:55:45.414Z","sn":"SP-260426TEWQDFF7","invoiceId":"70148","plan":["44→22"],"dryRun":false}
+{"ts":"2026-04-28T08:55:46.366Z","sn":"SP-260426TEWQDFF7","invoiceId":"70148","status":"applied","newSyncToken":"1","newTotal":320000}
+{"ts":"2026-04-28T08:55:46.996Z","sn":"SP-260427URWQAW9C","invoiceId":"70147","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:47.918Z","sn":"SP-260427URWQAW9C","invoiceId":"70147","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:48.501Z","sn":"SP-260426S6UWXCGR","invoiceId":"70146","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:49.526Z","sn":"SP-260426S6UWXCGR","invoiceId":"70146","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:50.120Z","sn":"SP-260425QS67XQKG","invoiceId":"70145","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:51.151Z","sn":"SP-260425QS67XQKG","invoiceId":"70145","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:51.810Z","sn":"SP-260425Q5605Y4X","invoiceId":"70143","plan":["44→22"],"dryRun":false}
+{"ts":"2026-04-28T08:55:52.627Z","sn":"SP-260425Q5605Y4X","invoiceId":"70143","status":"applied","newSyncToken":"1","newTotal":320000}
+{"ts":"2026-04-28T08:55:53.397Z","sn":"SP-260427TVTE5K83","invoiceId":"70144","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:54.628Z","sn":"SP-260427TVTE5K83","invoiceId":"70144","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:55.361Z","sn":"SP-260426TF6DVN9Y","invoiceId":"70142","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:56.417Z","sn":"SP-260426TF6DVN9Y","invoiceId":"70142","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:57.074Z","sn":"SP-260426SQB95B07","invoiceId":"70141","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:55:58.229Z","sn":"SP-260426SQB95B07","invoiceId":"70141","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:55:58.936Z","sn":"SP-260426STQ3H7TA","invoiceId":"70140","plan":["41→16"],"dryRun":false}
+{"ts":"2026-04-28T08:55:59.799Z","sn":"SP-260426STQ3H7TA","invoiceId":"70140","status":"applied","newSyncToken":"1","newTotal":470000}
+{"ts":"2026-04-28T08:56:00.400Z","sn":"SP-260426SPJT6EWT","invoiceId":"70139","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:56:01.596Z","sn":"SP-260426SPJT6EWT","invoiceId":"70139","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:56:02.244Z","sn":"SP-260425R6P0TBR7","invoiceId":"70138","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:56:03.206Z","sn":"SP-260425R6P0TBR7","invoiceId":"70138","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:56:03.827Z","sn":"SP-260426S9NHK02W","invoiceId":"70137","plan":["44→22"],"dryRun":false}
+{"ts":"2026-04-28T08:56:04.864Z","sn":"SP-260426S9NHK02W","invoiceId":"70137","status":"applied","newSyncToken":"1","newTotal":320000}
+{"ts":"2026-04-28T08:56:05.469Z","sn":"SP-260426SJ5X77ND","invoiceId":"70136","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:56:06.454Z","sn":"SP-260426SJ5X77ND","invoiceId":"70136","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:56:07.079Z","sn":"SP-260426SQ0Y5DP6","invoiceId":"70135","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:56:08.056Z","sn":"SP-260426SQ0Y5DP6","invoiceId":"70135","status":"applied","newSyncToken":"3","newTotal":390000}
+{"ts":"2026-04-28T08:56:08.677Z","sn":"SP-260425Q489DQVY","invoiceId":"70134","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:56:09.713Z","sn":"SP-260425Q489DQVY","invoiceId":"70134","status":"applied","newSyncToken":"1","newTotal":690000}

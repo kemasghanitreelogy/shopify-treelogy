@@ -1,0 +1,371 @@
+[
+  {
+    "salesorder_no": "SP-260424KBJ3UCD0",
+    "docNumber": "SP-260424KBJ3UCD0",
+    "txnDate": "2026-04-24",
+    "customer": "SP - Aisya",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260424MGHXN0CV",
+    "docNumber": "SP-260424MGHXN0CV",
+    "txnDate": "2026-04-24",
+    "customer": "SP - Melati Putri",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260424MRN2W13G",
+    "docNumber": "SP-260424MRN2W13G",
+    "txnDate": "2026-04-24",
+    "customer": "SP - Tasya",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583677760920585566-128884",
+    "docNumber": "TP-583677760920585566",
+    "txnDate": "2026-04-24",
+    "customer": "TP - F***iani A***ifa",
+    "totalAmt": 389900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 389900,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260425NXSA49EX",
+    "docNumber": "SP-260425NXSA49EX",
+    "txnDate": "2026-04-25",
+    "customer": "Olivia",
+    "totalAmt": 690000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 690000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260425PHT0VE69",
+    "docNumber": "SP-260425PHT0VE69",
+    "txnDate": "2026-04-25",
+    "customer": "SP - Aisyah",
+    "totalAmt": 1250000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 1250000,
+        "description": "TREELOGY The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 6"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260425PRKB480U",
+    "docNumber": "SP-260425PRKB480U",
+    "txnDate": "2026-04-25",
+    "customer": "SP - lrena",
+    "totalAmt": 320000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 320000,
+        "description": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260425Q100HA8P",
+    "docNumber": "SP-260425Q100HA8P",
+    "txnDate": "2026-04-25",
+    "customer": "SP - Samsiyah",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260425QA2RH9VP",
+    "docNumber": "SP-260425QA2RH9VP",
+    "txnDate": "2026-04-25",
+    "customer": "SP - lrawati / Shasa",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260425QAPMK8W9",
+    "docNumber": "SP-260425QAPMK8W9",
+    "txnDate": "2026-04-25",
+    "customer": "SP - Cut Keumala Intan",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260425QTTRCK11",
+    "docNumber": "SP-260425QTTRCK11",
+    "txnDate": "2026-04-25",
+    "customer": "SP - Rince",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583682244870308895-128884",
+    "docNumber": "TP-583682244870308895",
+    "txnDate": "2026-04-25",
+    "customer": "TP - M Yansen",
+    "totalAmt": 1380000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 690000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583683593446000612-128884",
+    "docNumber": "TP-583683593446000612",
+    "txnDate": "2026-04-25",
+    "customer": "TP - A***",
+    "totalAmt": 389900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 389900,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583684722538743518-128884",
+    "docNumber": "TP-583684722538743518",
+    "txnDate": "2026-04-25",
+    "customer": "TP - H***ky G*",
+    "totalAmt": 690000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 690000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583685091417425706-128884",
+    "docNumber": "TP-583685091417425706",
+    "txnDate": "2026-04-25",
+    "customer": "TP - N***a A**",
+    "totalAmt": 389900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 389900,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583686010705839610-128884",
+    "docNumber": "TP-583686010705839610",
+    "txnDate": "2026-04-25",
+    "customer": "TP - M***ska A***",
+    "totalAmt": 998900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 998900,
+        "description": "Treelogy The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kul"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583686031763277753-128884",
+    "docNumber": "TP-583686031763277753",
+    "txnDate": "2026-04-25",
+    "customer": "TP - H***y",
+    "totalAmt": 859900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 389900,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      },
+      {
+        "kind": "product",
+        "amount": 470000,
+        "description": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583687573187036687-128884",
+    "docNumber": "TP-583687573187036687",
+    "txnDate": "2026-04-25",
+    "customer": "TP - H***y D***anti",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583692778014017032-128884",
+    "docNumber": "TP-583692778014017032",
+    "txnDate": "2026-04-25",
+    "customer": "TP - O**",
+    "totalAmt": 389900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 389900,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583693188804282204-128884",
+    "docNumber": "TP-583693188804282204",
+    "txnDate": "2026-04-25",
+    "customer": "TP - S***nny Y***anto",
+    "totalAmt": 389900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 389900,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583700131971695830-128884",
+    "docNumber": "TP-583700131971695830",
+    "txnDate": "2026-04-26",
+    "customer": "TP - N***l F***ilah",
+    "totalAmt": 470000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 470000,
+        "description": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583704358844466787-128884",
+    "docNumber": "TP-583704358844466787",
+    "txnDate": "2026-04-26",
+    "customer": "TP - P***ma",
+    "totalAmt": 389900,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 389900,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "TP-583710156336695156-128884",
+    "docNumber": "TP-583710156336695156",
+    "txnDate": "2026-04-26",
+    "customer": "TP - j***y g",
+    "totalAmt": 690000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 690000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium [@"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SHF-7453-128887",
+    "docNumber": "SHF-7453-128887",
+    "txnDate": "2026-04-27",
+    "customer": "SHF - Nia Palupi",
+    "totalAmt": 415000,
+    "lines": [
+      {
+        "kind": "shipping",
+        "amount": 25000,
+        "description": "Shipping (Domestic Shipping)"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SHF-7456-128887",
+    "docNumber": "SHF-7456-128887",
+    "txnDate": "2026-04-27",
+    "customer": "SHF - Sari Dewi",
+    "totalAmt": 415000,
+    "lines": [
+      {
+        "kind": "shipping",
+        "amount": 25000,
+        "description": "Shipping (Domestic Shipping)"
+      }
+    ]
+  },
+  {
+    "salesorder_no": "SP-260427V5GYE2JR",
+    "docNumber": "SP-260427V5GYE2JR",
+    "txnDate": "2026-04-27",
+    "customer": "SP - Tya",
+    "totalAmt": 390000,
+    "lines": [
+      {
+        "kind": "product",
+        "amount": 390000,
+        "description": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium"
+      }
+    ]
+  }
+]

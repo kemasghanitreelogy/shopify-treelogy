@@ -1,0 +1,956 @@
+{
+  "generatedAt": "2026-04-28T03:59:42.635Z",
+  "decisions": {
+    "historicalInvoiceStrategy": "REDIRECT_TO_INVENTORY (user choice — riskier but clean)",
+    "archivedJubelioSkus": "SKIP",
+    "bundleDiscountStrategy": "BUNDLE_LINE_AT_FULL + DISCOUNT_LINE_IF_CHEAPER",
+    "stockOpening": "COPY_FROM_JUBELIO_AVAILABLE_QTY",
+    "preserve": [
+      "SAMPLE (id 39, 40)",
+      "Sales (id 1)",
+      "Hours (id 2)",
+      "Shipping Charge (id 7)",
+      "Shopify connector items (10)",
+      "Categories (12)"
+    ]
+  },
+  "phase1_renameLegacyInventory": [
+    {
+      "qboId": "6",
+      "currentName": "Moringa Dried Leaf Powder 180grams",
+      "currentSku": "",
+      "desiredName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (180 gram)",
+      "desiredSku": "OMP-180-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "OMP-180-001",
+        "desiredName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (180 gram)",
+        "groupName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "variationLabel": "180 gram",
+        "sellPrice": 990000,
+        "stockOpening": 48,
+        "jubelioItemId": 85
+      }
+    },
+    {
+      "qboId": "22",
+      "currentName": "Moringa Dried Leaf Powder - 45grams",
+      "currentSku": "",
+      "desiredName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (45 gram)",
+      "desiredSku": "OMP-45-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "OMP-45-001",
+        "desiredName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (45 gram)",
+        "groupName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "variationLabel": "45 gram",
+        "sellPrice": 320000,
+        "stockOpening": 285,
+        "jubelioItemId": 83
+      }
+    },
+    {
+      "qboId": "9",
+      "currentName": "Moringa Dried Leaf Powder - 90grams",
+      "currentSku": "",
+      "desiredName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (90 gram)",
+      "desiredSku": "OMP-90-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "OMP-90-001",
+        "desiredName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (90 gram)",
+        "groupName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+        "variationLabel": "90 gram",
+        "sellPrice": 540000,
+        "stockOpening": 242,
+        "jubelioItemId": 84
+      }
+    },
+    {
+      "qboId": "20",
+      "currentName": "Moringa Capsules-180Pcs",
+      "currentSku": "",
+      "desiredName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium (180 Caps)",
+      "desiredSku": "OMC-180-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "OMC-180-001",
+        "desiredName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium (180 Caps)",
+        "groupName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "variationLabel": "180 Caps",
+        "sellPrice": 690000,
+        "stockOpening": 386,
+        "jubelioItemId": 80
+      }
+    },
+    {
+      "qboId": "18",
+      "currentName": "Moringa Capsules-90Pcs",
+      "currentSku": "",
+      "desiredName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium (90 Caps)",
+      "desiredSku": "OMC-90-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "OMC-90-001",
+        "desiredName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium (90 Caps)",
+        "groupName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+        "variationLabel": "90 Caps",
+        "sellPrice": 390000,
+        "stockOpening": 479,
+        "jubelioItemId": 79
+      }
+    },
+    {
+      "qboId": "15",
+      "currentName": "Moringa Seed Oil - 30ml",
+      "currentSku": "",
+      "desiredName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium (30 ml)",
+      "desiredSku": "OMO-30-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "OMO-30-001",
+        "desiredName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium (30 ml)",
+        "groupName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "variationLabel": "30 ml",
+        "sellPrice": 470000,
+        "stockOpening": 251,
+        "jubelioItemId": 81
+      }
+    },
+    {
+      "qboId": "16",
+      "currentName": "Moringa Seed Oil - 60ml",
+      "currentSku": "",
+      "desiredName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium (60 ml)",
+      "desiredSku": "OMO-60-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "OMO-60-001",
+        "desiredName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium (60 ml)",
+        "groupName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+        "variationLabel": "60 ml",
+        "sellPrice": 790000,
+        "stockOpening": 88,
+        "jubelioItemId": 82
+      }
+    },
+    {
+      "qboId": "13",
+      "currentName": "Moringa Ritual Set",
+      "currentSku": "MRS-002",
+      "desiredName": "TREELOGY Moringa Ritual Set (Moringa Ritual Set - No Powder Included)",
+      "desiredSku": "MRS-001",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "MRS-001",
+        "desiredName": "TREELOGY Moringa Ritual Set (Moringa Ritual Set - No Powder Included)",
+        "groupName": "TREELOGY Moringa Ritual Set",
+        "variationLabel": "Moringa Ritual Set - No Powder Included",
+        "sellPrice": 1090000,
+        "stockOpening": 96,
+        "jubelioItemId": 75
+      }
+    },
+    {
+      "qboId": "24",
+      "currentName": "Bamboo Scoop",
+      "currentSku": "Bamboo-Scoop",
+      "desiredName": "Bamboo Scoop",
+      "desiredSku": "Bamboo-Scoop",
+      "matchBy": "manual map",
+      "target": {
+        "sku": "Bamboo-Scoop",
+        "desiredName": "Bamboo Scoop",
+        "groupName": "Bamboo Scoop",
+        "variationLabel": "",
+        "sellPrice": 120000,
+        "stockOpening": 47,
+        "jubelioItemId": 97
+      },
+      "skip": "already correct"
+    }
+  ],
+  "phase2_createNewInventory": [
+    {
+      "desiredName": "Bamboo Whisk - 120 prongs (Bamboo Whisk)",
+      "desiredSku": "Bamboo-Whisk",
+      "stockOpening": 50,
+      "sellPrice": 290000,
+      "target": {
+        "sku": "Bamboo-Whisk",
+        "desiredName": "Bamboo Whisk - 120 prongs (Bamboo Whisk)",
+        "groupName": "Bamboo Whisk - 120 prongs",
+        "variationLabel": "Bamboo Whisk",
+        "sellPrice": 290000,
+        "stockOpening": 50,
+        "jubelioItemId": 98
+      }
+    }
+  ],
+  "phase3_redirectServiceLines": [
+    {
+      "serviceId": "50",
+      "serviceName": "Inside Out Moringa Protocol copy",
+      "serviceSku": "Inside-Out-Protocol",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:Inside-Out-Protocol"
+      },
+      "invoiceCount": 11,
+      "invoices": [
+        {
+          "docNumber": "SHF-7454-128887",
+          "txnDate": "2026-04-27",
+          "qty": 1,
+          "amount": 690000
+        },
+        {
+          "docNumber": "SHF-7397-128887",
+          "txnDate": "2026-04-23",
+          "qty": 1,
+          "amount": 690000
+        },
+        {
+          "docNumber": "SHF-7392-128887",
+          "txnDate": "2026-04-23",
+          "qty": 1,
+          "amount": 690000
+        },
+        {
+          "docNumber": "SHF-7439-128887",
+          "txnDate": "2026-04-26",
+          "qty": 1,
+          "amount": 690000
+        },
+        {
+          "docNumber": "SHF-7440-128887",
+          "txnDate": "2026-04-26",
+          "qty": 1,
+          "amount": 690000
+        }
+      ],
+      "totalQtyToRedirect": 11,
+      "totalAmount": 7590000
+    },
+    {
+      "serviceId": "54",
+      "serviceName": "Jubelio Sync Item",
+      "serviceSku": "",
+      "destination": {
+        "kind": "generic-fallback",
+        "target": "BY_DESCRIPTION",
+        "note": "Pakai runItemMigration existing service untuk redirect per-line description"
+      },
+      "invoiceCount": 7,
+      "invoices": [
+        {
+          "docNumber": "SP-260427UPG9NSA4",
+          "txnDate": "2026-04-27",
+          "qty": 1,
+          "amount": 390000
+        },
+        {
+          "docNumber": "SP-260425QW8625VH",
+          "txnDate": "2026-04-25",
+          "qty": 2,
+          "amount": 780000
+        },
+        {
+          "docNumber": "SP-260425Q8AA8BA8",
+          "txnDate": "2026-04-25",
+          "qty": 1,
+          "amount": 390000
+        },
+        {
+          "docNumber": "SP-260426TNCQN2AF",
+          "txnDate": "2026-04-26",
+          "qty": 1,
+          "amount": 1250000
+        },
+        {
+          "docNumber": "SP-260426T83DT6T1",
+          "txnDate": "2026-04-26",
+          "qty": 1,
+          "amount": 390000
+        }
+      ],
+      "totalQtyToRedirect": 8,
+      "totalAmount": 5140000
+    },
+    {
+      "serviceId": "42",
+      "serviceName": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+      "serviceSku": "OMC-180-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "20"
+      },
+      "invoiceCount": 395,
+      "invoices": [
+        {
+          "docNumber": "SP-2604280RPP48XV",
+          "txnDate": "2026-04-28",
+          "qty": 1,
+          "amount": 390000
+        },
+        {
+          "docNumber": "SP-260423JWEF01RC",
+          "txnDate": "2026-04-23",
+          "qty": 1,
+          "amount": 390000
+        },
+        {
+          "docNumber": "DW-J6F4WXGZNC42XBDUV6",
+          "txnDate": "2026-04-28",
+          "qty": 1,
+          "amount": 690000
+        },
+        {
+          "docNumber": "SP-260427W0JMUP9C",
+          "txnDate": "2026-04-27",
+          "qty": 1,
+          "amount": 390000
+        },
+        {
+          "docNumber": "SHF-7458-128887",
+          "txnDate": "2026-04-27",
+          "qty": 4,
+          "amount": 2484000
+        }
+      ],
+      "totalQtyToRedirect": 404,
+      "totalAmount": 201944100
+    },
+    {
+      "serviceId": "44",
+      "serviceName": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+      "serviceSku": "OMP-45-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "22"
+      },
+      "invoiceCount": 33,
+      "invoices": [
+        {
+          "docNumber": "DW-J6F4WXGZNC42XBDUV6",
+          "txnDate": "2026-04-28",
+          "qty": 2,
+          "amount": 1080000
+        },
+        {
+          "docNumber": "SHF-7385-128887",
+          "txnDate": "2026-04-22",
+          "qty": 1,
+          "amount": 320000
+        },
+        {
+          "docNumber": "SHF-7391-128887",
+          "txnDate": "2026-04-22",
+          "qty": 1,
+          "amount": 503181.82
+        },
+        {
+          "docNumber": "SHF-7415-128887",
+          "txnDate": "2026-04-24",
+          "qty": 1,
+          "amount": 540000
+        },
+        {
+          "docNumber": "TP-583718007354786863",
+          "txnDate": "2026-04-27",
+          "qty": 1,
+          "amount": 320000
+        }
+      ],
+      "totalQtyToRedirect": 36,
+      "totalAmount": 15693181.82
+    },
+    {
+      "serviceId": "53",
+      "serviceName": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (OMP-45-001)",
+      "serviceSku": "OMP-45-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "22"
+      },
+      "invoiceCount": 1,
+      "invoices": [
+        {
+          "docNumber": "SP-260426SVPSK94C",
+          "txnDate": "2026-04-26",
+          "qty": 1,
+          "amount": 320000
+        }
+      ],
+      "totalQtyToRedirect": 1,
+      "totalAmount": 320000
+    },
+    {
+      "serviceId": "41",
+      "serviceName": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+      "serviceSku": "OMO-60-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "16"
+      },
+      "invoiceCount": 47,
+      "invoices": [
+        {
+          "docNumber": "SP-260423HFE9C8Q6",
+          "txnDate": "2026-04-24",
+          "qty": 1,
+          "amount": 470000
+        },
+        {
+          "docNumber": "SHF-7457-128887",
+          "txnDate": "2026-04-27",
+          "qty": 1,
+          "amount": 790000
+        },
+        {
+          "docNumber": "SHF-7398-128887",
+          "txnDate": "2026-04-23",
+          "qty": 1,
+          "amount": 445000
+        },
+        {
+          "docNumber": "SHF-7411-128887",
+          "txnDate": "2026-04-24",
+          "qty": 1,
+          "amount": 445000
+        },
+        {
+          "docNumber": "SHF-7431-128887",
+          "txnDate": "2026-04-25",
+          "qty": 1,
+          "amount": 470000
+        }
+      ],
+      "totalQtyToRedirect": 49,
+      "totalAmount": 27139700
+    },
+    {
+      "serviceId": "49",
+      "serviceName": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & I",
+      "serviceSku": "",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:Discovery-Pack",
+        "by": "name match Discovery Pack"
+      },
+      "invoiceCount": 5,
+      "invoices": [
+        {
+          "docNumber": "TP-583582092472190706",
+          "txnDate": "2026-04-18",
+          "qty": 1,
+          "amount": 999000
+        },
+        {
+          "docNumber": "TP-583655688462304420",
+          "txnDate": "2026-04-23",
+          "qty": 1,
+          "amount": 999000
+        },
+        {
+          "docNumber": "TP-583689434302678028",
+          "txnDate": "2026-04-25",
+          "qty": 1,
+          "amount": 998900
+        },
+        {
+          "docNumber": "SP-2604198MHG81Y4",
+          "txnDate": "2026-04-19",
+          "qty": 1,
+          "amount": 999000
+        },
+        {
+          "docNumber": "SHF-7404-128887",
+          "txnDate": "2026-04-24",
+          "qty": 1,
+          "amount": 880000
+        }
+      ],
+      "totalQtyToRedirect": 5,
+      "totalAmount": 4875900
+    },
+    {
+      "serviceId": "55",
+      "serviceName": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas A",
+      "serviceSku": "Discovery-Pack",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:Discovery-Pack"
+      },
+      "invoiceCount": 1,
+      "invoices": [
+        {
+          "docNumber": "SP-260426TMFQQY61",
+          "txnDate": "2026-04-26",
+          "qty": 1,
+          "amount": 999000
+        }
+      ],
+      "totalQtyToRedirect": 1,
+      "totalAmount": 999000
+    },
+    {
+      "serviceId": "43",
+      "serviceName": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Se",
+      "serviceSku": "",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:The-Movement-&-Relief",
+        "by": "name match Movement & Relief"
+      },
+      "invoiceCount": 12,
+      "invoices": [
+        {
+          "docNumber": "TP-583565974407185817",
+          "txnDate": "2026-04-17",
+          "qty": 1,
+          "amount": 1250000
+        },
+        {
+          "docNumber": "SP-260423HAJVWVWN",
+          "txnDate": "2026-04-23",
+          "qty": 1,
+          "amount": 1250000
+        },
+        {
+          "docNumber": "SP-260421DNC0D4CY",
+          "txnDate": "2026-04-21",
+          "qty": 1,
+          "amount": 1250000
+        },
+        {
+          "docNumber": "TP-583643254722430285",
+          "txnDate": "2026-04-22",
+          "qty": 1,
+          "amount": 1250000
+        },
+        {
+          "docNumber": "TP-583635975553844698",
+          "txnDate": "2026-04-21",
+          "qty": 1,
+          "amount": 1250000
+        }
+      ],
+      "totalQtyToRedirect": 12,
+      "totalAmount": 14860000
+    },
+    {
+      "serviceId": "52",
+      "serviceName": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Per",
+      "serviceSku": "The-Movement-&-Relief",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:The-Movement-&-Relief"
+      },
+      "invoiceCount": 11,
+      "invoices": [
+        {
+          "docNumber": "SHF-7455-128887",
+          "txnDate": "2026-04-27",
+          "qty": 1,
+          "amount": 1180000
+        },
+        {
+          "docNumber": "SHF-7452-128887",
+          "txnDate": "2026-04-27",
+          "qty": 1,
+          "amount": 1180000
+        },
+        {
+          "docNumber": "TP-583700582063245276",
+          "txnDate": "2026-04-26",
+          "qty": 1,
+          "amount": 1249900
+        },
+        {
+          "docNumber": "TP-583680976087320089",
+          "txnDate": "2026-04-24",
+          "qty": 1,
+          "amount": 1249900
+        },
+        {
+          "docNumber": "TP-583690966562538706",
+          "txnDate": "2026-04-25",
+          "qty": 1,
+          "amount": 1249900
+        }
+      ],
+      "totalQtyToRedirect": 11,
+      "totalAmount": 13609600
+    },
+    {
+      "serviceId": "51",
+      "serviceName": "TREELOGY Moringa Ritual Set",
+      "serviceSku": "",
+      "destination": {
+        "kind": "inventory",
+        "target": "13",
+        "by": "name match Ritual Set"
+      },
+      "invoiceCount": 1,
+      "invoices": [
+        {
+          "docNumber": "TP-583689434302678028",
+          "txnDate": "2026-04-25",
+          "qty": 1,
+          "amount": 760000
+        }
+      ],
+      "totalQtyToRedirect": 1,
+      "totalAmount": 760000
+    }
+  ],
+  "phase4_createGroupBundles": [
+    {
+      "desiredSku": "MRS-003",
+      "desiredName": "TREELOGY Moringa Ritual Set + Powder 90gr (Daily Wellness Bundle)",
+      "bundlePrice": 1450000,
+      "componentSum": 1630000,
+      "discount": 180000,
+      "members": [
+        {
+          "sku": "OMP-90-001",
+          "qty": 1,
+          "sellPrice": 540000,
+          "itemName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "qboInventoryId": "9"
+        },
+        {
+          "sku": "MRS-001",
+          "qty": 1,
+          "sellPrice": 1090000,
+          "itemName": "TREELOGY Moringa Ritual Set",
+          "qboInventoryId": "13"
+        }
+      ]
+    },
+    {
+      "desiredSku": "Inside-Out-Protocol",
+      "desiredName": "Inside Out  Moringa Protocol (Capsule 90 + Oil 30ml)",
+      "bundlePrice": 690000,
+      "componentSum": 860000,
+      "discount": 170000,
+      "members": [
+        {
+          "sku": "OMC-90-001",
+          "qty": 1,
+          "sellPrice": 390000,
+          "itemName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "qboInventoryId": "18"
+        },
+        {
+          "sku": "OMO-30-001",
+          "qty": 1,
+          "sellPrice": 470000,
+          "itemName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "qboInventoryId": "15"
+        }
+      ]
+    },
+    {
+      "desiredSku": "Discovery-Pack",
+      "desiredName": "Treelogy The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & I",
+      "bundlePrice": 1180000,
+      "componentSum": 1180000,
+      "discount": 0,
+      "members": [
+        {
+          "sku": "OMP-45-001",
+          "qty": 1,
+          "sellPrice": 320000,
+          "itemName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "qboInventoryId": "22"
+        },
+        {
+          "sku": "OMO-30-001",
+          "qty": 1,
+          "sellPrice": 470000,
+          "itemName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "qboInventoryId": "15"
+        },
+        {
+          "sku": "OMC-90-001",
+          "qty": 1,
+          "sellPrice": 390000,
+          "itemName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "qboInventoryId": "18"
+        }
+      ]
+    },
+    {
+      "desiredSku": "MRS-004",
+      "desiredName": "TREELOGY Moringa Ritual Set + Powder 180gr (The Complete Ritual Bundle)",
+      "bundlePrice": 1780000,
+      "componentSum": 2080000,
+      "discount": 300000,
+      "members": [
+        {
+          "sku": "OMP-180-001",
+          "qty": 1,
+          "sellPrice": 990000,
+          "itemName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "qboInventoryId": "6"
+        },
+        {
+          "sku": "MRS-001",
+          "qty": 1,
+          "sellPrice": 1090000,
+          "itemName": "TREELOGY Moringa Ritual Set",
+          "qboInventoryId": "13"
+        }
+      ]
+    },
+    {
+      "desiredSku": "MRS-002",
+      "desiredName": "TREELOGY Moringa Ritual Set + Powder 45gr (Ritual Starter Bundle)",
+      "bundlePrice": 1290000,
+      "componentSum": 1410000,
+      "discount": 120000,
+      "members": [
+        {
+          "sku": "OMP-45-001",
+          "qty": 1,
+          "sellPrice": 320000,
+          "itemName": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "qboInventoryId": "22"
+        },
+        {
+          "sku": "MRS-001",
+          "qty": 1,
+          "sellPrice": 1090000,
+          "itemName": "TREELOGY Moringa Ritual Set",
+          "qboInventoryId": "13"
+        }
+      ]
+    },
+    {
+      "desiredSku": "The-Movement-&-Relief",
+      "desiredName": "TREELOGY The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Se",
+      "bundlePrice": 1450000,
+      "componentSum": 1480000,
+      "discount": 30000,
+      "members": [
+        {
+          "sku": "OMO-60-001",
+          "qty": 1,
+          "sellPrice": 790000,
+          "itemName": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "qboInventoryId": "16"
+        },
+        {
+          "sku": "OMC-180-001",
+          "qty": 1,
+          "sellPrice": 690000,
+          "itemName": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "qboInventoryId": "20"
+        }
+      ]
+    }
+  ],
+  "phase5_inactivateServiceItems": [
+    {
+      "qboId": "50",
+      "name": "Inside Out Moringa Protocol copy",
+      "sku": "Inside-Out-Protocol",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:Inside-Out-Protocol"
+      }
+    },
+    {
+      "qboId": "54",
+      "name": "Jubelio Sync Item",
+      "sku": "",
+      "destination": {
+        "kind": "generic-fallback",
+        "target": "BY_DESCRIPTION",
+        "note": "Pakai runItemMigration existing service untuk redirect per-line description"
+      }
+    },
+    {
+      "qboId": "42",
+      "name": "Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+      "sku": "OMC-180-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "20"
+      }
+    },
+    {
+      "qboId": "44",
+      "name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+      "sku": "OMP-45-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "22"
+      }
+    },
+    {
+      "qboId": "53",
+      "name": "Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium (OMP-45-001)",
+      "sku": "OMP-45-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "22"
+      }
+    },
+    {
+      "qboId": "41",
+      "name": "Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+      "sku": "OMO-60-001",
+      "destination": {
+        "kind": "inventory",
+        "target": "16"
+      }
+    },
+    {
+      "qboId": "49",
+      "name": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & I",
+      "sku": "",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:Discovery-Pack",
+        "by": "name match Discovery Pack"
+      }
+    },
+    {
+      "qboId": "55",
+      "name": "The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas A",
+      "sku": "Discovery-Pack",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:Discovery-Pack"
+      }
+    },
+    {
+      "qboId": "43",
+      "name": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Se",
+      "sku": "",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:The-Movement-&-Relief",
+        "by": "name match Movement & Relief"
+      }
+    },
+    {
+      "qboId": "52",
+      "name": "The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Per",
+      "sku": "The-Movement-&-Relief",
+      "destination": {
+        "kind": "bundle",
+        "target": "NEW:bundle:The-Movement-&-Relief"
+      }
+    },
+    {
+      "qboId": "51",
+      "name": "TREELOGY Moringa Ritual Set",
+      "sku": "",
+      "destination": {
+        "kind": "inventory",
+        "target": "13",
+        "by": "name match Ritual Set"
+      }
+    }
+  ],
+  "phase6_inactivateOrphanInventory": [
+    {
+      "qboId": "11",
+      "name": "Consignment - Moringa Dried Leaf Powder - 90 grams",
+      "sku": "",
+      "reason": "Tidak match Jubelio canonical"
+    },
+    {
+      "qboId": "8",
+      "name": "Consignment - Moringa Dried Leaf Powder - 180grams",
+      "sku": "",
+      "reason": "Tidak match Jubelio canonical"
+    },
+    {
+      "qboId": "4",
+      "name": "Moringa Leaf Powder 180grams - Discounted Price",
+      "sku": "",
+      "reason": "Tidak match Jubelio canonical"
+    },
+    {
+      "qboId": "38",
+      "name": "The Discovery Pack",
+      "sku": "",
+      "reason": "Tidak match Jubelio canonical"
+    },
+    {
+      "qboId": "36",
+      "name": "The Movement & Relief",
+      "sku": "",
+      "reason": "Tidak match Jubelio canonical"
+    }
+  ],
+  "phase7_adjustStockToJubelio": [
+    {
+      "sku": "OMP-180-001",
+      "jubelioCurrentQty": 48,
+      "qboCanonicalId": "6"
+    },
+    {
+      "sku": "OMP-45-001",
+      "jubelioCurrentQty": 285,
+      "qboCanonicalId": "22"
+    },
+    {
+      "sku": "OMP-90-001",
+      "jubelioCurrentQty": 242,
+      "qboCanonicalId": "9"
+    },
+    {
+      "sku": "OMC-180-001",
+      "jubelioCurrentQty": 386,
+      "qboCanonicalId": "20"
+    },
+    {
+      "sku": "OMC-90-001",
+      "jubelioCurrentQty": 479,
+      "qboCanonicalId": "18"
+    },
+    {
+      "sku": "OMO-30-001",
+      "jubelioCurrentQty": 251,
+      "qboCanonicalId": "15"
+    },
+    {
+      "sku": "OMO-60-001",
+      "jubelioCurrentQty": 88,
+      "qboCanonicalId": "16"
+    },
+    {
+      "sku": "MRS-001",
+      "jubelioCurrentQty": 96,
+      "qboCanonicalId": "13"
+    },
+    {
+      "sku": "Bamboo-Whisk",
+      "jubelioCurrentQty": 50,
+      "qboCanonicalId": "NEW:Bamboo-Whisk"
+    },
+    {
+      "sku": "Bamboo-Scoop",
+      "jubelioCurrentQty": 47,
+      "qboCanonicalId": "24"
+    }
+  ],
+  "summary": {
+    "totalQboItemsBeforeMigration": 51,
+    "renameLegacyInventory": 8,
+    "alreadyCorrect": 1,
+    "createNewInventory": 1,
+    "redirectServiceItems": 11,
+    "redirectInvoiceLines": 524,
+    "createGroupBundles": 6,
+    "inactivateServiceItems": 11,
+    "inactivateOrphanInventory": 5,
+    "preserveAsIs": 27
+  }
+}

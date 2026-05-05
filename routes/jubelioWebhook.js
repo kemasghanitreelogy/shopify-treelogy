@@ -327,11 +327,22 @@ const stripCustomerChannelPrefix = (name) =>
 //   DP=WhatsApp/direct · DW=Walk-in · WS=Wholesale
 const KNOWN_CHANNEL_PREFIXES = new Set(['SP', 'TP', 'TT', 'SHF', 'LB', 'CS', 'DP', 'DW', 'WS']);
 const PREFIX_CANONICAL = { TT: 'TP' }; // TT is a Tokopedia variant — canonical TP
-const HAS_CHANNEL_PREFIX_RE = /^\s*[A-Z]{2,5}\s*-/;
 const channelPrefixOf = (so) => {
     const raw = String(so?.salesorder_no || '').match(/^([A-Z]{2,5})-/)?.[1] || null;
     if (!raw || !KNOWN_CHANNEL_PREFIXES.has(raw)) return null;
     return PREFIX_CANONICAL[raw] || raw;
+};
+
+// Strict channel-prefix check on a DisplayName. Returns true when the name
+// starts with `${expectedPrefix} -` (case-insensitive, with TT→TP canonical
+// folding). When expectedPrefix is null/falsy (channel unknown), the policy
+// is not enforced and we return true so callers fall back to legacy dedup.
+const hasMatchingChannelPrefix = (name, expectedPrefix) => {
+    if (!expectedPrefix) return true;
+    const m = String(name || '').match(/^\s*([A-Z]{2,5})\s*-/i);
+    if (!m) return false;
+    const actual = (PREFIX_CANONICAL[m[1].toUpperCase()] || m[1].toUpperCase());
+    return actual === expectedPrefix;
 };
 
 const buildShipAddr = (so) => {
@@ -346,22 +357,20 @@ const buildShipAddr = (so) => {
     };
 };
 
-// Quick existence check before trusting a cached qbo_customer_id from the
-// JubelioCustomerMap. Returns true if the QBO Customer is still present
-// (and Active). Network failure is treated as "exists" — better to attempt
-// the sync with the cached id than spuriously create a duplicate.
-const qboCustomerExists = (qbo, customerId) => withQboRetry('getCustomer', () => new Promise((resolve) => {
+// Lookup an active QBO Customer by id for the JubelioCustomerMap fast path.
+// Returns the Customer body when present & active, null when QBO confirms
+// missing/inactive, and the sentinel `{ status: 'unknown' }` for transient
+// errors so callers can keep trusting the cache rather than spuriously
+// creating duplicates on QBO flakiness.
+const qboGetActiveCustomer = (qbo, customerId) => withQboRetry('getCustomer', () => new Promise((resolve) => {
     qbo.getCustomer(String(customerId), (err, body) => {
         if (err) {
-            // 404/410/object-not-found means we should fall through and re-resolve.
             const msg = String(err.message || err);
-            if (/Object Not Found|6240|404|invalid/i.test(msg)) return resolve(false);
-            // Other errors → assume exists, don't trigger duplicate creation.
-            return resolve(true);
+            if (/Object Not Found|6240|404|invalid/i.test(msg)) return resolve(null);
+            return resolve({ status: 'unknown' });
         }
-        if (!body) return resolve(false);
-        if (body.Active === false) return resolve(false);
-        resolve(true);
+        if (!body || body.Active === false) return resolve(null);
+        resolve(body);
     });
 }));
 
@@ -372,46 +381,23 @@ const getOrCreateCustomer = async (qbo, so) => {
     let shipFullName = so.shipping_full_name;
     let shipAddr = buildShipAddr(so);
 
-    // ─── Stable identity lookup by (source, buyer_id) ───────────────────
-    // Tokopedia/Shopee always send a marketplace user id (`buyer_id`) per
-    // order. We persist (source, buyer_id) → qbo_customer_id in the
-    // JubelioCustomerMap collection so finance can rename / merge customers
-    // in QBO without breaking the integration's dedup. This is the most
-    // robust lookup path — it survives name changes that name-based
-    // matching cannot.
     const source = String(so.source_name || so.source || '').toUpperCase().trim();
     const buyerId = so.buyer_id ? String(so.buyer_id).trim() : null;
     const realmId = String(qbo.realmId);
 
-    if (source && buyerId) {
-        const mapped = await JubelioCustomerMap.findOne({
-            source, buyer_id: buyerId, qbo_realm_id: realmId,
-        }).lean();
-        if (mapped?.qbo_customer_id) {
-            // Verify the cached customer still exists (finance might have deleted it)
-            const exists = await qboCustomerExists(qbo, mapped.qbo_customer_id);
-            if (exists) {
-                // Touch audit fields async (don't block sync on this).
-                JubelioCustomerMap.updateOne(
-                    { _id: mapped._id },
-                    {
-                        last_seen_at: new Date(),
-                        last_so_no: so.salesorder_no,
-                        last_customer_name_jubelio: displayName,
-                    }
-                ).catch(e => console.warn(`⚠️ JubelioCustomerMap touch failed: ${e.message}`));
-                console.log(`✅ Customer match by buyer_id source=${source} buyer_id=${buyerId} → qbo_id=${mapped.qbo_customer_id}`);
-                return mapped.qbo_customer_id;
-            }
-            console.warn(`⚠️ JubelioCustomerMap stale: qbo_customer_id=${mapped.qbo_customer_id} no longer exists, re-resolving (will rebuild map)`);
-        }
-    }
-
-    // Auto-prefix new customer with channel code from salesorder_no (TP-/SP-
-    // /SHF-/LB-/CS-/DP-/DW-). Skip if already has a prefix or unknown
-    // channel. The lookup chain still tries unprefixed variants below to
-    // catch any pre-existing customers stored without prefix.
+    // Strict channel prefix policy: every customer used for an SO must carry
+    // its channel's prefix in DisplayName (e.g. `SHF - Veranika Effendy` for
+    // a Shopify SO). Cached or pre-existing customers without that prefix —
+    // or with the wrong prefix — are bypassed so a properly prefixed record
+    // gets created, even if it means a parallel entry per channel.
     const channelPrefix = channelPrefixOf(so);
+
+    // ─── Resolve canonical DisplayName BEFORE any cache lookup ──────────
+    // We compare cached customer records against the webhook's canonical
+    // displayName so the QBO Customer name always tracks what Jubelio sends
+    // (= what the Jubelio UI shows for that order). The unredact-fetch and
+    // prefix-forcing both feed into that canonical form, so they must run
+    // before the buyer_id fast path.
 
     // Tokopedia & some channels redact customer info in webhook payloads.
     // When detected, fetch the unredacted form from Jubelio API directly.
@@ -434,30 +420,81 @@ const getOrCreateCustomer = async (qbo, so) => {
         // strictly better than failing the webhook outright.
     }
 
-    // Apply channel prefix to displayName when missing. This is what the
-    // CREATE path will use; the LOOKUP variants (below) still try the
-    // unprefixed form so we match any pre-existing customer stored without
-    // prefix, and the upsert below will record either form's id in the map.
-    if (channelPrefix && !HAS_CHANNEL_PREFIX_RE.test(displayName)) {
-        displayName = `${channelPrefix} - ${displayName}`.substring(0, 100);
+    // Force the canonical DisplayName to carry the SO's channel prefix.
+    // We override even when the raw name already starts with some other
+    // known prefix (e.g. Jubelio fed us `TP - Yenny` for an SHF order) —
+    // the prefix must reflect THIS SO's channel.
+    if (channelPrefix && !hasMatchingChannelPrefix(displayName, channelPrefix)) {
+        const stripped = stripCustomerChannelPrefix(displayName);
+        displayName = `${channelPrefix} - ${stripped}`.substring(0, 100);
+    }
+
+    // ─── buyer_id fast path (gated on canonical-name equality) ──────────
+    // (source, buyer_id) → qbo_customer_id is stored in JubelioCustomerMap
+    // as a fast lookup. We trust the cache ONLY when the cached customer's
+    // DisplayName equals the canonical displayName we just resolved. This
+    // ensures repeat orders for the same recipient are deduped, while a
+    // single Tokopedia account shipping to a different recipient
+    // (dropship / reseller / gift) falls through to find-or-create so the
+    // QBO record reflects THIS order's recipient — matching what Jubelio
+    // UI shows for that order.
+    if (source && buyerId) {
+        const mapped = await JubelioCustomerMap.findOne({
+            source, buyer_id: buyerId, qbo_realm_id: realmId,
+        }).lean();
+        if (mapped?.qbo_customer_id) {
+            const cached = await qboGetActiveCustomer(qbo, mapped.qbo_customer_id);
+            if (cached) {
+                const transient = cached.status === 'unknown';
+                const cachedName = transient ? '' : (cached.DisplayName || '');
+                const nameOk = transient || (cachedName.trim().toLowerCase() === displayName.trim().toLowerCase());
+                if (nameOk) {
+                    JubelioCustomerMap.updateOne(
+                        { _id: mapped._id },
+                        {
+                            last_seen_at: new Date(),
+                            last_so_no: so.salesorder_no,
+                            last_customer_name_jubelio: displayName,
+                        }
+                    ).catch(e => console.warn(`⚠️ JubelioCustomerMap touch failed: ${e.message}`));
+                    console.log(`✅ Customer match by buyer_id source=${source} buyer_id=${buyerId} → qbo_id=${mapped.qbo_customer_id}`);
+                    return mapped.qbo_customer_id;
+                }
+                console.warn(`⚠️ JubelioCustomerMap mismatch: buyer_id=${buyerId} cached DisplayName="${cachedName}" but webhook says "${displayName}" — bypassing cache (likely a different recipient on the same buyer account; mapping will be overwritten to track the latest recipient)`);
+            } else {
+                console.warn(`⚠️ JubelioCustomerMap stale: qbo_customer_id=${mapped.qbo_customer_id} no longer exists, re-resolving (will rebuild map)`);
+            }
+        }
     }
 
     // Resolve customerId via email → name → create.
     let resolvedCustomerId = null;
     let resolvedQboName = null;
 
-    // 1. Match by email (most specific identifier).
+    // 1. Match by email (most specific identifier). Under the strict prefix
+    // policy, only reuse an email-matched customer when its DisplayName
+    // already carries this SO's channel prefix; otherwise a parallel
+    // properly prefixed record will be created below.
     if (email) {
         const byEmail = await findCustomersByField(qbo, 'PrimaryEmailAddr', email);
         if (byEmail.length > 0) {
-            resolvedCustomerId = byEmail[0].Id;
-            resolvedQboName = byEmail[0].DisplayName;
+            const match = channelPrefix
+                ? byEmail.find(c => hasMatchingChannelPrefix(c.DisplayName, channelPrefix))
+                : byEmail[0];
+            if (match) {
+                resolvedCustomerId = match.Id;
+                resolvedQboName = match.DisplayName;
+            } else {
+                console.log(`⏭️  Skip email match: ${byEmail.length} candidate(s) for ${email} lack "${channelPrefix} -" prefix — will create new prefixed customer`);
+            }
         }
     }
 
-    // 2. Multi-variant DisplayName lookup. Reduces duplicate creation when
-    // QBO already has the customer under a different naming convention
-    // (with/without channel prefix). Try most specific first.
+    // 2. Multi-variant DisplayName lookup. When the channel prefix is
+    // known we only consider variants that already carry it, so we never
+    // lock this SO into a wrong-channel or un-prefixed record. The
+    // unprefixed/stripped forms are still emitted for the (rare) channel-
+    // unknown path which falls back to legacy dedup.
     if (!resolvedCustomerId) {
         const variants = [];
         const seen = new Set();
@@ -477,7 +514,11 @@ const getOrCreateCustomer = async (qbo, so) => {
             if (stripped !== displayName) addVariant(`${prefix} - ${stripped}`);
         }
 
-        for (const v of variants) {
+        const candidates = channelPrefix
+            ? variants.filter(v => hasMatchingChannelPrefix(v, channelPrefix))
+            : variants;
+
+        for (const v of candidates) {
             const byName = await findCustomersByField(qbo, 'DisplayName', v);
             if (byName.length > 0) {
                 if (v !== displayName) {

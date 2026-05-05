@@ -1,0 +1,1284 @@
+{
+  "fetchedAt": "2026-04-28T04:26:32.359Z",
+  "activeCount": 6,
+  "bundleCount": 6,
+  "archivedCount": 3,
+  "active": [
+    {
+      "item_group_id": 50,
+      "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+      "last_modified": "2026-04-25T02:44:44.811Z",
+      "variations": [
+        {
+          "label": "Net Weight",
+          "values": [
+            "45 gram",
+            "90 gram",
+            "180 gram"
+          ]
+        }
+      ],
+      "sell_price": null,
+      "item_category_id": 18458,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/431d2d47914b4cee94ca879df13b079ctplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 50,
+          "item_id": 85,
+          "item_code": "OMP-180-001",
+          "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Net Weight",
+              "value": "180 gram"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/0110cb7d-4720-4bc3-bceb-d837ea8c0b70pngtplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            }
+          ],
+          "end_qty": 50,
+          "order_qty": 2,
+          "available_qty": 48,
+          "sell_price": 990000
+        },
+        {
+          "item_group_id": 50,
+          "item_id": 83,
+          "item_code": "OMP-45-001",
+          "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Net Weight",
+              "value": "45 gram"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/55b85f24-8253-417d-9963-cd94cb73bb93pngtplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            }
+          ],
+          "end_qty": 288,
+          "order_qty": 3,
+          "available_qty": 285,
+          "sell_price": 320000
+        },
+        {
+          "item_group_id": 50,
+          "item_id": 84,
+          "item_code": "OMP-90-001",
+          "item_name": "TREELOGY Premium Organic Moringa Powder / Bubuk Daun Kelor Organik Premium",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Net Weight",
+              "value": "90 gram"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/6280062d-71fe-4cd5-adc6-dd4adb345053pngtplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            }
+          ],
+          "end_qty": 245,
+          "order_qty": 5,
+          "available_qty": 240,
+          "sell_price": 540000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "43411462136",
+          "channel_url": "https://shopee.co.id/product/1592826980/43411462136",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1729838939428784091",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-premium-organic-moringa-powder-bubuk-daun-kelor-organik-premium-1729838939428784091",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1729838939428784091",
+          "channel_url": "https://shop.tiktok.com/view/product/1729838939428784091",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "8641940390076",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/organic-moringa-powder",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 48,
+      "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+      "last_modified": "2026-04-28T02:31:14.867Z",
+      "variations": [
+        {
+          "label": "Ukuran",
+          "values": [
+            "180 Caps",
+            "90 Caps"
+          ]
+        }
+      ],
+      "sell_price": "390000.0000",
+      "item_category_id": 15166,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/dc4033affac04cc6b758418a4eeceddftplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 48,
+          "item_id": 80,
+          "item_code": "OMC-180-001",
+          "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "is_bundle": false,
+          "invt_acct_id": null,
+          "variation_values": [
+            {
+              "label": "Ukuran",
+              "value": "180 Caps"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/0bf9f5e19946432db0fc23bf263d2e35tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": 417,
+          "order_qty": 34,
+          "available_qty": 383,
+          "sell_price": 690000
+        },
+        {
+          "item_group_id": 48,
+          "item_id": 79,
+          "item_code": "OMC-90-001",
+          "item_name": "TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium",
+          "is_bundle": false,
+          "invt_acct_id": null,
+          "variation_values": [
+            {
+              "label": "Ukuran",
+              "value": "90 Caps"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/0bf9f5e19946432db0fc23bf263d2e35tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": 539,
+          "order_qty": 63,
+          "available_qty": 476,
+          "sell_price": 390000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "48200274325",
+          "channel_url": "https://shopee.co.id/product/1592826980/48200274325",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1731010208236537819",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-premium-organic-moringa-capsules-kapsul-daun-kelor-organik-premium-1731010208236537819",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1731010208236537819",
+          "channel_url": "https://shop.tiktok.com/view/product/1731010208236537819",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "8642235236540",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/organic-moringa-capsules",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 49,
+      "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+      "last_modified": "2026-03-25T06:29:07.474Z",
+      "variations": [
+        {
+          "label": "Net Volume",
+          "values": [
+            "30 ml",
+            "60 ml"
+          ]
+        }
+      ],
+      "sell_price": null,
+      "item_category_id": 18320,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/6ccc8bd246384a77a31b08f87cf4e6b0tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 49,
+          "item_id": 81,
+          "item_code": "OMO-30-001",
+          "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Net Volume",
+              "value": "30 ml"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/1d5aac43e3fe4fb697425cdddd08a7e6tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": 263,
+          "order_qty": 12,
+          "available_qty": 251,
+          "sell_price": 470000
+        },
+        {
+          "item_group_id": 49,
+          "item_id": 82,
+          "item_code": "OMO-60-001",
+          "item_name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Net Volume",
+              "value": "60 ml"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/1d5aac43e3fe4fb697425cdddd08a7e6tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": 92,
+          "order_qty": 5,
+          "available_qty": 87,
+          "sell_price": 790000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "44500552904",
+          "channel_url": "https://shopee.co.id/product/1592826980/44500552904",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1731010063360755675",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-premium-organic-moringa-seed-oil-minyak-biji-kelor-organik-premium-1731010063360755675",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1731010063360755675",
+          "channel_url": "https://shop.tiktok.com/view/product/1731010063360755675",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "8641972207804",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/organic-moringa-oil",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 47,
+      "item_name": "TREELOGY Moringa Ritual Set",
+      "last_modified": "2026-03-25T06:29:07.474Z",
+      "variations": [
+        {
+          "label": "Moringa Ritual Set",
+          "values": [
+            "Moringa Ritual Set - No Powder Included",
+            "Starter Ritual Bundle – Includes 45g Powder",
+            "Daily Wellness Ritual Bundle – Includes 90g Powder",
+            "Complete Ritual Bundle – Includes 180g Powder"
+          ]
+        }
+      ],
+      "sell_price": null,
+      "item_category_id": null,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/eff85d29af02464fa0fc52e19c452d14tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 47,
+          "item_id": 75,
+          "item_code": "MRS-001",
+          "item_name": "TREELOGY Moringa Ritual Set",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Moringa Ritual Set",
+              "value": "Moringa Ritual Set - No Powder Included"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/758bc3136c204eb5bb4df253af49aa6atplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": 96,
+          "order_qty": 0,
+          "available_qty": 96,
+          "sell_price": 1090000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "47450290638",
+          "channel_url": "https://shopee.co.id/product/1592826980/47450290638",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-moringa-ritual-set-1731746420475922395",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://shop.tiktok.com/view/product/1731746420475922395",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "8709764841660",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-ritual-set",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 65,
+      "item_name": "Bamboo Whisk - 120 prongs",
+      "last_modified": "2026-04-21T06:27:31.267Z",
+      "variations": [
+        {
+          "label": "Bamboo Whisk - 120 Prongs",
+          "values": [
+            "Bamboo Whisk"
+          ]
+        }
+      ],
+      "sell_price": "290000.0000",
+      "item_category_id": null,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/11_thumb.png",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 65,
+          "item_id": 98,
+          "item_code": "Bamboo-Whisk",
+          "item_name": "Bamboo Whisk - 120 prongs",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Bamboo Whisk - 120 Prongs",
+              "value": "Bamboo Whisk"
+            }
+          ],
+          "thumbnail": null,
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": 50,
+          "order_qty": 0,
+          "available_qty": 50,
+          "sell_price": 290000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "9043110133948",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/bamboo-whisk",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 64,
+      "item_name": "Bamboo Scoop",
+      "last_modified": "2026-04-22T02:35:31.679Z",
+      "variations": null,
+      "sell_price": "120000.0000",
+      "item_category_id": 14788,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/bamboo_scoop_thumb.png",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 64,
+          "item_id": 97,
+          "item_code": "Bamboo-Scoop",
+          "item_name": "Bamboo Scoop",
+          "is_bundle": false,
+          "invt_acct_id": null,
+          "variation_values": null,
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/bamboo_scoop_thumb.png",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": 48,
+          "order_qty": 1,
+          "available_qty": 47,
+          "sell_price": 120000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "9043106922684",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/bamboo-scoop",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    }
+  ],
+  "bundles": [
+    {
+      "item_group_id": 56,
+      "item_name": "TREELOGY Moringa Ritual Set + Powder 90gr (Daily Wellness Bundle)",
+      "last_modified": "2026-04-28T03:10:42.972Z",
+      "variations": null,
+      "sell_price": "1450000.0000",
+      "item_category_id": null,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/758bc3136c204eb5bb4df253af49aa6atplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "2",
+      "is_consignment": null,
+      "variants": [
+        {
+          "item_group_id": 56,
+          "item_id": 77,
+          "item_code": "MRS-003",
+          "item_name": "TREELOGY Moringa Ritual Set + Powder 90gr (Daily Wellness Bundle)",
+          "is_bundle": true,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Moringa Ritual Set",
+              "value": "Daily Wellness Ritual Bundle – Includes 90g Powder"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/eff85d29af02464fa0fc52e19c452d14tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": -1,
+          "order_qty": 0,
+          "available_qty": -1,
+          "sell_price": 1450000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "47450290638",
+          "channel_url": "https://shopee.co.id/product/1592826980/47450290638",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-moringa-ritual-set-1731746420475922395",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://shop.tiktok.com/view/product/1731746420475922395",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "8709764841660",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-ritual-set",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 63,
+      "item_name": "Inside Out  Moringa Protocol (Capsule 90 + Oil 30ml)",
+      "last_modified": "2026-04-28T03:12:58.471Z",
+      "variations": null,
+      "sell_price": "690000.0000",
+      "item_category_id": 14788,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/hand_drops_a_green_treelogy_organic_moringa_capsule_en_thumb.jpeg",
+      "total_composition": "2",
+      "is_consignment": null,
+      "variants": [
+        {
+          "item_group_id": 63,
+          "item_id": 96,
+          "item_code": "Inside-Out-Protocol",
+          "item_name": "Inside Out  Moringa Protocol (Capsule 90 + Oil 30ml)",
+          "is_bundle": true,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "The Movement & Relief",
+              "value": "90 Moringa Capsules  + 30ml Moringa Oil"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/hand_drops_a_green_treelogy_organic_moringa_capsule_en_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": -32,
+          "order_qty": 7,
+          "available_qty": -39,
+          "sell_price": 690000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "9291531649212",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-inside-out-protocol",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 45,
+      "item_name": "Treelogy The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas Alami",
+      "last_modified": "2026-04-27T02:16:14.603Z",
+      "variations": [],
+      "sell_price": null,
+      "item_category_id": 18458,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/c7a461a3812a4f26b19e719be08c1765tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "3",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 45,
+          "item_id": 73,
+          "item_code": "Discovery-Pack",
+          "item_name": "Treelogy The Discovery Pack | Minyak, Bubuk & Kapsul Kelor Organik Premium – Kulit Cerah, Energi & Imunitas Alami",
+          "is_bundle": true,
+          "invt_acct_id": 4,
+          "variation_values": [],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/2c4ab9776eaa4a6891f0b82f6df90a34tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": -7,
+          "order_qty": 1,
+          "available_qty": -8,
+          "sell_price": 1180000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "49000815284",
+          "channel_url": "https://shopee.co.id/product/1592826980/49000815284",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1733075840222857179",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-discovery-pack-minyak-bubuk-kapsul-kelor-organik-premium-kulit-cerah-energi-imunitas-alami-1733075840222857179",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1733075840222857179",
+          "channel_url": "https://shop.tiktok.com/view/product/1733075840222857179",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "9074141200572",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/the-discovery-pack",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 57,
+      "item_name": "TREELOGY Moringa Ritual Set + Powder 180gr (The Complete Ritual Bundle)",
+      "last_modified": "2026-04-28T03:11:26.800Z",
+      "variations": null,
+      "sell_price": "1780000.0000",
+      "item_category_id": null,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/758bc3136c204eb5bb4df253af49aa6atplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "2",
+      "is_consignment": null,
+      "variants": [
+        {
+          "item_group_id": 57,
+          "item_id": 78,
+          "item_code": "MRS-004",
+          "item_name": "TREELOGY Moringa Ritual Set + Powder 180gr (The Complete Ritual Bundle)",
+          "is_bundle": true,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Moringa Ritual Set",
+              "value": "Complete Ritual Bundle – Includes 180g Powder"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/758bc3136c204eb5bb4df253af49aa6atplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": null,
+          "order_qty": null,
+          "available_qty": null,
+          "sell_price": 1780000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "47450290638",
+          "channel_url": "https://shopee.co.id/product/1592826980/47450290638",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-moringa-ritual-set-1731746420475922395",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://shop.tiktok.com/view/product/1731746420475922395",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "8709764841660",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-ritual-set",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 55,
+      "item_name": "TREELOGY Moringa Ritual Set + Powder 45gr (Ritual Starter Bundle)",
+      "last_modified": "2026-04-28T03:09:51.830Z",
+      "variations": null,
+      "sell_price": "1290000.0000",
+      "item_category_id": null,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/758bc3136c204eb5bb4df253af49aa6atplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "2",
+      "is_consignment": null,
+      "variants": [
+        {
+          "item_group_id": 55,
+          "item_id": 76,
+          "item_code": "MRS-002",
+          "item_name": "TREELOGY Moringa Ritual Set + Powder 45gr (Ritual Starter Bundle)",
+          "is_bundle": true,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Moringa Ritual Set",
+              "value": "Starter Ritual Bundle – Includes 45g Powder"
+            }
+          ],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/e52b526d8a4b48478cba3b9224fbe972tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": -2,
+          "order_qty": 0,
+          "available_qty": -2,
+          "sell_price": 1290000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "47450290638",
+          "channel_url": "https://shopee.co.id/product/1592826980/47450290638",
+          "error_text": null,
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-moringa-ritual-set-1731746420475922395",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1731746420475922395",
+          "channel_url": "https://shop.tiktok.com/view/product/1731746420475922395",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "8709764841660",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-ritual-set",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    },
+    {
+      "item_group_id": 46,
+      "item_name": "TREELOGY The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Perawatan Kulit & Rambut",
+      "last_modified": "2026-04-28T02:31:14.359Z",
+      "variations": [],
+      "sell_price": null,
+      "item_category_id": 15166,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/19097e503e034f7ca47a67a8af2f71f5tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+      "total_composition": "2",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 46,
+          "item_id": 74,
+          "item_code": "The-Movement-&-Relief",
+          "item_name": "TREELOGY The Movement & Relief | Moringa Daun Kelor Premium | 180 Kapsul + Oil 60ml | Bantu Pegal Sendi + Perawatan Kulit & Rambut",
+          "is_bundle": true,
+          "invt_acct_id": 4,
+          "variation_values": [],
+          "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/0c5305de8ddd424e866dd47de7180e45tplv-aphluv4xwc-origin-jpeg_thumb.jpeg",
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopee - Shopee"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            },
+            {
+              "store_name": "Shop | Tokopedia - Shop | Tokopedia"
+            },
+            {
+              "store_name": "Tokopedia - Tokopedia"
+            },
+            {
+              "store_name": "Shopify - Shopify"
+            }
+          ],
+          "end_qty": -48,
+          "order_qty": 5,
+          "available_qty": -53,
+          "sell_price": 1450000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "42127146755",
+          "channel_url": "https://shopee.co.id/product/1592826980/42127146755",
+          "error_text": "Invalid brand Treelogy for category id 100006 for Shopee, Suggestion: please use \"No Brand\"",
+          "shop_id": "1592826980"
+        },
+        {
+          "channel_id": 128,
+          "store_id": 128884,
+          "store_name": "Tokopedia - Tokopedia",
+          "channel_group_id": "1733531009044613083",
+          "channel_url": "https://tokopedia.com/treelogy-moringa/treelogy-the-movement-relief-moringa-daun-kelor-premium-180-kapsul-oil-60ml-bantu-pegal-sendi-perawatan-kulit-rambut-1733531009044613083",
+          "error_text": null,
+          "shop_id": "7495817948361296859"
+        },
+        {
+          "channel_id": 131076,
+          "store_id": 128883,
+          "store_name": "Shop | Tokopedia - Shop | Tokopedia",
+          "channel_group_id": "1733531009044613083",
+          "channel_url": "https://shop.tiktok.com/view/product/1733531009044613083",
+          "error_text": null,
+          "shop_id": null
+        },
+        {
+          "channel_id": 1048576,
+          "store_id": 128887,
+          "store_name": "Shopify - Shopify",
+          "channel_group_id": "9075164709052",
+          "channel_url": "https://treelogymoringa.myshopify.com/products/moringa-inside-out-protocol",
+          "error_text": null,
+          "shop_id": null
+        }
+      ]
+    }
+  ],
+  "archived": [
+    {
+      "item_group_id": 58,
+      "item_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 180caps / Kapsul Daun Kelor Organik Premium 180caps",
+      "last_modified": "2026-04-17T03:25:04.065Z",
+      "variations": [
+        {
+          "label": "Ukuran",
+          "values": [
+            "180 Caps"
+          ]
+        }
+      ],
+      "sell_price": "780000.0000",
+      "item_category_id": 14788,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/id-11134207-8224r-mj9pqu7x0l4y96_thumb.jpeg",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 58,
+          "item_id": 92,
+          "item_code": "OMC180",
+          "item_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 180caps / Kapsul Daun Kelor Organik Premium 180caps",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Ukuran",
+              "value": "180 Caps"
+            }
+          ],
+          "thumbnail": null,
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopee - Shopee"
+            }
+          ],
+          "end_qty": null,
+          "order_qty": null,
+          "available_qty": null,
+          "sell_price": 780000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "40277905678",
+          "channel_url": "https://shopee.co.id/product/1592826980/40277905678",
+          "error_text": null,
+          "shop_id": "1592826980"
+        }
+      ]
+    },
+    {
+      "item_group_id": 59,
+      "item_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 90caps / Kapsul Daun Kelor Organik Premium 90caps",
+      "last_modified": "2026-04-17T03:25:04.065Z",
+      "variations": [
+        {
+          "label": "Ukuran",
+          "values": [
+            "90 Caps"
+          ]
+        }
+      ],
+      "sell_price": "390000.0000",
+      "item_category_id": 14788,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/id-11134207-8224o-mj9pqu7wqr5u20_thumb.jpeg",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 59,
+          "item_id": 93,
+          "item_code": "OMC90",
+          "item_name": "[BELI2 GRATIS1] TREELOGY Premium Organic Moringa Capsules 90caps / Kapsul Daun Kelor Organik Premium 90caps",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "Ukuran",
+              "value": "90 Caps"
+            }
+          ],
+          "thumbnail": null,
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": [
+            {
+              "store_name": "Shopee - Shopee"
+            }
+          ],
+          "end_qty": null,
+          "order_qty": null,
+          "available_qty": null,
+          "sell_price": 390000
+        }
+      ],
+      "online_status": [
+        {
+          "channel_id": 64,
+          "store_id": 128882,
+          "store_name": "Shopee - Shopee",
+          "channel_group_id": "54104387502",
+          "channel_url": "https://shopee.co.id/product/1592826980/54104387502",
+          "error_text": null,
+          "shop_id": "1592826980"
+        }
+      ]
+    },
+    {
+      "item_group_id": 62,
+      "item_name": "Inside Out Moringa Protocol - Archive",
+      "last_modified": "2026-04-17T06:14:37.727Z",
+      "variations": [
+        {
+          "label": "The Movement & Relief",
+          "values": [
+            "90 Moringa Capsules  + 30ml Moringa Oil"
+          ]
+        }
+      ],
+      "sell_price": "690000.0000",
+      "item_category_id": null,
+      "thumbnail": "https://file-service.3smqg.upcloudobjects.com/vreienxjt9asizybi76pra/images/hand_drops_a_green_treelogy_organic_moringa_capsule_en_thumb.jpeg",
+      "total_composition": "0",
+      "is_consignment": false,
+      "variants": [
+        {
+          "item_group_id": 62,
+          "item_id": 94,
+          "item_code": "46129731666108",
+          "item_name": "Inside Out  Moringa Protocol",
+          "is_bundle": false,
+          "invt_acct_id": 4,
+          "variation_values": [
+            {
+              "label": "The Movement & Relief",
+              "value": "90 Moringa Capsules  + 30ml Moringa Oil"
+            }
+          ],
+          "thumbnail": null,
+          "barcode": null,
+          "tax_rate": 0,
+          "store_names": null,
+          "end_qty": 0,
+          "order_qty": 0,
+          "available_qty": 0,
+          "sell_price": 690000
+        }
+      ],
+      "online_status": null
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+salesorder_no,qbo_invoice_id,channel,jubelio_grand_total,qbo_total,qbo_balance,diff,direction,is_paid,has_marketplace_fee_line
+SP-260423J7NBGSPS,69475,SP,1096250,1250000,0,153750,qbo-over,true,false
+SP-260423HAJVWVWN,69470,SP,1096250,1250000,0,153750,qbo-over,true,false
+SP-260421DNC0D4CY,69409,SP,1096250,1250000,0,153750,qbo-over,true,false

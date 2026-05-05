@@ -1,0 +1,230 @@
+[
+  {
+    "target": {
+      "salesorder_no": "SHF-7390-128887",
+      "qboInvoiceId": "69566",
+      "expectedTotal": 1180000,
+      "restructured": "2026-04-28"
+    },
+    "invoice": {
+      "Id": "69566",
+      "DocNumber": "SHF-7390-128887",
+      "SyncToken": "5",
+      "TotalAmt": 1180000,
+      "Balance": 320000,
+      "TxnDate": "2026-04-22",
+      "MetaData": {
+        "CreateTime": "2026-04-23T19:04:04-07:00",
+        "LastModifiedByRef": {
+          "value": "9341456557542043"
+        },
+        "LastUpdatedTime": "2026-04-28T01:28:25-07:00"
+      },
+      "CustomerRef": {
+        "value": "14054",
+        "name": "SHF - vininta Fazharyasti"
+      },
+      "LinkedTxn": [
+        {
+          "TxnId": "69567",
+          "TxnType": "Payment"
+        }
+      ],
+      "Lines": [
+        {
+          "DetailType": "SalesItemLineDetail",
+          "Amount": 690000,
+          "Description": "[The-Movement-&-Relief] TREELOGY Premium Organic Moringa Capsules 180",
+          "ItemRef": {
+            "value": "20",
+            "name": "Moringa Capsules-180Pcs:TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium (180 Caps)"
+          },
+          "UnitPrice": 690000,
+          "Qty": 1,
+          "TaxCodeRef": {
+            "value": "5"
+          }
+        },
+        {
+          "DetailType": "SalesItemLineDetail",
+          "Amount": 790000,
+          "Description": "[The-Movement-&-Relief] TREELOGY Premium Organic Moringa Seed Oil 60ml",
+          "ItemRef": {
+            "value": "16",
+            "name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium (60 ml)"
+          },
+          "UnitPrice": 790000,
+          "Qty": 1,
+          "TaxCodeRef": {
+            "value": "5"
+          }
+        },
+        {
+          "DetailType": "SubTotalLineDetail",
+          "Amount": 1480000,
+          "Description": ""
+        },
+        {
+          "DetailType": "DiscountLineDetail",
+          "Amount": 300000,
+          "Description": ""
+        }
+      ]
+    },
+    "payments": [
+      {
+        "Id": "69567",
+        "TxnDate": "2026-04-22",
+        "TotalAmt": 1180000,
+        "UnappliedAmt": 320000,
+        "PrivateNote": "Auto-paid from Jubelio SO #SHF-7390-128887 status=COMPLETED",
+        "DepositToAccountRef": {
+          "value": "143"
+        },
+        "SyncToken": "1",
+        "MetaData": {
+          "CreateTime": "2026-04-23T19:04:06-07:00",
+          "LastUpdatedTime": "2026-04-28T00:18:55-07:00"
+        },
+        "Lines": [
+          {
+            "Amount": 860000,
+            "LinkedTxn": [
+              {
+                "TxnId": "69566",
+                "TxnType": "Invoice"
+              }
+            ]
+          }
+        ],
+        "sumAppliedToThisInv": 860000
+      }
+    ],
+    "deposits": [],
+    "analysis": {
+      "subtotalSalesItems": 1480000,
+      "sumDiscount": 300000,
+      "computedTotal": 1180000,
+      "qboTotalAmt": 1180000,
+      "qboBalance": 320000,
+      "totalAppliedFromPayments": 860000,
+      "computedBalance": 320000,
+      "expectedTotal": 1180000,
+      "healthy": false
+    }
+  },
+  {
+    "target": {
+      "salesorder_no": "SHF-7410-128887",
+      "qboInvoiceId": "69791",
+      "expectedTotal": 1180000,
+      "restructured": "2026-04-28"
+    },
+    "invoice": {
+      "Id": "69791",
+      "DocNumber": "SHF-7410-128887",
+      "SyncToken": "2",
+      "TotalAmt": 1180000,
+      "Balance": 0,
+      "TxnDate": "2026-04-24",
+      "MetaData": {
+        "CreateTime": "2026-04-24T19:37:48-07:00",
+        "LastModifiedByRef": {
+          "value": "9341456557542043"
+        },
+        "LastUpdatedTime": "2026-04-28T01:28:27-07:00"
+      },
+      "CustomerRef": {
+        "value": "14184",
+        "name": "SHF - Ira Kartika Pulungan"
+      },
+      "LinkedTxn": [
+        {
+          "TxnId": "69792",
+          "TxnType": "Payment"
+        }
+      ],
+      "Lines": [
+        {
+          "DetailType": "SalesItemLineDetail",
+          "Amount": 690000,
+          "Description": "[The-Movement-&-Relief] TREELOGY Premium Organic Moringa Capsules 180",
+          "ItemRef": {
+            "value": "20",
+            "name": "Moringa Capsules-180Pcs:TREELOGY Premium Organic Moringa Capsules / Kapsul Daun Kelor Organik Premium (180 Caps)"
+          },
+          "UnitPrice": 690000,
+          "Qty": 1,
+          "TaxCodeRef": {
+            "value": "5"
+          }
+        },
+        {
+          "DetailType": "SalesItemLineDetail",
+          "Amount": 790000,
+          "Description": "[The-Movement-&-Relief] TREELOGY Premium Organic Moringa Seed Oil 60ml",
+          "ItemRef": {
+            "value": "16",
+            "name": "TREELOGY Premium Organic Moringa Seed Oil / Minyak Biji Kelor Organik Premium (60 ml)"
+          },
+          "UnitPrice": 790000,
+          "Qty": 1,
+          "TaxCodeRef": {
+            "value": "5"
+          }
+        },
+        {
+          "DetailType": "SubTotalLineDetail",
+          "Amount": 1480000,
+          "Description": ""
+        },
+        {
+          "DetailType": "DiscountLineDetail",
+          "Amount": 300000,
+          "Description": ""
+        }
+      ]
+    },
+    "payments": [
+      {
+        "Id": "69792",
+        "TxnDate": "2026-04-24",
+        "TotalAmt": 1180000,
+        "UnappliedAmt": 0,
+        "PrivateNote": "Auto-paid from Jubelio SO #SHF-7410-128887 status=COMPLETED",
+        "DepositToAccountRef": {
+          "value": "143"
+        },
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2026-04-24T19:37:49-07:00",
+          "LastUpdatedTime": "2026-04-24T19:37:49-07:00"
+        },
+        "Lines": [
+          {
+            "Amount": 1180000,
+            "LinkedTxn": [
+              {
+                "TxnId": "69791",
+                "TxnType": "Invoice"
+              }
+            ]
+          }
+        ],
+        "sumAppliedToThisInv": 1180000
+      }
+    ],
+    "deposits": [],
+    "analysis": {
+      "subtotalSalesItems": 1480000,
+      "sumDiscount": 300000,
+      "computedTotal": 1180000,
+      "qboTotalAmt": 1180000,
+      "qboBalance": 0,
+      "totalAppliedFromPayments": 1180000,
+      "computedBalance": 0,
+      "expectedTotal": 1180000,
+      "healthy": true
+    }
+  }
+]

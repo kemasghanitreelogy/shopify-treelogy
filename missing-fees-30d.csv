@@ -1,0 +1,2 @@
+salesorder_no,qbo_invoice_id,channel,doc_number,customer_name,txn_date,total_amt,grand_total_jubelio,gap,item_lines_total,current_discount,required_discount,discount_gap,expected_total_fees,has_marketplace_fee_line,payment_applied,balance,linked_payment_ids,is_paid
+SP-260424MM1WMQ92,69690,SP,SP-260424MM1WMQ92,"SP - Fionita",2026-04-24,1250000,1096250,153750,1480000,230000,383750,153750,153750,false,1250000,0,"70307",true

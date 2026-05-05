@@ -1,0 +1,6 @@
+{"ts":"2026-04-28T08:03:36.808Z","sn":"SHF-7390-128887","invoiceId":"69566","status":"unresolved","summary":["UNRESOLVED desc match \"Inside-Out-Protocol\" rejected: componentSum=860000 < lineAmount=1180000 (would require negative discount)"]}
+{"ts":"2026-04-28T08:04:45.191Z","sn":"SHF-7410-128887","invoiceId":"69791","status":"unresolved","summary":["UNRESOLVED desc match \"Inside-Out-Protocol\" rejected: componentSum=860000 < lineAmount=1180000 (would require negative discount)"]}
+{"ts":"2026-04-28T08:06:36.692Z","sn":"SP-260427VA3ERM9S","invoiceId":"70132","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:06:37.744Z","sn":"SP-260427VA3ERM9S","invoiceId":"70132","status":"applied","newSyncToken":"1","newTotal":390000}
+{"ts":"2026-04-28T08:06:38.418Z","sn":"SP-260427UKXEW0G1","invoiceId":"70133","plan":["42→20"],"dryRun":false}
+{"ts":"2026-04-28T08:06:39.344Z","sn":"SP-260427UKXEW0G1","invoiceId":"70133","status":"applied","newSyncToken":"1","newTotal":390000}
