@@ -141,14 +141,18 @@ const apiGetPaged = async (path, params = {}, { pageSize = 100, maxPages = 50, u
 // `dateFrom` is the WIB date string YYYY-MM-DD used purely for client-side
 // short-circuit. The endpoint itself returns all orders sorted by date desc;
 // we stop fetching once we encounter an item older than `dateFrom`.
-
-const JKT_OFFSET_MS_LOCAL = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
-const itemDateJkt = (item, key) => {
+//
+// Intentional WITA (UTC+8) here, NOT WIB: this is a fetch-cutoff margin, not
+// a write to QBO. Using WITA makes the cutoff slightly looser (over-fetches
+// by up to 1h around midnight WITA), which is safer than under-fetching and
+// missing edge orders. For canonical write semantics see lib/jubelioTime.js.
+const FETCH_CUTOFF_OFFSET_MS = 8 * 60 * 60 * 1000;
+const itemFetchCutoffDate = (item, key) => {
     const raw = item?.[key];
     if (!raw) return null;
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return null;
-    return new Date(d.getTime() + JKT_OFFSET_MS_LOCAL).toISOString().substring(0, 10);
+    return new Date(d.getTime() + FETCH_CUTOFF_OFFSET_MS).toISOString().substring(0, 10);
 };
 
 const listShippedOrders = ({ dateFrom } = {}) => {
@@ -157,7 +161,7 @@ const listShippedOrders = ({ dateFrom } = {}) => {
     // populated and sorting by it works reliably.
     const until = dateFrom
         ? (item) => {
-            const d = itemDateJkt(item, 'transaction_date');
+            const d = itemFetchCutoffDate(item, 'transaction_date');
             return d && d < dateFrom;
         }
         : null;
@@ -167,7 +171,7 @@ const listShippedOrders = ({ dateFrom } = {}) => {
 const listCompletedOrders = ({ dateFrom } = {}) => {
     const until = dateFrom
         ? (item) => {
-            const d = itemDateJkt(item, 'transaction_date');
+            const d = itemFetchCutoffDate(item, 'transaction_date');
             return d && d < dateFrom;
         }
         : null;
@@ -177,7 +181,7 @@ const listCompletedOrders = ({ dateFrom } = {}) => {
 const listCanceledOrders = ({ dateFrom } = {}) => {
     const until = dateFrom
         ? (item) => {
-            const d = itemDateJkt(item, 'transaction_date');
+            const d = itemFetchCutoffDate(item, 'transaction_date');
             return d && d < dateFrom;
         }
         : null;

@@ -30,17 +30,14 @@ const requireAdmin = (req, res, next) => {
     return res.status(401).json({ error: 'Unauthorized' });
 };
 
-// Jubelio uses UTC+8 timezone semantics in its UI and date fields. Keep this
-// in sync with routes/jubelioWebhook.js — both must use the same offset.
-const JKT_OFFSET_MS = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
-const isoDateJakarta = (raw) => {
-    if (!raw) return null;
-    const s = String(raw).trim();
-    if (!s || s === '-') return null;
-    const d = new Date(s);
-    if (Number.isNaN(d.getTime())) return s.substring(0, 10);
-    return new Date(d.getTime() + JKT_OFFSET_MS).toISOString().substring(0, 10);
-};
+// Jubelio raw timestamps → calendar date helpers. See lib/jubelioTime.js
+// for semantic model. We use BOTH WIB and WITA here:
+//   • toQboTxnDate (WIB, UTC+7) — current write semantic for new invoices
+//   • toWitaDate (UTC+8, legacy) — pre-2026-05 write semantic for historical
+//     invoices that haven't been touched (forward-only cutover policy)
+// Tolerant compare in /audit-txndate accepts EITHER as valid to avoid
+// false-positive drift on historical records.
+const { toQboTxnDate, toWitaDate } = require('../lib/jubelioTime');
 const dayDiff = (laterStr, earlierStr) => {
     const a = new Date(`${laterStr}T00:00:00Z`).getTime();
     const b = new Date(`${earlierStr}T00:00:00Z`).getTime();
@@ -121,10 +118,18 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
             // Prefer payment_date (canonical accrual event, now policy) over the
             // Shopee SO# encoding which only reflects when the order was placed.
             // For Shopee orders paid on a different day, payment_date wins.
+            //
+            // Tolerant compare: accept inv.TxnDate that matches EITHER the WIB
+            // (current write semantic) OR the WITA (pre-2026-05 write semantic).
+            // This avoids false-positive drift on historical invoices written
+            // before the WITA→WIB cutover. Genuine drift (matches neither) is
+            // still flagged and, if doFix, rewritten to WIB (the new canonical).
             const dateSource = r.last_payment_date_raw || r.last_transaction_date_raw;
             if (dateSource) {
-                const expected = isoDateJakarta(dateSource);
-                if (expected && inv.TxnDate !== expected) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected, syncToken: inv.SyncToken, layer: 'VERIFIED', dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date' });
+                const expectedWib = toQboTxnDate(dateSource);
+                const expectedWita = toWitaDate(dateSource);
+                const matches = expectedWib && (inv.TxnDate === expectedWib || inv.TxnDate === expectedWita);
+                if (expectedWib && !matches) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: expectedWib, syncToken: inv.SyncToken, layer: 'VERIFIED', dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date' });
                 continue;
             }
             // Fallback only when no raw date stored (legacy entries pre-deploy):
@@ -134,13 +139,17 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
                 if (inv.TxnDate !== shopeeDate) shopeeFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: shopeeDate, syncToken: inv.SyncToken, layer: 'SHOPEE' });
                 continue;
             }
-            const jktCreate = isoDateJakarta(inv.MetaData?.CreateTime);
-            if (!jktCreate || !inv.TxnDate) continue;
-            if (dayDiff(jktCreate, inv.TxnDate) === 1) {
+            // Legacy fallback heuristic: detect pre-2026-04-29 invoices where
+            // TxnDate was set to UTC date (1 day before the WIB business day).
+            // We use the QBO Invoice's own MetaData.CreateTime as a proxy for
+            // when the order was actually placed.
+            const wibCreate = toQboTxnDate(inv.MetaData?.CreateTime);
+            if (!wibCreate || !inv.TxnDate) continue;
+            if (dayDiff(wibCreate, inv.TxnDate) === 1) {
                 if (allChannels) {
-                    legacyFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: jktCreate, syncToken: inv.SyncToken, layer: 'LEGACY' });
+                    legacyFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: wibCreate, syncToken: inv.SyncToken, layer: 'LEGACY' });
                 } else {
-                    legacyReport.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, jktCreate });
+                    legacyReport.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, wibCreate });
                 }
             }
         }

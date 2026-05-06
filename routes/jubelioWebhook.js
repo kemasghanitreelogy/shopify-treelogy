@@ -7,6 +7,7 @@ const { isBundleSku, getBundleComposition } = require('../services/bundleService
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const JubelioCustomerMap = require('../models/JubelioCustomerMap');
+const { toQboTxnDate } = require('../lib/jubelioTime');
 
 // Fire-and-forget: persist full webhook payload for later debugging. Logging
 // failures MUST NOT block the actual sync flow — we swallow errors here.
@@ -138,25 +139,14 @@ const getTermDays = (so) => {
     const prefix = getSoPrefix(so);
     return prefix === 'CS' ? 7 : 14;
 };
-// Jubelio sends `transaction_date` etc. as ISO UTC strings. Naively taking
-// `substring(0, 10)` returns the UTC date — which is "yesterday" for any
-// timestamp between 17:00 WIB and 23:59 WIB (the UTC day rollover happens at
-// 07:00 WIB). Always project to Asia/Jakarta (UTC+7) before formatting.
-// Jubelio's UI and internal date semantics are UTC+8 (Singapore-time / WITA),
-// not WIB. An order at e.g. "2026-04-24T16:43:13.000Z" is shown by Jubelio as
-// "25 Apr 2026, 00:43:20" — adding 7h would give 23:43 on Apr 24 and produce
-// the wrong calendar date for any timestamp in the 16:00-16:59 UTC window.
-// Override via env JUBELIO_TZ_OFFSET_HOURS if business policy changes.
-const TZ_OFFSET_HOURS = Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8;
-const JKT_OFFSET_MS = TZ_OFFSET_HOURS * 60 * 60 * 1000;
-const isoDateJakarta = (raw) => {
-    if (raw === undefined || raw === null || raw === '') return undefined;
-    const s = String(raw).trim();
-    if (!s || s === '-') return undefined;
-    const d = new Date(s);
-    if (Number.isNaN(d.getTime())) return s.substring(0, 10);
-    return new Date(d.getTime() + JKT_OFFSET_MS).toISOString().substring(0, 10);
-};
+// Jubelio raw timestamps are real UTC. QBO TxnDate must reflect the WIB
+// (UTC+7) calendar date when payment was received — that's the Jakarta
+// business day finance reports against. See lib/jubelioTime.js for the
+// canonical helper and its semantic model.
+//
+// Note: pre-2026-05 this code used +8h ("isoDateJakarta") which produced
+// WITA dates matching Jubelio admin UI. Migrated to WIB (toQboTxnDate) in
+// the forward-only cutover; historical invoices left untouched.
 const addDays = (isoDate, days) => {
     const d = new Date(isoDate);
     if (Number.isNaN(d.getTime())) return undefined;
@@ -852,7 +842,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
     const lines = [];
     const bundleNotes = []; // accumulated bundle discounts → merged into single DiscountLineDetail at end
     const items = Array.isArray(so.items) ? so.items : [];
-    const serviceDate = isoDateJakarta(so.transaction_date);
+    const serviceDate = toQboTxnDate(so.transaction_date);
 
     for (const it of items) {
         const qty = Number(it.qty_in_base ?? it.qty ?? 1) || 1;
@@ -1414,7 +1404,7 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
     const payload = {
         CustomerRef: { value: String(customerId) },
         TotalAmt: balance,
-        TxnDate: isoDateJakarta(so.payment_date || so.transaction_date),
+        TxnDate: toQboTxnDate(so.payment_date || so.transaction_date),
         DocNumber: paymentDocNumber,
         PrivateNote: `Auto-paid from Jubelio SO #${so.salesorder_no} status=${so.status}`,
         Line: [{
@@ -1473,7 +1463,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     const dateField = so.payment_date ? 'payment_date'
         : so.transaction_date ? 'transaction_date'
         : so.created_date ? 'created_date' : 'none';
-    const txnDate = isoDateJakarta(dateRaw);
+    const txnDate = toQboTxnDate(dateRaw);
     if (dateRaw) {
         console.log(`📅 SO ${so.salesorder_no} ${dateField}="${dateRaw}" → TxnDate=${txnDate}`);
     }
@@ -1500,7 +1490,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         so.completed_date,
         so.received_date,
     ].map(v => (v ? String(v).trim() : '')).filter(v => v && v !== '-');
-    const validShipDate = isoDateJakarta(dateCandidates[0]);
+    const validShipDate = toQboTxnDate(dateCandidates[0]);
     // Shopify and some other channels send a full URL as tracking_no
     // (e.g. "https://lionparcel.com/track/stt?q=11LP1776…"). QBO TrackingNum
     // max is 31 chars, so extract the actual tracking code from the URL.

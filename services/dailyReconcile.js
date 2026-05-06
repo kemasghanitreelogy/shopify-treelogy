@@ -23,24 +23,8 @@ const BYPASS_STATUS_PREFIXES = new Set(
         .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
 );
 
-// Match webhook timezone (UTC+8 = Jubelio operational timezone).
-const JKT_OFFSET_MS = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
-
-const yesterdayWib = () => {
-    const nowJkt = new Date(Date.now() + JKT_OFFSET_MS);
-    const y = new Date(nowJkt);
-    y.setUTCDate(y.getUTCDate() - 1);
-    return y.toISOString().substring(0, 10);
-};
-
-const isoDateJakarta = (raw) => {
-    if (!raw) return null;
-    const s = String(raw).trim();
-    if (!s || s === '-') return null;
-    const d = new Date(s);
-    if (Number.isNaN(d.getTime())) return s.substring(0, 10);
-    return new Date(d.getTime() + JKT_OFFSET_MS).toISOString().substring(0, 10);
-};
+// Match webhook write semantic (WIB, UTC+7). See lib/jubelioTime.js.
+const { toQboTxnDate, yesterdayWib } = require('../lib/jubelioTime');
 
 const getSoPrefix = (soNo) => {
     const m = String(soNo || '').match(/^([A-Z]{2,5})-/);
@@ -71,12 +55,8 @@ const applySyncRule = (so) => {
 const itemMatchesDate = (so, date) => {
     const fields = ['transaction_date', 'shipment_date', 'created_date'];
     for (const f of fields) {
-        const raw = so?.[f];
-        if (!raw) continue;
-        const d = new Date(raw);
-        if (Number.isNaN(d.getTime())) continue;
-        const wib = new Date(d.getTime() + JKT_OFFSET_MS).toISOString().substring(0, 10);
-        if (wib === date) return true;
+        const wib = toQboTxnDate(so?.[f]);
+        if (wib && wib === date) return true;
     }
     return false;
 };
@@ -217,7 +197,7 @@ const runDailyReconcile = async ({ qbo, date }) => {
             customer_name: so.customer_name || so.shipping_full_name || null,
             status: so.status || so.internal_status || so.wms_status || null,
             transaction_date_raw: so.transaction_date || null,
-            transaction_date_jkt: isoDateJakarta(so.transaction_date),
+            transaction_date_wib: toQboTxnDate(so.transaction_date),
             grand_total: so.grand_total != null ? Number(so.grand_total) : null,
             invoice_no: so.invoice_no || null,
             tracking_no: so.tracking_no || so.tracking_number || null,

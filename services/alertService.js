@@ -358,7 +358,8 @@ const _fmtMissing = (m) => {
     if (m.customer_name) lines.push(`   👤 ${escapeHtml(m.customer_name)}`);
     lines.push(`   📊 status=<b>${escapeHtml(String(m.status || '-'))}</b> · total=${escapeHtml(_fmtIdr(m.grand_total))}`);
     if (m.transaction_date_raw) {
-        lines.push(`   📅 txn_raw=<code>${escapeHtml(m.transaction_date_raw)}</code> · jkt=${escapeHtml(m.transaction_date_jkt || '?')}`);
+        const wib = m.transaction_date_wib || m.transaction_date_jkt || '?';
+        lines.push(`   📅 txn_raw=<code>${escapeHtml(m.transaction_date_raw)}</code> · wib=${escapeHtml(wib)}`);
     }
     if (m.tracking_no) lines.push(`   🚚 ${escapeHtml(String(m.tracking_no).slice(0, 40))}`);
     if (m.invoice_no) lines.push(`   🧾 jubelio_inv=${escapeHtml(m.invoice_no)}`);

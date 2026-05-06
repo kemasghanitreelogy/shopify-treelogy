@@ -4,6 +4,17 @@
 // fields. Lets historical invoices use the same payment_date semantics as
 // new webhooks after the policy change.
 //
+// ⚠️ RETROACTIVE WITA SEMANTIC — DO NOT USE FOR GO-FORWARD WRITES ⚠️
+// This service intentionally uses WITA (+8h, legacy semantic) so that any
+// historical re-date stays consistent with neighboring pre-2026-05 invoices
+// that were written with the same offset. New invoices are written by the
+// webhook using WIB (toQboTxnDate from lib/jubelioTime.js); the two helpers
+// are different on purpose. Tolerant compare in /api/admin/audit-txndate
+// accepts both. If you need to re-date historical invoices to WIB, write a
+// new script — do not switch the helper here without finance + Anda sign-off,
+// because changing this will silently shift ~1.7% of records by 1 day on
+// next run.
+//
 // Source priority for raw payment_date value, in order:
 //   1. JubelioOrderMap.last_payment_date_raw (already stored, post-fix)
 //   2. JubelioPayloadLog.payload.payment_date (most recent webhook for the SO)
@@ -15,7 +26,8 @@ const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const jubelio = require('./jubelioApiService');
 
-const TZ_OFFSET_MS = (Number(process.env.JUBELIO_TZ_OFFSET_HOURS) || 8) * 60 * 60 * 1000;
+// Intentional WITA (+8h) — see header comment above.
+const TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
 const isoDateJubelio = (raw) => {
     if (!raw) return null;
     const d = new Date(String(raw).trim());
