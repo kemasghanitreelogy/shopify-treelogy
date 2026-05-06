@@ -1524,7 +1524,9 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         `term=Net${termDays}`,
     ];
     if (courier) privateParts.push(`courier=${courier}`);
-    const paidAt = toWibTime(so.payment_date);
+    // SHF (Shopify) doesn't populate payment_date — falls back to transaction_date
+    // (Shopify checkout is pre-paid, so transaction time ≈ payment time).
+    const paidAt = toWibTime(so.payment_date || so.transaction_date);
     if (paidAt) privateParts.push(`paid=${paidAt}`);
 
     const basePayload = {
