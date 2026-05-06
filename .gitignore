@@ -40,3 +40,5 @@ logs
 *.temp
 *.tmp
 .vercel
+audit-logs/
+migration-audit-*.ndjson

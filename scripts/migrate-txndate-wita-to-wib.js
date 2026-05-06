@@ -14,6 +14,7 @@
 //   node scripts/migrate-txndate-wita-to-wib.js --channel SP       # filter
 //   node scripts/migrate-txndate-wita-to-wib.js --before 2026-04-01 # only older
 //   node scripts/migrate-txndate-wita-to-wib.js --limit 50
+//   node scripts/migrate-txndate-wita-to-wib.js --so TP-58382474... # single SO (prefix match)
 //   node scripts/migrate-txndate-wita-to-wib.js --apply --i-understand --limit 5 --before 2026-04-30
 //
 // Output (always written): migration-audit-wita-to-wib-<ISO>.ndjson
@@ -39,6 +40,7 @@ const ALLOW_CURRENT_MONTH = flag('allow-current-month');
 const LIMIT = Number(val('limit')) || 0;
 const BEFORE = val('before'); // YYYY-MM-DD; only records with TxnDate < this
 const CHANNEL = (val('channel') || '').toUpperCase();
+const SO = val('so'); // exact or prefix match on salesorder_no
 
 if (APPLY && !I_UNDERSTAND) {
     console.error('❌ --apply requires --i-understand flag (this rewrites historical books).');
@@ -77,7 +79,7 @@ const channelOf = (soNo) => {
     const qbo = await getQboInstance();
 
     console.log(`🚀 Migration ${APPLY ? '(APPLY)' : '(dry-run)'}`);
-    console.log(`   filters: channel=${CHANNEL || 'ALL'}  before=${BEFORE || 'none'}  limit=${LIMIT || 'none'}`);
+    console.log(`   filters: channel=${CHANNEL || 'ALL'}  before=${BEFORE || 'none'}  limit=${LIMIT || 'none'}  so=${SO || 'none'}`);
     console.log(`   guards: skip-current-month=${ALLOW_CURRENT_MONTH ? 'OFF' : 'ON'}  current_month=${currentMonth}`);
     console.log(`   audit: ${auditPath}\n`);
 
@@ -88,6 +90,11 @@ const channelOf = (soNo) => {
             { last_transaction_date_raw: { $exists: true, $ne: null } },
         ],
     };
+    if (SO) {
+        // Prefix match — accepts both "TP-58382..." and "TP-58382...-128884"
+        const escaped = SO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        filter.salesorder_no = { $regex: '^' + escaped };
+    }
     const rows = await JubelioOrderMap.find(filter)
         .select('salesorder_no qbo_invoice_id last_payment_date_raw last_transaction_date_raw last_synced_at')
         .lean();
