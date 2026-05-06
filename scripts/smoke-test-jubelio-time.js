@@ -1,6 +1,6 @@
 // Smoke test for lib/jubelioTime.js — table-driven assertions.
 // Run: node scripts/smoke-test-jubelio-time.js
-const { toQboTxnDate, toWitaDate, todayWib, yesterdayWib } = require('../lib/jubelioTime');
+const { toQboTxnDate, toWitaDate, toWibTime, todayWib, yesterdayWib } = require('../lib/jubelioTime');
 
 let pass = 0, fail = 0;
 const check = (label, got, want) => {
@@ -41,6 +41,21 @@ console.log('\nReal samples from production probe');
 check('SP transaction 16:18:53', toQboTxnDate('2026-05-02T16:18:53.000Z'), '2026-05-02');
 check('TP transaction 16:43:13', toQboTxnDate('2026-04-24T16:43:13.000Z'), '2026-04-24');
 check('SHF transaction 16:11:26', toQboTxnDate('2026-04-27T16:11:26.000Z'), '2026-04-27');
+
+console.log('\ntoWibTime — payment hour for invoice memo');
+// CRITICAL: ensure WIB (+7h), NOT WITA (+8h). See lib/jubelioTime.js header.
+//   Raw 14:58 UTC → WIB 21:58 (correct). WITA would be 22:58 (wrong).
+check('14:58 UTC → 21:58 WIB',  toWibTime('2026-05-03T14:58:05.000Z'), '21:58');
+check('00:00 UTC → 07:00 WIB',  toWibTime('2026-05-04T00:00:00.000Z'), '07:00');
+check('16:00 UTC → 23:00 WIB',  toWibTime('2026-05-04T16:00:00.000Z'), '23:00');
+check('17:00 UTC → 00:00 WIB next day', toWibTime('2026-05-04T17:00:00.000Z'), '00:00');
+check('23:59 UTC → 06:59 WIB next day', toWibTime('2026-05-04T23:59:00.000Z'), '06:59');
+// Anti-WITA assertions: same raw must NOT produce the WITA hour.
+check('14:58 UTC ≠ 22:58 (would be WITA)', toWibTime('2026-05-03T14:58:05.000Z') === '22:58', false);
+check('null', toWibTime(null), undefined);
+check('empty', toWibTime(''), undefined);
+check('dash', toWibTime('-'), undefined);
+check('garbage', toWibTime('zzzzz'), undefined);
 
 console.log('\ntodayWib / yesterdayWib basic format');
 const today = todayWib();

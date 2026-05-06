@@ -7,7 +7,7 @@ const { isBundleSku, getBundleComposition } = require('../services/bundleService
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const JubelioCustomerMap = require('../models/JubelioCustomerMap');
-const { toQboTxnDate } = require('../lib/jubelioTime');
+const { toQboTxnDate, toWibTime } = require('../lib/jubelioTime');
 
 // Fire-and-forget: persist full webhook payload for later debugging. Logging
 // failures MUST NOT block the actual sync flow — we swallow errors here.
@@ -1524,6 +1524,8 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         `term=Net${termDays}`,
     ];
     if (courier) privateParts.push(`courier=${courier}`);
+    const paidAt = toWibTime(so.payment_date);
+    if (paidAt) privateParts.push(`paid=${paidAt}`);
 
     const basePayload = {
         Line: lines,
