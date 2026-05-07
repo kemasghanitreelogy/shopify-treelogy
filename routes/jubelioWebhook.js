@@ -1358,6 +1358,22 @@ const hasPaymentSignal = (so) => {
 // pays. Volume is low (<10/month); no automatic clearing of the marker.
 const hasUnpaidMarker = (so) => /#unpaid\b/i.test(String(so?.note || ''));
 
+// Cancellation detection. Jubelio is inconsistent about which field carries
+// the cancel signal — `is_canceled` is sometimes null even when the order
+// is fully canceled (`internal_status: "CANCELED"`, `wms_status: "CANCELED"`,
+// `channel_status: "CANCELLED"`, `internal_cancel_date` set). Pre-2026-05-07
+// the webhook only checked `is_canceled`, which let canceled SOs slip
+// through and create invoices in QBO (e.g. SP-260505KPNWRGF7). We OR-match
+// across all known signals so any one of them flips the void path.
+const CANCELED_STATUS_VALUES = new Set(['CANCELED', 'CANCELLED']);
+const isCanceledSO = (so) => {
+    if (!so) return false;
+    if (so.is_canceled) return true;
+    if (so.internal_cancel_date) return true;
+    const fields = [so.status, so.internal_status, so.wms_status, so.channel_status];
+    return fields.some((f) => f && CANCELED_STATUS_VALUES.has(String(f).toUpperCase()));
+};
+
 // Per-channel sync gate: ALL channels (marketplace + direct-sale) follow the
 // same rule — wait for buyer-paid signal (payment_date set OR status
 // PAID/COMPLETED) before syncing to QBO. Policy decision 2026-04-29: invoice
@@ -1720,7 +1736,7 @@ router.post('/pesanan', async (req, res) => {
 
     const payload = req.body || {};
     const statusUpper = String(payload.status || '').toUpperCase();
-    log(`📦 [3/8] PAYLOAD action=${payload.action || '-'} SO=${payload.salesorder_no || '-'} id=${payload.salesorder_id || '-'} status=${statusUpper || '-'} canceled=${!!payload.is_canceled} items=${Array.isArray(payload.items) ? payload.items.length : 0} grandTotal=${payload.grand_total ?? '-'}`);
+    log(`📦 [3/8] PAYLOAD action=${payload.action || '-'} SO=${payload.salesorder_no || '-'} id=${payload.salesorder_id || '-'} status=${statusUpper || '-'} canceled=${isCanceledSO(payload)} items=${Array.isArray(payload.items) ? payload.items.length : 0} grandTotal=${payload.grand_total ?? '-'}`);
     try { log(`📋 PAYLOAD JSON: ${JSON.stringify(payload)}`); } catch { log('📋 PAYLOAD JSON: <stringify failed>'); }
     logJubelioPayload('pesanan', payload);
 
@@ -1734,7 +1750,7 @@ router.post('/pesanan', async (req, res) => {
         // source_name, shipping address, items with disc_amount, etc.) — no
         // outbound API call required.
         const so = payload;
-        const shouldVoid = !!payload.is_canceled;
+        const shouldVoid = isCanceledSO(payload);
         const prefix = getSoPrefix(so);
         const bypassStatus = BYPASS_STATUS_PREFIXES.has(prefix);
         const buyerPaid = hasPaymentSignal(so);
