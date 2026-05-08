@@ -1630,9 +1630,12 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
         // Respect finance manual edit on TxnDate. If the QBO invoice's current
         // TxnDate differs from what we last wrote (`existing.last_txn_date`),
         // finance touched it after our last sync — preserve their edit by
-        // dropping TxnDate + DueDate from the sparse-update payload. Other
-        // fields (Line items, tracking, courier, memo, etc.) still update
-        // normally so we don't drift on operational data.
+        // omitting TxnDate from the sparse-update payload. Recompute DueDate
+        // from finance's edited TxnDate + termDays so the due date auto-syncs
+        // (e.g. finance corrects TxnDate from May 5 → May 6 with Net 14 →
+        // DueDate auto-updates from May 19 → May 20). Other fields (Line
+        // items, tracking, courier, memo, etc.) still update normally so we
+        // don't drift on operational data.
         //
         // The map's `last_txn_date` keeps tracking webhook's COMPUTED value
         // (not finance's), so future webhook fires can keep detecting the
@@ -1647,14 +1650,17 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
                     current?.TxnDate &&
                     current.TxnDate !== existing.last_txn_date
                 ) {
+                    const recomputedDueDate = addDays(current.TxnDate, termDays);
                     console.log(
                         `📌 Finance edit detected on inv ${existing.qbo_invoice_id}: ` +
                         `keeping TxnDate=${current.TxnDate} ` +
-                        `(last wrote ${existing.last_txn_date}, would have written ${p.TxnDate})`,
+                        `(last wrote ${existing.last_txn_date}, would have written ${p.TxnDate}); ` +
+                        `recomputing DueDate=${recomputedDueDate} (Net${termDays} from finance's TxnDate)`,
                     );
                     const next = { ...p };
                     delete next.TxnDate;
-                    delete next.DueDate;
+                    if (recomputedDueDate) next.DueDate = recomputedDueDate;
+                    else delete next.DueDate;
                     return next;
                 }
                 return p;
