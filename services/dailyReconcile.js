@@ -24,7 +24,7 @@ const BYPASS_STATUS_PREFIXES = new Set(
 );
 
 // Match webhook write semantic (WIB, UTC+7). See lib/jubelioTime.js.
-const { toQboTxnDate, yesterdayWib } = require('../lib/jubelioTime');
+const { toQboTxnDate, yesterdayQbo } = require('../lib/jubelioTime');
 
 const getSoPrefix = (soNo) => {
     const m = String(soNo || '').match(/^([A-Z]{2,5})-/);
@@ -144,7 +144,7 @@ const channelLabel = (prefix, sourceName) => {
 
 const runDailyReconcile = async ({ qbo, date }) => {
     const t0 = Date.now();
-    const targetDate = date || yesterdayWib();
+    const targetDate = date || yesterdayQbo();
     console.log(`\n🌅 Daily reconcile · target=${targetDate}`);
 
     // 1) Pull from all three sources in parallel.
@@ -343,7 +343,7 @@ const runDailyReconcile = async ({ qbo, date }) => {
 
 module.exports = {
     runDailyReconcile,
-    yesterdayWib,
+    yesterdayQbo,
     applySyncRule,
     channelLabel,
     getSoPrefix,

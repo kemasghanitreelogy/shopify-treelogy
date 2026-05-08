@@ -30,14 +30,10 @@ const requireAdmin = (req, res, next) => {
     return res.status(401).json({ error: 'Unauthorized' });
 };
 
-// Jubelio raw timestamps → calendar date helpers. See lib/jubelioTime.js
-// for semantic model. We use BOTH WIB and WITA here:
-//   • toQboTxnDate (WIB, UTC+7) — current write semantic for new invoices
-//   • toWitaDate (UTC+8, legacy) — pre-2026-05 write semantic for historical
-//     invoices that haven't been touched (forward-only cutover policy)
-// Tolerant compare in /audit-txndate accepts EITHER as valid to avoid
-// false-positive drift on historical records.
-const { toQboTxnDate, toWitaDate } = require('../lib/jubelioTime');
+// Jubelio raw timestamps → calendar date. UTC+8 (= Jubelio/Shopee dashboard
+// alignment). See lib/jubelioTime.js for full semantic model and history of
+// the brief 2026-05-06 → 2026-05-08 WIB experiment that got reverted.
+const { toQboTxnDate, toWibDate } = require('../lib/jubelioTime');
 const dayDiff = (laterStr, earlierStr) => {
     const a = new Date(`${laterStr}T00:00:00Z`).getTime();
     const b = new Date(`${earlierStr}T00:00:00Z`).getTime();
@@ -115,21 +111,22 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
                 if (!/Object Not Found|6240|404/i.test(err)) errors.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, err });
                 continue;
             }
-            // Prefer payment_date (canonical accrual event, now policy) over the
-            // Shopee SO# encoding which only reflects when the order was placed.
-            // For Shopee orders paid on a different day, payment_date wins.
+            // Prefer payment_date (canonical accrual event) over Shopee SO#
+            // encoding which only reflects when the order was placed.
             //
-            // Tolerant compare: accept inv.TxnDate that matches EITHER the WIB
-            // (current write semantic) OR the WITA (pre-2026-05 write semantic).
-            // This avoids false-positive drift on historical invoices written
-            // before the WITA→WIB cutover. Genuine drift (matches neither) is
-            // still flagged and, if doFix, rewritten to WIB (the new canonical).
+            // Tolerant compare: accept inv.TxnDate that matches EITHER the
+            // current write semantic (UTC+8 / dashboard-aligned) OR the brief
+            // 2026-05-06 → 2026-05-08 WIB-experiment value. Without this,
+            // post-revert this cron would auto-rewrite ~dozens of WIB-window
+            // invoices on its first run — probably what we want eventually,
+            // but ops can drive that with the dedicated revert script instead
+            // so the operation has explicit audit + per-record review.
             const dateSource = r.last_payment_date_raw || r.last_transaction_date_raw;
             if (dateSource) {
-                const expectedWib = toQboTxnDate(dateSource);
-                const expectedWita = toWitaDate(dateSource);
-                const matches = expectedWib && (inv.TxnDate === expectedWib || inv.TxnDate === expectedWita);
-                if (expectedWib && !matches) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: expectedWib, syncToken: inv.SyncToken, layer: 'VERIFIED', dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date' });
+                const expectedQbo = toQboTxnDate(dateSource); // UTC+8
+                const expectedWib = toWibDate(dateSource);    // UTC+7 (cutover-window)
+                const matches = expectedQbo && (inv.TxnDate === expectedQbo || inv.TxnDate === expectedWib);
+                if (expectedQbo && !matches) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: expectedQbo, syncToken: inv.SyncToken, layer: 'VERIFIED', dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date' });
                 continue;
             }
             // Fallback only when no raw date stored (legacy entries pre-deploy):

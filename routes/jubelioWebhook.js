@@ -7,7 +7,7 @@ const { isBundleSku, getBundleComposition } = require('../services/bundleService
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const JubelioCustomerMap = require('../models/JubelioCustomerMap');
-const { toQboTxnDate, toWibTime } = require('../lib/jubelioTime');
+const { toQboTxnDate, toQboTime } = require('../lib/jubelioTime');
 
 // Fire-and-forget: persist full webhook payload for later debugging. Logging
 // failures MUST NOT block the actual sync flow — we swallow errors here.
@@ -1542,7 +1542,7 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     if (courier) privateParts.push(`courier=${courier}`);
     // SHF (Shopify) doesn't populate payment_date — falls back to transaction_date
     // (Shopify checkout is pre-paid, so transaction time ≈ payment time).
-    const paidAt = toWibTime(so.payment_date || so.transaction_date);
+    const paidAt = toQboTime(so.payment_date || so.transaction_date);
     if (paidAt) privateParts.push(`paid=${paidAt}`);
 
     const basePayload = {
