@@ -1627,8 +1627,38 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
 
     if (existing) {
         console.log(`♻️ Update QBO Invoice ${existing.qbo_invoice_id} untuk SO ${so.salesorder_no}`);
+        // Respect finance manual edit on TxnDate. If the QBO invoice's current
+        // TxnDate differs from what we last wrote (`existing.last_txn_date`),
+        // finance touched it after our last sync — preserve their edit by
+        // dropping TxnDate + DueDate from the sparse-update payload. Other
+        // fields (Line items, tracking, courier, memo, etc.) still update
+        // normally so we don't drift on operational data.
+        //
+        // The map's `last_txn_date` keeps tracking webhook's COMPUTED value
+        // (not finance's), so future webhook fires can keep detecting the
+        // divergence and keep respecting the manual edit indefinitely. To
+        // override and let webhook re-control the TxnDate, finance edits
+        // back to the value the webhook would compute (or a bug-fix script
+        // updates the map directly).
         const updated = await writeWithTaxFallback((p) =>
-            qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, () => p)
+            qboUpdateInvoiceSafe(qbo, existing.qbo_invoice_id, (current) => {
+                if (
+                    existing.last_txn_date &&
+                    current?.TxnDate &&
+                    current.TxnDate !== existing.last_txn_date
+                ) {
+                    console.log(
+                        `📌 Finance edit detected on inv ${existing.qbo_invoice_id}: ` +
+                        `keeping TxnDate=${current.TxnDate} ` +
+                        `(last wrote ${existing.last_txn_date}, would have written ${p.TxnDate})`,
+                    );
+                    const next = { ...p };
+                    delete next.TxnDate;
+                    delete next.DueDate;
+                    return next;
+                }
+                return p;
+            })
         );
         await JubelioOrderMap.updateOne(
             { salesorder_id: so.salesorder_id, qbo_realm_id: realmId },

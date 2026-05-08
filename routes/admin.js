@@ -101,7 +101,7 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
         const qbo = await getQboInstance();
         const filter = days > 0 ? { last_synced_at: { $gte: new Date(Date.now() - days * 86400000) } } : {};
         const rows = await JubelioOrderMap.find(filter)
-            .select('salesorder_no qbo_invoice_id last_transaction_date_raw last_payment_date_raw')
+            .select('salesorder_no qbo_invoice_id last_transaction_date_raw last_payment_date_raw last_txn_date')
             .lean();
 
         const shopeeFix = [], verifiedFix = [], legacyFix = [], legacyReport = [], errors = [];
@@ -111,22 +111,35 @@ router.all('/audit-txndate', requireAdmin, async (req, res) => {
                 if (!/Object Not Found|6240|404/i.test(err)) errors.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, err });
                 continue;
             }
-            // Prefer payment_date (canonical accrual event) over Shopee SO#
-            // encoding which only reflects when the order was placed.
+            // Drift detection logic (3-way):
+            //   1. inv.TxnDate ≠ map.last_txn_date  → FINANCE EDITED. Skip,
+            //      respect their value. Webhook also drops TxnDate from sparse
+            //      update for the same reason.
+            //   2. inv.TxnDate == map.last_txn_date but ≠ expected → STALE drift
+            //      (e.g. payment_date got updated by Jubelio). Flag for fix.
+            //   3. inv.TxnDate == expected → all good.
             //
-            // Tolerant compare: accept inv.TxnDate that matches EITHER the
-            // current write semantic (UTC+8 / dashboard-aligned) OR the brief
-            // 2026-05-06 → 2026-05-08 WIB-experiment value. Without this,
-            // post-revert this cron would auto-rewrite ~dozens of WIB-window
-            // invoices on its first run — probably what we want eventually,
-            // but ops can drive that with the dedicated revert script instead
-            // so the operation has explicit audit + per-record review.
+            // Tolerant compare: accept inv.TxnDate that matches current UTC+8
+            // OR the brief 2026-05-06 → 2026-05-08 WIB-experiment value
+            // (UTC+7), so cron doesn't auto-rewrite cutover-window invoices.
+            // Ops drive that cleanup explicitly via dedicated revert script.
             const dateSource = r.last_payment_date_raw || r.last_transaction_date_raw;
             if (dateSource) {
                 const expectedQbo = toQboTxnDate(dateSource); // UTC+8
-                const expectedWib = toWibDate(dateSource);    // UTC+7 (cutover-window)
-                const matches = expectedQbo && (inv.TxnDate === expectedQbo || inv.TxnDate === expectedWib);
-                if (expectedQbo && !matches) verifiedFix.push({ so: r.salesorder_no, inv: r.qbo_invoice_id, qbo: inv.TxnDate, expected: expectedQbo, syncToken: inv.SyncToken, layer: 'VERIFIED', dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date' });
+                const expectedWib = toWibDate(dateSource);    // UTC+7 (legacy)
+                const inWindowAcceptable = inv.TxnDate === expectedQbo || inv.TxnDate === expectedWib;
+                const isFinanceEdit = r.last_txn_date && inv.TxnDate !== r.last_txn_date;
+                if (expectedQbo && !inWindowAcceptable && !isFinanceEdit) {
+                    verifiedFix.push({
+                        so: r.salesorder_no,
+                        inv: r.qbo_invoice_id,
+                        qbo: inv.TxnDate,
+                        expected: expectedQbo,
+                        syncToken: inv.SyncToken,
+                        layer: 'VERIFIED',
+                        dateSource: r.last_payment_date_raw ? 'payment_date' : 'transaction_date',
+                    });
+                }
                 continue;
             }
             // Fallback only when no raw date stored (legacy entries pre-deploy):
