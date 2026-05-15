@@ -908,7 +908,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
                 const discount = Math.round((componentSum - jubelioAmount) * 100) / 100;
                 if (discount > 0) {
                     // Accumulate bundle discount; emit ONE merged DiscountLineDetail
-                    // at the end of buildLines (combined with marketplace fees).
+                    // at the end of buildLines (combined with item-level discounts).
                     // QBO Indonesia drops a 2nd DiscountLineDetail silently (quirk #14).
                     bundleNotes.push({ sku: itemCode, discount });
                 } else if (discount < 0) {
@@ -928,14 +928,14 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         // Emit at GROSS (qty × sell_price) so QBO shows original price + the
         // discount as a separate value matching the Jubelio UI's "Diskon" field.
         // The line-level discount accumulates into the merged DiscountLineDetail
-        // at the end (alongside bundle discount + marketplace fee adjustment) —
-        // QBO Indonesia only accepts ONE DiscountLineDetail per invoice (quirk
-        // #14), so all discount sources must be combined.
+        // at the end (alongside bundle discount + customer-facing adjustments)
+        // — QBO Indonesia only accepts ONE DiscountLineDetail per invoice (quirk #14).
         //
-        // Backward compat: marketplace orders typically have it.disc=0 (only
-        // marketplace fees apply at order level), so gross == jubelioAmount and
-        // behavior is unchanged. INTERNAL/WS orders with item-level discount
-        // (e.g. wholesale 30% off) now surface the discount as a visible line.
+        // Shopee-only payout fees (service_fee + order_processing_fee) are NOT
+        // subtracted here — they surface as balance-due against the auto-Payment
+        // which is capped at so.grand_total. All other channel adjustments
+        // (add_disc, discount_marketplace, etc.) are customer-facing and DO
+        // get absorbed into the discount line.
         const grossRaw = qty * price;
         const grossRounded = Math.round(grossRaw * 100) / 100;
         const itemDiscount = Math.round((grossRounded - jubelioAmount) * 100) / 100;
@@ -1000,33 +1000,51 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         });
     }
 
-    // ── Combined discount line (bundle discount + marketplace fee adjustment) ──
-    // QBO Indonesia accepts only ONE DiscountLineDetail per invoice — multi-disc
-    // payloads silently drop one of them (quirk #14, discovered 2026-04-28). We
-    // merge bundle discounts and marketplace fee deductions into a single line.
+    // ── Combined discount line ──
+    // Policy (2026-05-14, refined): invoice TotalAmt must reflect what the
+    // CUSTOMER ACTUALLY PAID (gross of payout-side deductions, net of any
+    // customer-facing discount).
     //
-    // Jubelio's grand_total = customer_paid − marketplace deductions (service_fee,
-    // order_processing_fee, insurance_cost, add_fee/add_disc, discount_marketplace,
-    // shipping_cost_discount). With bundle discount NOT yet emitted, lineTotal
-    // here equals (sum of component lines + shipping); the diff to grand_total
-    // therefore naturally absorbs both bundle promo and marketplace fees.
+    // Per-field semantics (verified 2026-05-14):
+    //   • service_fee, order_processing_fee  → ONLY on Shopee (SP-). These are
+    //     deducted from merchant payout — customer NEVER sees them. Must NOT
+    //     be absorbed into the invoice discount; surface as balance-due gap.
+    //   • add_disc, discount_marketplace, insurance_cost, add_fee,
+    //     shipping_cost_discount → customer-facing adjustments (real promo /
+    //     manual disc / extra fee at checkout). Must be absorbed so invoice
+    //     reflects what customer paid out of pocket.
     //
-    // Finance chose this trade-off for 1:1 bank-deposit reconciliation — fees
-    // absorbed into Sales discount instead of a separate Expense account.
+    // Formula:
+    //     customerPaid = grand_total + (service_fee + order_processing_fee)
+    //     adjustment   = linesTotal − customerPaid
+    //
+    // For Shopee: service_fee/OPF > 0 → adjustment excludes Shopee fees.
+    //   TotalAmt = customerPaid (gross). Payment caps at grand_total (net payout).
+    //   Balance = customerPaid − grand_total = Shopee fee gap (finance reconcile).
+    // For other channels: service_fee/OPF = 0 → customerPaid = grand_total.
+    //   adjustment naturally absorbs any customer-facing discount.
+    //   TotalAmt = grand_total, Payment = grand_total, Balance = 0.
+    //
+    // QBO Indonesia still accepts only ONE DiscountLineDetail per invoice
+    // (quirk #14, 2026-04-28) — bundle/item disc + any customer-side
+    // adjustment are merged into a single line.
     const grandTotal = Number(so.grand_total ?? NaN);
     const bundleDiscSum = bundleNotes.reduce((s, b) => s + b.discount, 0);
+    const shopeeFees = Math.round(((Number(so.service_fee) || 0) + (Number(so.order_processing_fee) || 0)) * 100) / 100;
     let adjustment = 0;
     let hasGrandTotal = false;
+    let customerPaid = NaN;
 
     if (Number.isFinite(grandTotal)) {
         hasGrandTotal = true;
+        customerPaid = Math.round((grandTotal + shopeeFees) * 100) / 100;
         const linesTotal = lines.reduce((s, l) =>
             s + (l.DetailType === 'DiscountLineDetail' ? -Number(l.Amount || 0) : Number(l.Amount || 0)), 0);
-        adjustment = Math.round((linesTotal - grandTotal) * 100) / 100;
+        adjustment = Math.round((linesTotal - customerPaid) * 100) / 100;
         if (adjustment < -0.01) {
             // Customer paid more than line+shipping (e.g., insurance added on top).
             // Negative discount not supported; log and let invoice be off-by-this.
-            console.warn(`⚠️ ${so.salesorder_no}: grand_total ${grandTotal} > linesTotal ${linesTotal} (diff ${-adjustment}); no discount line emitted`);
+            console.warn(`⚠️ ${so.salesorder_no}: customerPaid ${customerPaid} > linesTotal ${linesTotal} (diff ${-adjustment}); no discount line emitted`);
             adjustment = 0;
         }
     } else if (bundleDiscSum > 0) {
@@ -1042,8 +1060,8 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
             parts.push(`${label} ${fmt(bn.discount)}`);
         }
         if (hasGrandTotal) {
-            if (Number(so.service_fee) > 0) parts.push(`service_fee ${fmt(so.service_fee)}`);
-            if (Number(so.order_processing_fee) > 0) parts.push(`order_processing_fee ${fmt(so.order_processing_fee)}`);
+            // Customer-facing components (NOT Shopee payout fees). These are
+            // included in the discount because the customer actually saw them.
             if (Number(so.insurance_cost) > 0) parts.push(`insurance ${fmt(so.insurance_cost)}`);
             if (Number(so.add_fee) > 0) parts.push(`add_fee ${fmt(so.add_fee)}`);
             if (Number(so.add_disc) > 0) parts.push(`add_disc ${fmt(so.add_disc)}`);
@@ -1055,7 +1073,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
         const labelParts = [];
         if (hasItem) labelParts.push('Item discount');
         if (hasBundle) labelParts.push('Bundle discount');
-        if (hasGrandTotal) labelParts.push('Marketplace fees & adjustments');
+        if (hasGrandTotal) labelParts.push('Customer adjustments');
         const baseDesc = labelParts.length ? labelParts.join(' + ') : 'Discount';
         lines.push({
             Description: `${baseDesc}${parts.length ? ` (${parts.join(' + ')})` : ''}`.substring(0, 4000),
@@ -1063,7 +1081,7 @@ const buildLines = async (qbo, so, taxCodeId, incomeAccountId) => {
             DetailType: 'DiscountLineDetail',
             DiscountLineDetail: { PercentBased: false },
         });
-        console.log(`💸 Combined discount: Rp ${adjustment.toLocaleString('id-ID')} (bundles=${bundleNotes.length}, grandTotal=${hasGrandTotal ? grandTotal : 'n/a'})`);
+        console.log(`💸 Combined discount: Rp ${adjustment.toLocaleString('id-ID')} (bundles=${bundleNotes.length}, shopeeFees=${shopeeFees}, customerPaid=${Number.isFinite(customerPaid) ? customerPaid : 'n/a'})`);
     }
 
     return lines;
@@ -1400,6 +1418,23 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
         return null;
     }
 
+    // Payment amount = so.grand_total (what actually hit the bank), capped at
+    // invoice balance so we never overpay.
+    //   • Shopee: invoice TotalAmt = gross customer-paid, grand_total = net
+    //     payout. Payment = grand_total < balance → Shopee fee surfaces as
+    //     balance-due gap for finance to reconcile at month-end.
+    //   • Other channels: invoice TotalAmt = grand_total = customer-paid (no
+    //     payout deduction). Payment = grand_total = balance → Balance = 0.
+    // This keeps the QBO Payment ↔ bank deposit reconciliation 1:1 (policy
+    // 2026-05-14, refined to Shopee-only after 2026-05-14 revert).
+    const grandTotal = Number(so.grand_total);
+    const customerPaid = Number.isFinite(grandTotal) && grandTotal > 0 ? grandTotal : balance;
+    const payAmount = Math.min(Math.round(customerPaid * 100) / 100, balance);
+    if (payAmount <= 0) {
+        console.log(`ℹ️ Invoice ${invoiceId} payAmount ${payAmount} <= 0 — skip payment.`);
+        return null;
+    }
+
     // Idempotency: scan recent payments for this customer; skip if one already links this invoice.
     const payments = await qboFindPayments(qbo, [
         { field: 'CustomerRef', value: String(customerId), operator: '=' },
@@ -1419,17 +1454,18 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
 
     const payload = {
         CustomerRef: { value: String(customerId) },
-        TotalAmt: balance,
+        TotalAmt: payAmount,
         TxnDate: toQboTxnDate(so.payment_date || so.transaction_date),
         DocNumber: paymentDocNumber,
-        PrivateNote: `Auto-paid from Jubelio SO #${so.salesorder_no} status=${so.status}`,
+        PrivateNote: `Auto-paid from Jubelio SO #${so.salesorder_no} status=${so.status} (grand_total=${grandTotal}, invoiceBal=${balance})`,
         Line: [{
-            Amount: balance,
+            Amount: payAmount,
             LinkedTxn: [{ TxnId: invoiceId, TxnType: 'Invoice' }],
         }],
     };
     const created = await qboCreatePayment(qbo, payload);
-    console.log(`💰 Payment created: ${created.Id} for invoice ${invoiceId} (${balance})`);
+    const gap = Math.round((balance - payAmount) * 100) / 100;
+    console.log(`💰 Payment created: ${created.Id} for invoice ${invoiceId} amount=${payAmount} (balance=${balance}, mkt-fee gap=${gap})`);
     return created;
 };
 
