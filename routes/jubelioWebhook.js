@@ -276,6 +276,22 @@ const findCustomerByDisplayNameAnyState = async (qbo, displayName) => {
 // these so we can fetch the unredacted form via Jubelio API directly.
 const isRedactedName = (name) => /\*{2,}/.test(String(name || ''));
 
+// QBO's DisplayName field rejects ':' — it's reserved as the parent:sub-customer
+// separator, so createCustomer 400s ("Invalid String ... contains invalid
+// characters") on any name carrying one, e.g. "Rudok Cc:Rumah Biang". Replace
+// ':' with '-' (mirroring sanitizeItemName), strip ASCII control chars QBO also
+// rejects, collapse whitespace, and trim leading/trailing punctuation. We
+// substitute rather than drop so the name stays readable; finance can refine it
+// in Jubelio and the next sync picks it up.
+const sanitizeCustomerName = (name) => {
+    if (name == null) return name;
+    let s = String(name).replace(/:/g, '-');   // ':' reserved in QBO DisplayName (parent:sub-customer separator) — mirror sanitizeItemName
+    s = s.replace(/[\x00-\x1F]/g, '');          // strip ASCII control chars QBO rejects
+    s = s.replace(/\s+/g, ' ').trim();
+    s = s.replace(/^[\s\-_.,;:]+|[\s\-_.,;:]+$/g, '');
+    return s;
+};
+
 // In-memory cache for /sales/orders/{id} responses. Webhooks for the same SO
 // re-fire often (status transitions, idempotency rejects, retries) — caching
 // for 60s eliminates repeated outbound API hits without risking stale data.
@@ -367,8 +383,8 @@ const qboGetActiveCustomer = (qbo, customerId) => withQboRetry('getCustomer', ()
 const getOrCreateCustomer = async (qbo, so) => {
     let email = so.customer_email;
     let phone = so.customer_phone;
-    let displayName = (so.customer_name || 'Jubelio Customer').trim().substring(0, 100);
-    let shipFullName = so.shipping_full_name;
+    let displayName = (sanitizeCustomerName(so.customer_name) || 'Jubelio Customer').substring(0, 100);
+    let shipFullName = sanitizeCustomerName(so.shipping_full_name);
     let shipAddr = buildShipAddr(so);
 
     const source = String(so.source_name || so.source || '').toUpperCase().trim();
@@ -395,13 +411,13 @@ const getOrCreateCustomer = async (qbo, so) => {
     if (isRedactedName(displayName) && so.salesorder_id) {
         const fullSo = await fetchUnredactedSo(so.salesorder_id);
         if (fullSo) {
-            const realName = String(fullSo.customer_name || fullSo.shipping_full_name || '').trim();
+            const realName = sanitizeCustomerName(fullSo.customer_name || fullSo.shipping_full_name || '');
             if (realName && !isRedactedName(realName)) {
                 console.log(`🔓 Unredacted customer: "${displayName}" → "${realName}" (SO ${so.salesorder_id})`);
                 displayName = realName.substring(0, 100);
                 email = email || fullSo.customer_email || null;
                 phone = phone || fullSo.customer_phone || null;
-                shipFullName = shipFullName || fullSo.shipping_full_name;
+                shipFullName = shipFullName || sanitizeCustomerName(fullSo.shipping_full_name);
                 if (!shipAddr) shipAddr = buildShipAddr(fullSo);
             }
         }
