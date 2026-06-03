@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const { getQboInstance } = require('../services/qboService');
-const { alertWebhookError, alertAuthRejected, sendTestAlert, isConfigured: alertsConfigured } = require('../services/alertService');
+const { alertWebhookError, alertAuthRejected, alertShfRouteFailed, sendTestAlert, isConfigured: alertsConfigured } = require('../services/alertService');
 const { isBundleSku, getBundleComposition } = require('../services/bundleService');
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
@@ -351,6 +351,59 @@ const hasMatchingChannelPrefix = (name, expectedPrefix) => {
     return actual === expectedPrefix;
 };
 
+// ─── Shopify payment-route split (SHF → WA / WX) ────────────────────────────
+// Jubelio delivers every Shopify order as `SHF-<shopifyOrderNo>-<storeId>`
+// regardless of how the buyer paid. Finance wants the QBO channel code to
+// reflect the payment route instead:
+//   WA = third-party gateway (Xendit)        (detection API payment=0)
+//   WX = native Shopify Payments (Airwallex)  (detection API payment=1)
+// The route isn't in the Jubelio payload, so we ask the standalone
+// payment-shopify-detection service (it reads Shopify directly). The 4+ digit
+// segment after `SHF-` is the Shopify order name (#8018), which is the `code`
+// that endpoint expects.
+//
+// Safety: a paid order's gateway never changes, so results are cached forever
+// (per Shopify order #). Any failure — unreachable, non-2xx, timeout, or an
+// unrecognized payment value — FALLS BACK to plain `SHF` so the webhook never
+// breaks on this enrichment, and fires a Telegram alert (deduped per order #
+// so a downed API doesn't spam on every webhook retry).
+const SHOPIFY_PAYMENT_API = (process.env.SHOPIFY_PAYMENT_API_URL || 'https://payment-shopify-detection.vercel.app').replace(/\/+$/, '');
+const SHF_ROUTE_TIMEOUT_MS = Number(process.env.SHOPIFY_PAYMENT_API_TIMEOUT_MS || 4000);
+const shfRouteCache = new Map();   // shopifyOrderNo → 'WA' | 'WX'
+const shfRouteAlerted = new Set(); // shopifyOrderNo already alerted (dedup)
+
+const resolveShfChannelCode = async (so) => {
+    const m = String(so?.salesorder_no || '').match(/^SHF-(\d+)-/);
+    if (!m) return 'SHF'; // not a Shopify SO (or unexpected format) — leave untouched
+    const orderNo = m[1];
+    if (shfRouteCache.has(orderNo)) return shfRouteCache.get(orderNo);
+
+    let httpStatus = null;
+    try {
+        const res = await fetch(`${SHOPIFY_PAYMENT_API}/api/orders/payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: orderNo }),
+            signal: AbortSignal.timeout(SHF_ROUTE_TIMEOUT_MS),
+        });
+        httpStatus = res.status;
+        if (!res.ok) throw new Error(`detection API HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`);
+        const body = await res.json();
+        const code = body.payment === 0 ? 'WA' : body.payment === 1 ? 'WX' : null;
+        if (!code) throw new Error(`unrecognized payment=${JSON.stringify(body.payment)} (channel=${body.paymentChannel || '?'})`);
+        shfRouteCache.set(orderNo, code);
+        console.log(`🔀 SHF route: #${orderNo} payment=${body.payment} (${body.paymentMethod || '?'}) → ${code}`);
+        return code;
+    } catch (err) {
+        console.warn(`⚠️ SHF route lookup failed for #${orderNo} (${so.salesorder_no}): ${err.message} — fallback SHF`);
+        if (!shfRouteAlerted.has(orderNo)) {
+            shfRouteAlerted.add(orderNo);
+            alertShfRouteFailed({ salesorderNo: so.salesorder_no, shopifyOrderNo: orderNo, error: err, httpStatus });
+        }
+        return 'SHF';
+    }
+};
+
 const buildShipAddr = (so) => {
     if (!so.shipping_address && !so.shipping_city) return undefined;
     return {
@@ -396,7 +449,12 @@ const getOrCreateCustomer = async (qbo, so) => {
     // a Shopify SO). Cached or pre-existing customers without that prefix —
     // or with the wrong prefix — are bypassed so a properly prefixed record
     // gets created, even if it means a parallel entry per channel.
-    const channelPrefix = channelPrefixOf(so);
+    // For Shopify orders, split the generic SHF code into WA (third-party /
+    // Xendit) or WX (native Shopify Payments) per the payment route. Falls back
+    // to SHF on any detection failure. Resolved once here and used everywhere
+    // the channel prefix feeds the DisplayName below.
+    let channelPrefix = channelPrefixOf(so);
+    if (channelPrefix === 'SHF') channelPrefix = await resolveShfChannelCode(so);
 
     // ─── Resolve canonical DisplayName BEFORE any cache lookup ──────────
     // We compare cached customer records against the webhook's canonical
@@ -514,10 +572,14 @@ const getOrCreateCustomer = async (qbo, so) => {
         addVariant(displayName);
         const stripped = stripCustomerChannelPrefix(displayName);
         if (stripped !== displayName) addVariant(stripped);
-        const prefix = getSoPrefix(so);
-        if (prefix && !displayName.toUpperCase().startsWith(`${prefix} -`)) {
-            addVariant(`${prefix} - ${displayName}`);
-            if (stripped !== displayName) addVariant(`${prefix} - ${stripped}`);
+        // Emit prefixed variants for both the effective channel code (which for
+        // Shopify is the WA/WX split) and the raw salesorder_no prefix, so we
+        // still match canonical-folded records (e.g. TT→TP) on non-Shopify SOs.
+        for (const prefix of [channelPrefix, getSoPrefix(so)]) {
+            if (prefix && !displayName.toUpperCase().startsWith(`${prefix} -`)) {
+                addVariant(`${prefix} - ${displayName}`);
+                if (stripped !== displayName) addVariant(`${prefix} - ${stripped}`);
+            }
         }
 
         const candidates = channelPrefix

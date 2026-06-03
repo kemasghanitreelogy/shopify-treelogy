@@ -159,6 +159,30 @@ const alertTokenRefreshFailed = ({ error, source }) => {
     fireAndForget(sendRaw(lines.join('\n')));
 };
 
+// Shopify payment-route detection failed — the webhook could not reach (or got
+// an error from) the payment-shopify-detection service, so it fell back to the
+// generic SHF prefix instead of splitting into WA (third-party) / WX (native).
+// The order still syncs; only the channel code is the un-split SHF.
+const alertShfRouteFailed = ({ salesorderNo, shopifyOrderNo, error, httpStatus }) => {
+    if (!isConfigured()) return;
+    const errMsg = error instanceof Error ? error.message : String(error || '');
+    const lines = [
+        '⚠️ <b>Shopify Payment-Route lookup FAILED</b>',
+        '',
+        `📦 <b>SO:</b> <code>${escapeHtml(salesorderNo || '?')}</code>`,
+        shopifyOrderNo ? `🛒 <b>Shopify order:</b> <code>#${escapeHtml(shopifyOrderNo)}</code>` : null,
+        httpStatus ? `🌐 <b>HTTP:</b> <code>${escapeHtml(String(httpStatus))}</code>` : null,
+        '',
+        '<b>━━━ Error ━━━</b>',
+        `<pre>${escapeHtml(errMsg.slice(0, 600))}</pre>`,
+        '',
+        `🕐 <b>Time:</b> ${escapeHtml(fmtWib())} WIB`,
+        '',
+        '<i>↩️ Fallback: prefix tetap SHF (tidak di-split WA/WX). Order tetap tersinkron.</i>',
+    ].filter(l => l !== null);
+    fireAndForget(sendRaw(lines.join('\n')));
+};
+
 // Awaited version — used by a debug endpoint that wants to report back success.
 const sendTestAlert = async () => {
     if (!isConfigured()) {
@@ -402,5 +426,6 @@ module.exports = {
     alertResyncResult,
     alertDailyReconcile,
     alertTokenRefreshFailed,
+    alertShfRouteFailed,
     sendTestAlert,
 };
