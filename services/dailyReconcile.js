@@ -133,6 +133,14 @@ const fetchQboInvoicesForDate = async (qbo, date) => {
     return out;
 };
 
+// A Shopify order's QBO DocNumber may carry the generic SHF prefix OR its
+// payment-route remap (WA = Xendit/third-party, WX = native Shopify Payments).
+// All three share the same numeric core (e.g. SHF-8038-128887 → WA-8038-128887),
+// so fold WA-/WX- back to SHF- before matching DocNumber ↔ salesorder_no. This
+// only touches the Shopify prefix family — non-Shopify codes (SP/TP/…) pass
+// through unchanged, so there is no cross-channel collision risk.
+const normalizeShopifyDocKey = (s) => String(s || '').replace(/^(WA|WX)-/, 'SHF-');
+
 // Channel label heuristic (so the report reads naturally).
 const channelLabel = (prefix, sourceName) => {
     const m = {
@@ -161,7 +169,7 @@ const runDailyReconcile = async ({ qbo, date }) => {
 
     // 2) Index for fast lookup.
     const mapBySoNo = new Map(mapEntries.map(m => [m.salesorder_no, m]));
-    const qboByDocNum = new Map(qboInvoices.map(inv => [inv.DocNumber, inv]));
+    const qboByDocNum = new Map(qboInvoices.map(inv => [normalizeShopifyDocKey(inv.DocNumber), inv]));
 
     // 3) Apply sync rule to every Jubelio order, classify into expected vs not.
     const expected = []; // { so, prefix, reason }
@@ -185,7 +193,7 @@ const runDailyReconcile = async ({ qbo, date }) => {
         const map = mapBySoNo.get(so.salesorder_no);
         // QBO truncates DocNumber to 21 chars. Match by prefix.
         const docNumberKey = String(so.salesorder_no).substring(0, 21);
-        const inv = qboByDocNum.get(docNumberKey);
+        const inv = qboByDocNum.get(normalizeShopifyDocKey(docNumberKey));
 
         const debugCtx = {
             salesorder_no: so.salesorder_no,
@@ -226,7 +234,7 @@ const runDailyReconcile = async ({ qbo, date }) => {
     for (const e of notExpected) {
         if (!e.so.is_canceled) continue;
         const map = mapBySoNo.get(e.so.salesorder_no);
-        const inv = qboByDocNum.get(String(e.so.salesorder_no).substring(0, 21));
+        const inv = qboByDocNum.get(normalizeShopifyDocKey(String(e.so.salesorder_no).substring(0, 21)));
         if (!inv) continue;
         const isVoidLike = inv.Balance === 0 && inv.TotalAmt === 0;
         if (isVoidLike) continue;
@@ -250,7 +258,7 @@ const runDailyReconcile = async ({ qbo, date }) => {
     const allJubelioSoNos = new Set(jubelioOrders.map(s => String(s.salesorder_no).substring(0, 21)));
     const orphan = [];
     for (const inv of qboInvoices) {
-        if (allJubelioSoNos.has(inv.DocNumber)) continue;
+        if (allJubelioSoNos.has(normalizeShopifyDocKey(inv.DocNumber))) continue;
         // Skip Jubelio-prefixed invoices that just don't appear in our 3 list endpoints (could be a different status not covered).
         // We still surface them — operator can spot real orphans vs status-coverage gaps.
         orphan.push({

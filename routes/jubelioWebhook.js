@@ -369,14 +369,24 @@ const hasMatchingChannelPrefix = (name, expectedPrefix) => {
 // so a downed API doesn't spam on every webhook retry).
 const SHOPIFY_PAYMENT_API = (process.env.SHOPIFY_PAYMENT_API_URL || 'https://payment-shopify-detection.vercel.app').replace(/\/+$/, '');
 const SHF_ROUTE_TIMEOUT_MS = Number(process.env.SHOPIFY_PAYMENT_API_TIMEOUT_MS || 4000);
-const shfRouteCache = new Map();   // shopifyOrderNo → 'WA' | 'WX'
-const shfRouteAlerted = new Set(); // shopifyOrderNo already alerted (dedup)
+const shfRouteCache = new Map();      // shopifyOrderNo → 'WA' | 'WX' (process-lifetime, success only)
+const shfRouteAlerted = new Set();    // shopifyOrderNo already alerted (dedup)
+const shfRequestMemo = new WeakMap(); // so payload → resolved code, so the customer prefix and the
+                                      // invoice DocNumber within ONE webhook always agree even if a
+                                      // transient detection failure would otherwise resolve differently
+                                      // across the two call sites.
 
 const resolveShfChannelCode = async (so) => {
-    const m = String(so?.salesorder_no || '').match(/^SHF-(\d+)-/);
-    if (!m) return 'SHF'; // not a Shopify SO (or unexpected format) — leave untouched
+    if (!so) return 'SHF';
+    if (shfRequestMemo.has(so)) return shfRequestMemo.get(so);
+    const m = String(so.salesorder_no || '').match(/^SHF-(\d+)-/);
+    if (!m) { shfRequestMemo.set(so, 'SHF'); return 'SHF'; } // not a Shopify SO — leave untouched
     const orderNo = m[1];
-    if (shfRouteCache.has(orderNo)) return shfRouteCache.get(orderNo);
+    if (shfRouteCache.has(orderNo)) {
+        const cached = shfRouteCache.get(orderNo);
+        shfRequestMemo.set(so, cached);
+        return cached;
+    }
 
     let httpStatus = null;
     try {
@@ -392,6 +402,7 @@ const resolveShfChannelCode = async (so) => {
         const code = body.payment === 0 ? 'WA' : body.payment === 1 ? 'WX' : null;
         if (!code) throw new Error(`unrecognized payment=${JSON.stringify(body.payment)} (channel=${body.paymentChannel || '?'})`);
         shfRouteCache.set(orderNo, code);
+        shfRequestMemo.set(so, code);
         console.log(`🔀 SHF route: #${orderNo} payment=${body.payment} (${body.paymentMethod || '?'}) → ${code}`);
         return code;
     } catch (err) {
@@ -400,6 +411,9 @@ const resolveShfChannelCode = async (so) => {
             shfRouteAlerted.add(orderNo);
             alertShfRouteFailed({ salesorderNo: so.salesorder_no, shopifyOrderNo: orderNo, error: err, httpStatus });
         }
+        // Memo SHF for THIS request only (keeps customer + DocNumber consistent);
+        // global shfRouteCache stays empty so a later webhook retries the lookup.
+        shfRequestMemo.set(so, 'SHF');
         return 'SHF';
     }
 };
@@ -1608,7 +1622,17 @@ const upsertQboInvoice = async (qbo, so, realmId) => {
     if (rawSoNo.length > 21) {
         console.warn(`⚠️ salesorder_no ${rawSoNo.length} chars > QBO DocNumber limit (21). Akan di-truncate. Enable "Custom transaction numbers" di QBO untuk support penuh.`);
     }
-    const docNumber = rawSoNo.substring(0, 21) || undefined;
+    let docNumber = rawSoNo.substring(0, 21) || undefined;
+    // Shopify payment-route: remap the DocNumber prefix to match the customer's
+    // WA/WX channel code (same numeric core, e.g. SHF-8038-128887 → WA-8038-128887)
+    // so the invoice number and the customer's channel agree. Uses the same
+    // per-request-memoized resolver as the customer prefix, so the two never
+    // diverge. Falls back to SHF on any detection failure; dailyReconcile folds
+    // WA-/WX- back to SHF- when matching, so reconcile stays correct either way.
+    if (docNumber && /^SHF-/.test(docNumber)) {
+        const routeCode = await resolveShfChannelCode(so);
+        if (routeCode !== 'SHF') docNumber = `${routeCode}-${docNumber.slice(4)}`;
+    }
     // Shipping date fallback chain (Jubelio doesn't consistently fill shipped_date):
     //   shipped_date → tn_created_date (tracking no. issued) → mp_completed_date
     //   → completed_date → received_date
