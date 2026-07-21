@@ -78,7 +78,7 @@ const shortStack = (error, maxFrames = 4) => {
         .join('\n');
 };
 
-const alertWebhookError = ({ endpoint, reqId, payload, error, intuitTid }) => {
+const alertWebhookError = ({ endpoint, reqId, payload, error, intuitTid, attempt, maxAttempts }) => {
     const so = payload || {};
     const errMsg = error instanceof Error ? error.message : String(error);
     const prefix = getSoPrefix(so.salesorder_no);
@@ -119,7 +119,12 @@ const alertWebhookError = ({ endpoint, reqId, payload, error, intuitTid }) => {
         `🔍 <b>reqId:</b> <code>${escapeHtml(reqId || '-')}</code>`,
         `🕐 <b>Time:</b> ${escapeHtml(fmtWib())} WIB`,
         '',
-        '<i>⚠️ Jubelio akan retry up to 3x</i>',
+        // This alert fires only AFTER Jubelio's retries are exhausted, so the
+        // failure is persistent and needs a human. When we don't have the
+        // attempt count (fail-open path), fall back to the generic notice.
+        attempt
+            ? `<i>🔁 Sudah gagal ${escapeHtml(attempt)}× (retry Jubelio habis) — butuh perhatian manual.</i>`
+            : '<i>⚠️ Gagal setelah retry — butuh perhatian manual.</i>',
     ].filter(l => l !== null);
 
     // Telegram hard-limit: 4096 chars per message.

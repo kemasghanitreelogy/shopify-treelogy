@@ -7,7 +7,54 @@ const { isBundleSku, getBundleComposition } = require('../services/bundleService
 const JubelioOrderMap = require('../models/JubelioOrderMap');
 const JubelioPayloadLog = require('../models/JubelioPayloadLog');
 const JubelioCustomerMap = require('../models/JubelioCustomerMap');
+const WebhookFailure = require('../models/WebhookFailure');
 const { toQboTxnDate, toQboTime } = require('../lib/jubelioTime');
+
+// ─── Deferred-alert failure counter ───────────────────────────────────────
+// We alert only once Jubelio's retries are exhausted. A failed webhook returns
+// 500 → Jubelio re-delivers the identical payload. We count failures per
+// logical event; the alert fires only when the count reaches this threshold.
+// Default 3 matches Jubelio's "retry up to 3x". Env-overridable.
+const WEBHOOK_ALERT_AFTER_ATTEMPTS = Math.max(1, Number(process.env.WEBHOOK_ALERT_AFTER_ATTEMPTS) || 3);
+
+// Records one failure for `key` and returns whether this failure should alert.
+// Fail-OPEN: if the counter store itself errors, we alert (a noisy alert beats
+// a silently-swallowed permanent failure).
+const recordFailureAndShouldAlert = async (key, endpoint, errMsg) => {
+    try {
+        const doc = await WebhookFailure.findOneAndUpdate(
+            { key },
+            {
+                $inc: { count: 1 },
+                $set: { last_at: new Date(), last_error: String(errMsg || '').slice(0, 500), endpoint },
+                $setOnInsert: { first_at: new Date() },
+            },
+            { upsert: true, new: true },
+        );
+        if (doc.count >= WEBHOOK_ALERT_AFTER_ATTEMPTS && !doc.alerted) {
+            // Latch the alert flag so we fire exactly once even if Jubelio
+            // retries past the threshold or two increments race.
+            const latched = await WebhookFailure.findOneAndUpdate(
+                { key, alerted: false },
+                { $set: { alerted: true } },
+                { new: true },
+            );
+            return { count: doc.count, shouldAlert: !!latched };
+        }
+        return { count: doc.count, shouldAlert: false };
+    } catch (e) {
+        console.error(`[alert] failure-counter error for ${key}: ${e.message}`);
+        return { count: null, shouldAlert: true };
+    }
+};
+
+// Clears the failure counter for `key` after a successful sync so a later,
+// unrelated failure starts a fresh count. Fire-and-forget.
+const clearFailureCounter = (key) => {
+    if (!key) return;
+    WebhookFailure.deleteOne({ key }).catch(e =>
+        console.error(`[alert] failure-counter clear error for ${key}: ${e.message}`));
+};
 
 // Fire-and-forget: persist full webhook payload for later debugging. Logging
 // failures MUST NOT block the actual sync flow — we swallow errors here.
@@ -1910,6 +1957,10 @@ router.post('/pesanan', async (req, res) => {
 
     const payload = req.body || {};
     const statusUpper = String(payload.status || '').toUpperCase();
+    // Key that is STABLE across Jubelio retries (same payload) but DISTINCT
+    // across status transitions, so the deferred-alert counter tracks one
+    // logical delivery. Used by both the success (clear) and catch (count) paths.
+    const failKey = `pesanan:${payload.salesorder_id || '?'}:${statusUpper || '-'}:${payload.action || '-'}`;
     log(`📦 [3/8] PAYLOAD action=${payload.action || '-'} SO=${payload.salesorder_no || '-'} id=${payload.salesorder_id || '-'} status=${statusUpper || '-'} canceled=${isCanceledSO(payload)} items=${Array.isArray(payload.items) ? payload.items.length : 0} grandTotal=${payload.grand_total ?? '-'}`);
     try { log(`📋 PAYLOAD JSON: ${JSON.stringify(payload)}`); } catch { log('📋 PAYLOAD JSON: <stringify failed>'); }
     logJubelioPayload('pesanan', payload);
@@ -1953,6 +2004,7 @@ router.post('/pesanan', async (req, res) => {
                 `SO ${payload.salesorder_no} canceled: ${payload.cancel_reason || 'no-reason'}`,
             );
             log(`✅ [DONE-VOID] ${JSON.stringify(result)} duration=${Date.now() - t0}ms`);
+            clearFailureCounter(failKey);
             return res.status(200).json({ ok: true, canceled: true, reqId, ...result });
         }
 
@@ -1983,6 +2035,7 @@ router.post('/pesanan', async (req, res) => {
         }
 
         log(`🎉 [8/8] DONE action=${upserted.action} invoiceId=${upserted.invoice.Id} paymentId=${payment?.Id || '-'} duration=${Date.now() - t0}ms`);
+        clearFailureCounter(failKey);
         res.status(200).json({
             ok: true,
             action: upserted.action,
@@ -2004,13 +2057,25 @@ router.post('/pesanan', async (req, res) => {
         if (isLikelyTransientError(error)) {
             log(`⏸  [ALERT-SUPPRESSED] transient pattern — relying on Jubelio retry. (${error.message.slice(0, 200)})`);
         } else {
-            alertWebhookError({
-                endpoint: 'POST /api/webhook/jubelio/pesanan',
-                reqId,
-                payload: req.body,
-                error,
-                intuitTid: error.intuit_tid,
-            });
+            // Defer the alert until Jubelio's retries are exhausted: count this
+            // failure and only alert once the count reaches the threshold. A
+            // failure that self-heals on a later retry clears the counter and
+            // never alerts.
+            const { count, shouldAlert } = await recordFailureAndShouldAlert(
+                failKey, 'POST /api/webhook/jubelio/pesanan', error.message);
+            if (shouldAlert) {
+                alertWebhookError({
+                    endpoint: 'POST /api/webhook/jubelio/pesanan',
+                    reqId,
+                    payload: req.body,
+                    error,
+                    intuitTid: error.intuit_tid,
+                    attempt: count,
+                    maxAttempts: WEBHOOK_ALERT_AFTER_ATTEMPTS,
+                });
+            } else {
+                log(`⏸  [ALERT-DEFERRED] failure ${count ?? '?'}/${WEBHOOK_ALERT_AFTER_ATTEMPTS} for ${failKey} — waiting for Jubelio retry before alerting. (${error.message.slice(0, 160)})`);
+            }
         }
         // 500 → Jubelio akan retry (up to 3x per docs)
         res.status(500).send(`Error: ${error.message}`);
@@ -2054,19 +2119,29 @@ router.post('/faktur', async (req, res) => {
             { salesorder_no: ref_no },
             `Jubelio Faktur ${invoice_no} deleted`,
         );
+        clearFailureCounter(`faktur:${ref_no}:${action || '-'}`);
         res.status(200).json({ ok: true, ...result });
     } catch (error) {
         console.error('❌ /faktur delete error:', error.message);
         if (isLikelyTransientError(error)) {
             console.log(`⏸  /faktur ALERT-SUPPRESSED (transient — Jubelio will retry): ${error.message.slice(0, 200)}`);
         } else {
-            alertWebhookError({
-                endpoint: 'POST /api/webhook/jubelio/faktur',
-                reqId: `faktur_${Date.now().toString(36)}`,
-                payload: { salesorder_no: ref_no, action, invoice_no },
-                error,
-                intuitTid: error.intuit_tid,
-            });
+            const fakturKey = `faktur:${ref_no}:${action || '-'}`;
+            const { count, shouldAlert } = await recordFailureAndShouldAlert(
+                fakturKey, 'POST /api/webhook/jubelio/faktur', error.message);
+            if (shouldAlert) {
+                alertWebhookError({
+                    endpoint: 'POST /api/webhook/jubelio/faktur',
+                    reqId: `faktur_${Date.now().toString(36)}`,
+                    payload: { salesorder_no: ref_no, action, invoice_no },
+                    error,
+                    intuitTid: error.intuit_tid,
+                    attempt: count,
+                    maxAttempts: WEBHOOK_ALERT_AFTER_ATTEMPTS,
+                });
+            } else {
+                console.log(`⏸  /faktur ALERT-DEFERRED (failure ${count ?? '?'}/${WEBHOOK_ALERT_AFTER_ATTEMPTS} for ${fakturKey}) — waiting for Jubelio retry`);
+            }
         }
         res.status(500).send(`Error: ${error.message}`);
     }
