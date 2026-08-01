@@ -298,13 +298,43 @@ const getIncomeAccountId = (qbo) => {
     });
 };
 
+// node-quickbooks builds every criteria lookup as a GET URL and URL-encodes
+// only % ' = < > & # \ + (node_modules/node-quickbooks/index.js ~L2575).
+// Characters RFC 3986 forbids in a query but that list misses — | { } ^ ` "
+// and control chars — reach Intuit's Tomcat gateway raw and come back as an
+// HTML "HTTP Status 400 – Bad Request" page, which surfaces here as
+// `findCustomers: <!doctype html>…` and 500s the whole webhook. Real case:
+// Shopee SO SP-260725JJYAV9YS, buyer "SIT| NURTAMSIAH" — stuck since 27 Jul.
+const QBO_URL_UNSAFE = /[|{}^`"\x00-\x1F\x7F]/;
+
+// Lossless fallback for those values: build the SOQL ourselves and
+// encodeURIComponent the whole query string (same approach as
+// findCustomerByDisplayNameAnyState below), so the match stays EXACT rather
+// than us mangling the search term to keep the transport happy.
+const qboQueryByField = async (qbo, entity, field, value) => {
+    const escaped = String(value).replace(/'/g, "\\'").substring(0, 100);
+    const q = `SELECT * FROM ${entity} WHERE ${field} = '${escaped}'`;
+    const body = await qboFetch(qbo, `/query?query=${encodeURIComponent(q)}`);
+    const rows = body?.QueryResponse?.[entity];
+    return Array.isArray(rows) ? rows : (rows ? [rows] : []);
+};
+
 // ─── Customer lookup (by email, then DisplayName, else create) ───
-const findCustomersByField = (qbo, field, value) => withQboRetry('findCustomers', () => new Promise((resolve, reject) => {
-    qbo.findCustomers([{ field, value, operator: '=' }], (err, body) => {
-        if (err) return reject(new Error('findCustomers: ' + extractQboError(err, body)));
-        resolve(body?.QueryResponse?.Customer || []);
+const findCustomersByField = (qbo, field, value) => withQboRetry('findCustomers', async () => {
+    if (QBO_URL_UNSAFE.test(String(value ?? ''))) {
+        const rows = await qboQueryByField(qbo, 'Customer', field, value);
+        // node-quickbooks' wrapper leans toward active records; mirror that
+        // preference so this path can't resolve to an archived customer while
+        // a live one exists.
+        return rows.sort((a, b) => Number(b.Active === true) - Number(a.Active === true));
+    }
+    return await new Promise((resolve, reject) => {
+        qbo.findCustomers([{ field, value, operator: '=' }], (err, body) => {
+            if (err) return reject(new Error('findCustomers: ' + extractQboError(err, body)));
+            resolve(body?.QueryResponse?.Customer || []);
+        });
     });
-}));
+});
 
 // Fallback for "Duplicate Name Exists" recovery when the QBO error message
 // lacks an Id=... fragment. node-quickbooks' findCustomers wrapper sometimes
@@ -323,17 +353,21 @@ const findCustomerByDisplayNameAnyState = async (qbo, displayName) => {
 // these so we can fetch the unredacted form via Jubelio API directly.
 const isRedactedName = (name) => /\*{2,}/.test(String(name || ''));
 
-// QBO's DisplayName field rejects ':' — it's reserved as the parent:sub-customer
-// separator, so createCustomer 400s ("Invalid String ... contains invalid
-// characters") on any name carrying one, e.g. "Rudok Cc:Rumah Biang". Replace
-// ':' with '-' (mirroring sanitizeItemName), strip ASCII control chars QBO also
-// rejects, collapse whitespace, and trim leading/trailing punctuation. We
-// substitute rather than drop so the name stays readable; finance can refine it
-// in Jubelio and the next sync picks it up.
+// QBO's API gateway (Apache Tomcat) rejects bare RFC-3986-reserved/unsafe
+// chars in query URLs with HTTP 400, even though they're legal inside SOQL
+// string literals. node-quickbooks builds findCustomers as a GET URL and
+// URL-encodes only a fixed set (% ' = < > & # \ +) — it leaves `| { } ^ \``
+// through, so any of those in a customer DisplayName crashes the lookup.
+// Strip them here, plus collapse whitespace and trim leading/trailing
+// punctuation (Jubelio sometimes emits names like "| Gusti Made ..." where
+// an empty dropshipper prefix leaks the separator). Conservative — we drop
+// the offending chars rather than guess substitutions; if finance wants
+// "I Gusti …" they fix it in Jubelio and the next sync picks it up.
 const sanitizeCustomerName = (name) => {
     if (name == null) return name;
-    let s = String(name).replace(/:/g, '-');   // ':' reserved in QBO DisplayName (parent:sub-customer separator) — mirror sanitizeItemName
-    s = s.replace(/[\x00-\x1F]/g, '');          // strip ASCII control chars QBO rejects
+    let s = String(name).replace(/[|{}^`\\]/g, ' ');
+    s = s.replace(/:/g, '-');                 // ':' is reserved in QBO DisplayName (parent:sub-customer separator) — mirror sanitizeItemName
+    s = s.replace(/[\x00-\x1F]/g, "");     // strip control chars QBO rejects
     s = s.replace(/\s+/g, ' ').trim();
     s = s.replace(/^[\s\-_.,;:]+|[\s\-_.,;:]+$/g, '');
     return s;
@@ -818,12 +852,22 @@ const getShippingItem = async (qbo, incomeAccountId) => {
 // instead of a product or service." — must be skipped on lookup.
 const SAFE_ITEM_TYPES = new Set(['Service', 'Inventory', 'NonInventory']);
 
-const qboFindItemsByField = (qbo, field, value) => new Promise((resolve) => {
-    qbo.findItems([{ field, value, operator: '=' }], (err, body) => {
-        if (err) return resolve([]);
-        resolve(body?.QueryResponse?.Item || []);
+const qboFindItemsByField = async (qbo, field, value) => {
+    // Same URL-encoding gap as findCustomersByField. Item lookups swallow
+    // errors (resolve([])), so an item_code or item_name carrying | { } ^ ` "
+    // wouldn't 500 — it would silently miss the existing item and create a
+    // duplicate one instead. Route those through the encoded query as well.
+    if (QBO_URL_UNSAFE.test(String(value ?? ''))) {
+        try { return await qboQueryByField(qbo, 'Item', field, value); }
+        catch { return []; }
+    }
+    return await new Promise((resolve) => {
+        qbo.findItems([{ field, value, operator: '=' }], (err, body) => {
+            if (err) return resolve([]);
+            resolve(body?.QueryResponse?.Item || []);
+        });
     });
-});
+};
 const qboFindItemsByName = (qbo, name) => qboFindItemsByField(qbo, 'Name', name);
 const qboFindItemsBySku = (qbo, sku) => qboFindItemsByField(qbo, 'Sku', sku);
 
