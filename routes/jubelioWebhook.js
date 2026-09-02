@@ -1696,6 +1696,40 @@ const markQboInvoicePaid = async (qbo, invoice, customerId, so) => {
     return created;
 };
 
+// ─── Payment reconcile pada jalur "skipped" ───
+// Guard idempoten di upsertQboInvoice mengasumsikan webhook sebelumnya sudah
+// menuntaskan sisi Payment. Asumsi itu jebol kalau run sebelumnya mati SETELAH
+// invoice dibuat tapi SEBELUM Payment — persis yang terjadi ke
+// SHF-10704-128887 saat outage Intuit 2026-09-02: invoice ada, Payment tidak
+// pernah dibuat, dan sepuluh re-fire berikutnya semuanya mengambil jalur skip.
+//
+// Biayanya nol untuk order normal: mapping yang sudah punya qbo_payment_id
+// atau payment_reconciled_at langsung keluar tanpa memanggil QBO. Satu mapping
+// paling banyak sekali diperiksa.
+const reconcileSkippedPayment = async (qbo, so, realmId, statusUpper, log = console.log) => {
+    const mapping = await JubelioOrderMap.findOne({ salesorder_id: so.salesorder_id, qbo_realm_id: realmId });
+    if (!mapping) return null;
+    if (mapping.qbo_payment_id || mapping.payment_reconciled_at || mapping.manual_payment) return null;
+
+    const stamp = (extra = {}) => JubelioOrderMap.updateOne(
+        { _id: mapping._id }, { payment_reconciled_at: new Date(), ...extra });
+
+    // Belum saatnya bayar (status belum PAID/COMPLETED) atau memang manual —
+    // jangan di-stamp, biar diperiksa lagi saat statusnya berubah.
+    if (!PAID_STATUSES.has(statusUpper) || hasUnpaidMarker(so)) return null;
+
+    const invoice = await qboGetInvoice(qbo, mapping.qbo_invoice_id);
+    if (!invoice || Number(invoice.Balance ?? 0) <= 0) {
+        await stamp();
+        return null;
+    }
+
+    log(`🩹 Skip-path reconcile: invoice ${mapping.qbo_invoice_id} masih bersaldo ${invoice.Balance} padahal ${statusUpper} — buat Payment yang tertinggal.`);
+    const payment = await markQboInvoicePaid(qbo, invoice, invoice.CustomerRef?.value, so);
+    await stamp(payment?.Id ? { qbo_payment_id: String(payment.Id) } : {});
+    return payment;
+};
+
 // ─── Upsert Invoice ───
 const upsertQboInvoice = async (qbo, so, realmId) => {
     // Idempotency guard: Jubelio re-fires webhooks multiple times for the same
@@ -2111,13 +2145,22 @@ router.post('/pesanan', async (req, res) => {
         let payment = null;
         const unpaidMarker = hasUnpaidMarker(so);
         if (upserted.action === 'skipped') {
-            log(`💰 [7/8] Upsert skipped (idempotent) — skip payment too.`);
+            // Bukan "lewati Payment" begitu saja: pastikan dulu Payment-nya
+            // memang sudah pernah dibuat (lihat reconcileSkippedPayment).
+            payment = await reconcileSkippedPayment(qbo, so, realmId, statusUpper, log);
+            log(`💰 [7/8] Upsert skipped (idempotent) — payment ${payment ? `tertinggal, dibuat sekarang: ${payment.Id}` : 'sudah beres'}.`);
         } else if (unpaidMarker) {
             log(`💰 [7/8] #UNPAID marker present in note — skip auto-payment (finance will record Payment manually in QBO when customer pays).`);
         } else if (PAID_STATUSES.has(statusUpper)) {
             log(`💰 [7/8] Status ${statusUpper} — marking Invoice as PAID…`);
             payment = await markQboInvoicePaid(qbo, upserted.invoice, upserted.customerId, so);
             log(`    ✅ Payment created: id=${payment?.Id || '-'} amount=${payment?.TotalAmt ?? '-'}`);
+            // Catat di mapping supaya re-fire berikutnya tahu sisi Payment
+            // sudah beres tanpa perlu bertanya ke QBO lagi.
+            await JubelioOrderMap.updateOne(
+                { salesorder_id: so.salesorder_id, qbo_realm_id: realmId },
+                { payment_reconciled_at: new Date(), ...(payment?.Id ? { qbo_payment_id: String(payment.Id) } : {}) },
+            );
         } else {
             log(`💰 [7/8] Status ${statusUpper} — skip payment (not in ${[...PAID_STATUSES].join('/')})`);
         }
@@ -2261,3 +2304,4 @@ module.exports.hasUnpaidMarker = hasUnpaidMarker;
 module.exports.isRetryableQboError = isRetryableQboError;
 module.exports.isLikelyTransientError = isLikelyTransientError;
 module.exports.getUsableTaxCodes = getUsableTaxCodes;
+module.exports.reconcileSkippedPayment = reconcileSkippedPayment;
