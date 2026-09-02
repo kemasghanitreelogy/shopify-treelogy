@@ -220,6 +220,12 @@ const extractQboError = (err, body) => {
 // when QBO rejects with "Invalid Tax Rate" (the chosen code's underlying tax
 // rate was deleted/disabled by an admin). Cache TTL is 1 hour so the list
 // refreshes automatically after admins reorganize the tax catalog.
+//
+// QBO_TAX_CODE (optional) pins the candidate list and skips the lookup
+// entirely — accepts a comma-separated list so the fallback chain survives,
+// e.g. "9,7,15". Pinning removes one QBO round-trip per cold start, which is
+// what turned the 2026-09-02 Intuit outage into a total sync stop: the very
+// first QBO call of every invocation was findTaxCodes.
 let _cachedTaxCodes = null;
 let _cachedTaxAt = 0;
 const TAX_CACHE_TTL_MS = 60 * 60 * 1000;
@@ -242,28 +248,53 @@ const rankTaxCode = (c) => {
     return 1;
 };
 
-const getUsableTaxCodes = (qbo) => new Promise((resolve, reject) => {
-    if (process.env.QBO_TAX_CODE) {
-        return resolve([String(process.env.QBO_TAX_CODE)]);
-    }
-    if (_cachedTaxCodes && Date.now() - _cachedTaxAt < TAX_CACHE_TTL_MS) {
-        return resolve(_cachedTaxCodes);
-    }
+const pinnedTaxCodes = () => String(process.env.QBO_TAX_CODE || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+const fetchTaxCodes = (qbo) => new Promise((resolve, reject) => {
     qbo.findTaxCodes([], (err, body) => {
         if (err) return reject(new Error('findTaxCodes: ' + extractQboError(err, body)));
-        const codes = body?.QueryResponse?.TaxCode || [];
-        const usable = codes.filter(isUsableTaxCode);
-        const ranked = usable.sort((a, b) => rankTaxCode(a) - rankTaxCode(b));
-        _cachedTaxCodes = ranked.map(c => String(c.Id));
-        _cachedTaxAt = Date.now();
-        // Fall-back to ANY active code id if filter eliminated everything (very
-        // misconfigured tenant) — better than no candidate at all.
-        if (_cachedTaxCodes.length === 0) {
-            _cachedTaxCodes = codes.filter(c => c.Active !== false).map(c => String(c.Id));
-        }
-        resolve(_cachedTaxCodes);
+        resolve(body?.QueryResponse?.TaxCode || []);
     });
 });
+
+const getUsableTaxCodes = async (qbo) => {
+    const pinned = pinnedTaxCodes();
+    if (pinned.length) return pinned;
+
+    if (_cachedTaxCodes && Date.now() - _cachedTaxAt < TAX_CACHE_TTL_MS) {
+        return _cachedTaxCodes;
+    }
+
+    let codes;
+    try {
+        codes = await withQboRetry('findTaxCodes', () => fetchTaxCodes(qbo));
+    } catch (err) {
+        // Serve stale rather than fail the whole sync. Tax codes change maybe
+        // once a year; a list that is an hour (or a day) old is still correct,
+        // and during a QBO outage this is the difference between "invoice
+        // posts on the next retry" and "every order backs up". Only when we
+        // have never fetched successfully is there nothing to fall back to.
+        if (_cachedTaxCodes?.length) {
+            const ageMin = Math.round((Date.now() - _cachedTaxAt) / 60000);
+            console.warn(`⚠️ findTaxCodes gagal (${String(err.message).slice(0, 120)}) — pakai cache basi umur ${ageMin}m: [${_cachedTaxCodes.join(',')}]`);
+            return _cachedTaxCodes;
+        }
+        throw err;
+    }
+
+    const ranked = codes.filter(isUsableTaxCode).sort((a, b) => rankTaxCode(a) - rankTaxCode(b));
+    _cachedTaxCodes = ranked.map(c => String(c.Id));
+    // Fall-back to ANY active code id if filter eliminated everything (very
+    // misconfigured tenant) — better than no candidate at all.
+    if (_cachedTaxCodes.length === 0) {
+        _cachedTaxCodes = codes.filter(c => c.Active !== false).map(c => String(c.Id));
+    }
+    _cachedTaxAt = Date.now();
+    return _cachedTaxCodes;
+};
 
 const getDefaultTaxCode = async (qbo) => {
     const list = await getUsableTaxCodes(qbo);
@@ -1387,11 +1418,20 @@ const isInventoryLockError = (err) => {
 // QBO returns HTTP 429 + errorCode 003001 ("ThrottleExceeded"), occasionally
 // 5xx for transient platform issues, and HTTP 400 "Business Validation Error"
 // for inventory-lock contention (handled with longer backoff in withQboRetry).
+// Intuit's gateway answers a stalled backend with the literal body
+// "stream timeout" (HTTP 200-shaped error, no Fault object) — verified during
+// the 2026-09-02 outage where authenticated calls hung with no response while
+// unauthenticated ones still returned 401 in ~1s. Axios' own client-side
+// timeouts surface as ECONNABORTED / "timeout of Nms exceeded". None of these
+// mean our payload is wrong, so they belong in the retry+suppress bucket.
+const QBO_TIMEOUT_PATTERN = /stream timeout|ESOCKETTIMEDOUT|ECONNABORTED|timeout of \d+ ?ms exceeded|Client network socket disconnected/i;
+
 const isRetryableQboError = (err) => {
     if (!err) return false;
     const msg = String(err.message || err);
     return /ThrottleExceeded|statusCode=429|errorCode=003001|"code":"?3001|"code":"?3002/i.test(msg)
         || /statusCode=5\d\d|HTTP 5\d\d|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg)
+        || QBO_TIMEOUT_PATTERN.test(msg)
         || isInventoryLockError(err);
 };
 
@@ -1419,6 +1459,10 @@ const isLikelyTransientError = (err) => {
     if (/ThrottleExceeded|statusCode=429|errorCode=003001|"code":"?3001|"code":"?3002/i.test(msg)) return true;
     if (/statusCode=5\d\d|HTTP 5\d\d|ECONNRESET|ETIMEDOUT|socket hang up/i.test(msg)) return true;
     if (/ESERVFAIL|EAI_AGAIN|getaddrinfo|ENOTFOUND/i.test(msg)) return true;
+    // QBO/Intuit unresponsive (see QBO_TIMEOUT_PATTERN). Nothing we can fix
+    // from here — hold the Telegram alert until Jubelio's retries are spent so
+    // an Intuit blip doesn't page anyone, while a real outage still surfaces.
+    if (QBO_TIMEOUT_PATTERN.test(msg)) return true;
     if (isInventoryLockError(err)) return true;
     return false;
 };
@@ -2212,3 +2256,8 @@ module.exports.markQboInvoicePaid = markQboInvoicePaid;
 module.exports.voidMappedInvoice = voidMappedInvoice;
 module.exports.hasPaymentSignal = hasPaymentSignal;
 module.exports.hasUnpaidMarker = hasUnpaidMarker;
+// Exported for scripts/_test-qbo-timeout-classifier.js — keeping the assertions
+// against the real predicates means the test can't drift from the code.
+module.exports.isRetryableQboError = isRetryableQboError;
+module.exports.isLikelyTransientError = isLikelyTransientError;
+module.exports.getUsableTaxCodes = getUsableTaxCodes;
